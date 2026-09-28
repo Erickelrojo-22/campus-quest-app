@@ -22,9 +22,15 @@ android {
 
     buildTypes {
         release {
-            optimization {
-                enable = false
-            }
+            // R8: reduce y ofusca el código (menos métodos, menor APK, arranque
+            // más rápido) y elimina recursos no usados. Las reglas de conservación
+            // adicionales viven en src/main/keepRules (AGP las combina solas).
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
     compileOptions {
