@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 /** RF-05, RF-06, RF-07: mapa del campus, ficha del punto y buscador. */
@@ -36,8 +37,10 @@ class HomeViewModel(
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // Depende solo de la lista de misiones; antes recombinaba con el texto de
+    // búsqueda (que ignora), recalculándose en cada pulsación del teclado.
     val misionSugerida: StateFlow<MisionConEstado?> = misiones
-        .combine(_busqueda) { lista, _ -> lista.firstOrNull { !it.completada } }
+        .map { lista -> lista.firstOrNull { !it.completada } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     fun onBusquedaChange(valor: String) {
