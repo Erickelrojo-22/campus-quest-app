@@ -1,0 +1,170 @@
+name: Android CI
+
+# Integración continua para la app nativa Android (Campus Quest).
+# Se ejecuta en cada push y pull request a main, y puede lanzarse a mano.
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+# Cancela ejecuciones anteriores de la misma rama/PR para no gastar minutos.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ──────────────────────────────────────────────────────────────
+  # 1) Compilación + análisis estático + pruebas unitarias
+  # ──────────────────────────────────────────────────────────────
+  build:
+    name: Build · Lint · Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Validar el Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Configurar JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Configurar Gradle (con caché)
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Configurar el SDK de Android
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar plataforma y build-tools requeridas
+        run: sdkmanager "platforms;android-37" "build-tools;36.0.0"
+
+      - name: Permisos de ejecución para gradlew
+        run: chmod +x ./gradlew
+
+      - name: Análisis estático (Lint)
+        run: ./gradlew lintDebug --stacktrace
+
+      - name: Pruebas unitarias
+        run: ./gradlew testDebugUnitTest --stacktrace
+
+      - name: Ensamblar APK de debug
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Publicar APK de debug como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn
+
+      - name: Publicar reportes de Lint y tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportes-build
+          path: |
+            app/build/reports/**
+          if-no-files-found: ignore
+
+  # ──────────────────────────────────────────────────────────────
+  # 2) Verificación del build de release con R8 activado
+  # ──────────────────────────────────────────────────────────────
+  release-check:
+    name: Verificar build de release (R8)
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Configurar Gradle (con caché)
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Configurar el SDK de Android
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar plataforma y build-tools requeridas
+        run: sdkmanager "platforms;android-37" "build-tools;36.0.0"
+
+      - name: Permisos de ejecución para gradlew
+        run: chmod +x ./gradlew
+
+      # Ejercita R8 / minificación / shrink de recursos para detectar
+      # a tiempo reglas keep faltantes antes de publicar.
+      - name: Ensamblar APK de release
+        run: ./gradlew assembleRelease --stacktrace
+
+      - name: Publicar APK de release como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
+
+  # ──────────────────────────────────────────────────────────────
+  # 3) Pruebas instrumentadas en emulador (solo push a main / manual)
+  # ──────────────────────────────────────────────────────────────
+  instrumented:
+    name: Pruebas instrumentadas (emulador)
+    runs-on: ubuntu-latest
+    # El emulador es costoso en tiempo: se evita en cada PR.
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    strategy:
+      matrix:
+        api-level: [ 29 ]
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Configurar Gradle (con caché)
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Configurar el SDK de Android
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar plataforma y build-tools requeridas
+        run: sdkmanager "platforms;android-37" "build-tools;36.0.0"
+
+      - name: Permisos de ejecución para gradlew
+        run: chmod +x ./gradlew
+
+      # Acelera el emulador con virtualización por hardware (KVM).
+      - name: Habilitar KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Ejecutar pruebas instrumentadas
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          arch: x86_64
+          profile: pixel_5
+          disable-animations: true
+          script: ./gradlew connectedDebugAndroidTest --stacktrace
+
+      - name: Publicar reportes de androidTest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportes-androidTest-api${{ matrix.api-level }}
+          path: app/build/reports/androidTests/**
+          if-no-files-found: ignore
