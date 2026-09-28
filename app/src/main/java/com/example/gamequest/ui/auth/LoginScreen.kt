@@ -49,8 +49,10 @@ import com.example.gamequest.ui.theme.TealPrimaryDark
 @Composable
 fun LoginScreen(
     viewModel: AuthViewModel,
-    onLoginExitoso: (UsuarioEntity) -> Unit
+    onLoginExitoso: (UsuarioEntity) -> Unit,
+    onIrARegistro: () -> Unit = {}
 ) {
+
     val uiState by viewModel.uiState.collectAsState()
 
     var nombre by remember { mutableStateOf("") }

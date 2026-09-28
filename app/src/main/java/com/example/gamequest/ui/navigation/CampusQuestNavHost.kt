@@ -18,6 +18,9 @@ import androidx.navigation.navArgument
 import com.example.gamequest.AppContainer
 import com.example.gamequest.ui.auth.AuthViewModel
 import com.example.gamequest.ui.auth.LoginScreen
+import com.example.gamequest.ui.auth.RegisterScreen
+import com.example.gamequest.ui.auth.RegisterViewModel
+
 import com.example.gamequest.ui.badges.BadgeEarnedViewModel
 import com.example.gamequest.ui.badges.BadgeEarnedScreen
 import com.example.gamequest.ui.badges.BadgesScreen
@@ -73,9 +76,27 @@ fun CampusQuestNavHost(container: AppContainer) {
                 onLoginExitoso = { usuarioLogueado ->
                     sessionViewModel.iniciarSesion(usuarioLogueado.id)
                     navController.navigate(Routes.HOME) { popUpTo(0) }
+                },
+                onIrARegistro = {
+                    navController.navigate(Routes.REGISTER)
                 }
             )
         }
+
+        composable(Routes.REGISTER) {
+            val registerViewModel: RegisterViewModel = viewModel(factory = GenericViewModelFactory { RegisterViewModel(container.authRepository) })
+            RegisterScreen(
+                viewModel = registerViewModel,
+                onRegistroExitoso = { usuarioRegistrado ->
+                    sessionViewModel.iniciarSesion(usuarioRegistrado.id)
+                    navController.navigate(Routes.HOME) { popUpTo(0) }
+                },
+                onVolverALogin = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
 
         composable(Routes.HOME) {
             val usuarioId = usuario?.id
