@@ -175,6 +175,11 @@ El proyecto incluye un paso de análisis y optimización de rendimiento:
   conserva únicamente el último frame y ZXing procesa como máximo un frame cada 120 ms.
 - **Listas con coste lineal**: el ranking usa el índice entregado por `itemsIndexed` en
   lugar de buscar la posición de cada usuario repetidamente durante la composición.
+- **Integridad y seguridad local**: las operaciones de progreso y creación de misiones
+  usan transacciones Room, el progreso tiene clave única por usuario/misión, los códigos
+  QR son únicos y las cuentas nuevas usan PBKDF2 con salt y migración de hashes antiguos.
+- **Roles protegidos**: el acceso rápido no puede crear tutores y las rutas de gestión
+  validan el rol tutor antes de mostrar operaciones CRUD.
 
 > ⚠️ Al activar R8 por primera vez, se recomienda validar un build de release (`./gradlew assembleRelease`) en dispositivo antes de publicar.
 
