@@ -171,6 +171,10 @@ El proyecto incluye un paso de análisis y optimización de rendimiento:
 - **R8 activado en release** (`isMinifyEnabled` + `isShrinkResources`) con reglas `keep` para Room, ZXing y CameraX → APK más liviano y arranque más rápido.
 - **Menos recomposiciones en Compose**: memoización de colecciones derivadas (`remember`) y eliminación de escrituras de estado durante la fase de dibujo del mapa.
 - **Flujos derivados eficientes**: se reemplazaron `combine` innecesarios por `map` en los ViewModels para no recalcular datos en cada pulsación del buscador o cambio de filtro.
+- **Escáner QR parametrizado para gama baja**: CameraX limita el análisis a 640 × 480,
+  conserva únicamente el último frame y ZXing procesa como máximo un frame cada 120 ms.
+- **Listas con coste lineal**: el ranking usa el índice entregado por `itemsIndexed` en
+  lugar de buscar la posición de cada usuario repetidamente durante la composición.
 
 > ⚠️ Al activar R8 por primera vez, se recomienda validar un build de release (`./gradlew assembleRelease`) en dispositivo antes de publicar.
 
