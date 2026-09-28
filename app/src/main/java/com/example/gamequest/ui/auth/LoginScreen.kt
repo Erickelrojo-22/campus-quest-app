@@ -59,7 +59,6 @@ fun LoginScreen(
     var nombre by remember { mutableStateOf("") }
     var correo by remember { mutableStateOf("") }
     var contrasena by remember { mutableStateOf("") }
-    var esTutor by remember { mutableStateOf(false) }
 
     Scaffold(containerColor = TealPrimaryDark) { padding ->
         Column(
@@ -158,25 +157,6 @@ fun LoginScreen(
                         )
                         Spacer(Modifier.height(12.dp))
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Checkbox(
-                                checked = esTutor,
-                                onCheckedChange = { esTutor = it },
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = AmberAccent,
-                                    checkmarkColor = PixelInkOnCream,
-                                    uncheckedColor = Color.White
-                                )
-                            )
-                            Text(
-                                "Soy tutor del programa de bienvenida",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.White
-                            )
-                        }
                     } else {
                         Text(
                             "CORREO INSTITUCIONAL",
@@ -245,7 +225,7 @@ fun LoginScreen(
                             if (modoInstitucional) {
                                 viewModel.entrarConCredenciales(correo, contrasena, onLoginExitoso)
                             } else {
-                                viewModel.entrar(nombre, esTutor, onLoginExitoso)
+                                viewModel.entrar(nombre, false, onLoginExitoso)
                             }
                         },
                         enabled = !uiState.cargando,

@@ -147,26 +147,6 @@ fun RegisterScreen(
                     )
                     Spacer(Modifier.height(12.dp))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = uiState.esTutor,
-                            onCheckedChange = viewModel::onEsTutorChange,
-                            colors = CheckboxDefaults.colors(
-                                checkedColor = AmberAccent,
-                                checkmarkColor = PixelInkOnCream,
-                                uncheckedColor = Color.White
-                            )
-                        )
-                        Text(
-                            "Registrarme con rol de tutor/guía",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.White
-                        )
-                    }
-
                     uiState.error?.let { mensaje ->
                         Spacer(Modifier.height(6.dp))
                         Text(
