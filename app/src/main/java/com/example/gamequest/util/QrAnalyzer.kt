@@ -2,6 +2,7 @@ package com.example.gamequest.util
 
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.ImageAnalysis
+import android.os.SystemClock
 import com.google.zxing.BinaryBitmap
 import com.google.zxing.NotFoundException
 import com.google.zxing.PlanarYUVLuminanceSource
@@ -15,28 +16,40 @@ import com.google.zxing.qrcode.QRCodeReader
  */
 class QrAnalyzer(private val onQrDetectado: (String) -> Unit) : ImageAnalysis.Analyzer {
 
+    private companion object {
+        const val INTERVALO_ANALISIS_MS = 120L
+    }
+
     private val reader = QRCodeReader()
     private var procesando = false
+    private var ultimoAnalisisMs = 0L
 
     override fun analyze(image: ImageProxy) {
-        if (procesando) {
+        val ahoraMs = SystemClock.elapsedRealtime()
+        if (procesando || ahoraMs - ultimoAnalisisMs < INTERVALO_ANALISIS_MS) {
             image.close()
             return
         }
         procesando = true
+        ultimoAnalisisMs = ahoraMs
         try {
-            val buffer = image.planes[0].buffer
-            val bytes = ByteArray(buffer.remaining())
-            buffer.get(bytes)
+            val plane = image.planes[0]
+            val recorte = extraerRecorteCentral(
+                buffer = plane.buffer,
+                imageWidth = image.width,
+                imageHeight = image.height,
+                rowStride = plane.rowStride,
+                pixelStride = plane.pixelStride
+            )
 
             val source = PlanarYUVLuminanceSource(
-                bytes,
-                image.width,
-                image.height,
+                recorte.bytes,
+                recorte.width,
+                recorte.height,
                 0,
                 0,
-                image.width,
-                image.height,
+                recorte.width,
+                recorte.height,
                 false
             )
             val binaryBitmap = BinaryBitmap(HybridBinarizer(source))
@@ -53,4 +66,35 @@ class QrAnalyzer(private val onQrDetectado: (String) -> Unit) : ImageAnalysis.An
             image.close()
         }
     }
+
+    private fun extraerRecorteCentral(
+        buffer: java.nio.ByteBuffer,
+        imageWidth: Int,
+        imageHeight: Int,
+        rowStride: Int,
+        pixelStride: Int
+    ): LuminanceCrop {
+        val left = imageWidth / 10
+        val top = imageHeight / 10
+        val width = imageWidth - (left * 2)
+        val height = imageHeight - (top * 2)
+        val bytes = ByteArray(width * height)
+        val source = buffer.duplicate()
+        val bufferStart = source.position()
+
+        var destination = 0
+        for (row in top until top + height) {
+            val rowStart = bufferStart + row * rowStride + left * pixelStride
+            for (column in 0 until width) {
+                bytes[destination++] = source.get(rowStart + column * pixelStride)
+            }
+        }
+        return LuminanceCrop(bytes, width, height)
+    }
+
+    private data class LuminanceCrop(
+        val bytes: ByteArray,
+        val width: Int,
+        val height: Int
+    )
 }

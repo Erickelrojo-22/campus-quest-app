@@ -34,6 +34,11 @@ private fun colorPorCategoria(categoria: String, primary: Color, secondary: Colo
         else -> tertiary
     }
 
+private val posicionesArboles = listOf(
+    0.10f to 0.12f, 0.88f to 0.10f,
+    0.09f to 0.88f, 0.90f to 0.85f, 0.68f to 0.18f
+)
+
 @Composable
 fun CampusMapView(
     puntos: List<PuntoInteresEntity>,
@@ -98,10 +103,7 @@ fun CampusMapView(
         }
 
         // Árboles pixelados en las esquinas del campus (fuera de los caminos)
-        listOf(
-            0.10f to 0.12f, 0.88f to 0.10f,
-            0.09f to 0.88f, 0.90f to 0.85f, 0.68f to 0.18f
-        ).forEach { (rx, ry) ->
+        posicionesArboles.forEach { (rx, ry) ->
             val cx = size.width * rx
             val cy = size.height * ry
             val r = size.minDimension * 0.045f
@@ -161,4 +163,3 @@ fun CampusMapView(
         }
     }
 }
-

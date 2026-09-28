@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -111,8 +112,8 @@ fun BadgesScreen(
             item {
                 SeccionTitulo("RANKING DEL CAMPUS")
             }
-            items(estado.ranking) { usuario ->
-                RankingRow(usuario, esUsuarioActual = usuario.id == usuarioActualId, posicion = estado.ranking.indexOf(usuario) + 1)
+            itemsIndexed(estado.ranking) { indice, usuario ->
+                RankingRow(usuario, esUsuarioActual = usuario.id == usuarioActualId, posicion = indice + 1)
             }
             item { Spacer(Modifier.height(24.dp)) }
         }
