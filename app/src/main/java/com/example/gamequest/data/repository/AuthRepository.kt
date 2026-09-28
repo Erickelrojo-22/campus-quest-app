@@ -59,7 +59,8 @@ class AuthRepository(private val usuarioDao: UsuarioDao) {
             correoInstitucional = mail,
             carrera = carr,
             contrasenaHash = hash,
-            rol = if (esTutor) Rol.TUTOR else Rol.ESTUDIANTE
+            // El rol tutor no se concede desde un formulario público.
+            rol = Rol.ESTUDIANTE
         )
         val id = usuarioDao.insertar(nuevoUsuario)
         return AuthResult.Exito(nuevoUsuario.copy(id = id.toInt()))
@@ -75,8 +76,14 @@ class AuthRepository(private val usuarioDao: UsuarioDao) {
         val usuario = usuarioDao.buscarPorCorreo(mail)
             ?: return AuthResult.Error("No existe una cuenta registrada con este correo.")
 
-        if (usuario.contrasenaHash.isNotBlank() && !PasswordHasher.matches(pass, usuario.contrasenaHash)) {
+        if (usuario.contrasenaHash.isBlank()) {
+            return AuthResult.Error("Esta cuenta debe completar su registro institucional.")
+        }
+        if (!PasswordHasher.matches(pass, usuario.contrasenaHash)) {
             return AuthResult.Error("Contraseña incorrecta.")
+        }
+        if (PasswordHasher.needsRehash(usuario.contrasenaHash)) {
+            usuarioDao.actualizarContrasena(usuario.id, PasswordHasher.hash(pass))
         }
 
         return AuthResult.Exito(usuario)
@@ -89,14 +96,19 @@ class AuthRepository(private val usuarioDao: UsuarioDao) {
         val nombreNormalizado = nombre.trim()
         if (nombreNormalizado.isBlank()) return AuthResult.Error("Escribe tu nombre para continuar.")
 
-        usuarioDao.buscarPorNombre(nombreNormalizado)?.let { return AuthResult.Exito(it) }
+        usuarioDao.buscarPorNombre(nombreNormalizado)?.let {
+            if (it.rol == Rol.TUTOR) {
+                return AuthResult.Error("Las cuentas tutor deben entrar con correo y contraseña.")
+            }
+            return AuthResult.Exito(it)
+        }
 
         val nuevo = UsuarioEntity(
             nombres = nombreNormalizado,
             correoInstitucional = "",
             carrera = "",
             contrasenaHash = "",
-            rol = if (esTutor) Rol.TUTOR else Rol.ESTUDIANTE
+            rol = Rol.ESTUDIANTE
         )
         val id = usuarioDao.insertar(nuevo)
         return AuthResult.Exito(nuevo.copy(id = id.toInt()))

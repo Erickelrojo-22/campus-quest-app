@@ -114,6 +114,7 @@ class RegisterViewModelTest {
         }
 
         override suspend fun actualizar(usuario: UsuarioEntity) {}
+        override suspend fun actualizarContrasena(usuarioId: Int, hash: String) {}
         override suspend fun buscarPorCorreo(correo: String): UsuarioEntity? {
             return usuarios.find { it.correoInstitucional.equals(correo.trim(), ignoreCase = true) }
         }

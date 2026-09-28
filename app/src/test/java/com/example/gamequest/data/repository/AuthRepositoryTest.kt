@@ -55,7 +55,7 @@ class AuthRepositoryTest {
         val usuario = (resultado as AuthResult.Exito).usuario
         assertEquals("Erick Moreira", usuario.nombres)
         assertEquals("e1351519127@live.uleam.edu.ec", usuario.correoInstitucional)
-        assertEquals(PasswordHasher.hash("clave12345"), usuario.contrasenaHash)
+        assertTrue(PasswordHasher.matches("clave12345", usuario.contrasenaHash))
         assertEquals(Rol.ESTUDIANTE, usuario.rol)
     }
 
@@ -134,6 +134,11 @@ class AuthRepositoryTest {
         override suspend fun actualizar(usuario: UsuarioEntity) {
             val idx = usuarios.indexOfFirst { it.id == usuario.id }
             if (idx != -1) usuarios[idx] = usuario
+        }
+
+        override suspend fun actualizarContrasena(usuarioId: Int, hash: String) {
+            val usuario = usuarios.find { it.id == usuarioId } ?: return
+            actualizar(usuario.copy(contrasenaHash = hash))
         }
 
         override suspend fun buscarPorCorreo(correo: String): UsuarioEntity? {

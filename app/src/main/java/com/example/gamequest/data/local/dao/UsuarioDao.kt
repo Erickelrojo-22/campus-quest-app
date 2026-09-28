@@ -16,11 +16,14 @@ interface UsuarioDao {
     @Update
     suspend fun actualizar(usuario: UsuarioEntity)
 
-    @Query("SELECT * FROM usuario WHERE LOWER(correoInstitucional) = LOWER(:correo) LIMIT 1")
+    @Query("UPDATE usuario SET contrasenaHash = :hash WHERE id = :usuarioId")
+    suspend fun actualizarContrasena(usuarioId: Int, hash: String)
+
+    @Query("SELECT * FROM usuario WHERE correoInstitucional = :correo COLLATE NOCASE LIMIT 1")
     suspend fun buscarPorCorreo(correo: String): UsuarioEntity?
 
 
-    @Query("SELECT * FROM usuario WHERE LOWER(nombres) = LOWER(:nombre) LIMIT 1")
+    @Query("SELECT * FROM usuario WHERE nombres = :nombre COLLATE NOCASE LIMIT 1")
     suspend fun buscarPorNombre(nombre: String): UsuarioEntity?
 
     @Query("SELECT * FROM usuario WHERE id = :id LIMIT 1")
