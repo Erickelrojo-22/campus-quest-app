@@ -21,6 +21,17 @@ tenga remoto en GitHub. Formato pensado para migrarse 1 a 1 con
   ningún otro archivo.
 - [x] **Textbox "Buscar lugar o misión" con bordes poco redondeados.**
   `HomeScreen.kt`: `shape` del `TextField` cambiado de 4dp a 24dp.
+- [x] **Puntos/"actividades" muy pequeños en el mapa de Inicio.**
+  `CampusMapView.kt`: se incrementó el radio táctil a 65f para garantizar
+  usabilidad en pantallas móviles y se añadieron anillos y detalles centrales
+  con alto contraste visual.
+- [x] **Registro de usuario institucional y pantalla de registro (RF-02).**
+  Implementada `RegisterScreen`, `RegisterViewModel` y métodos de registro
+  y login con contraseña en `AuthRepository` con validación de dominio
+  institucional (@live.uleam.edu.ec) y pruebas unitarias.
+- [x] **Visualización de carrera y correo en el perfil.**
+  `ProfileScreen.kt`: ahora muestra el correo institucional, carrera,
+  nivel del usuario y puntaje acumulado con estilo retro.
 
 ## Pendientes
 
@@ -30,15 +41,10 @@ tenga remoto en GitHub. Formato pensado para migrarse 1 a 1 con
   por lectura de código. **Bloqueado**: falta el logcat
   (`FATAL EXCEPTION`/`AndroidRuntime`) o un dispositivo/emulador para
   reproducirlo.
-- [ ] **Puntos/"actividades" muy pequeños en el mapa de Inicio.**
-  `CampusMapView.kt` dibuja los puntos como círculos de 16–21px sin
-  etiqueta. Fix inmediato de tamaño/etiqueta todavía no se hizo (se
-  documentó como parte de la evaluación de mapa HD en `ROADMAP.md`,
-  pero son dos cosas separadas: el bug de tamaño actual, y la
-  migración a mapa 3D a futuro).
 - [ ] **Mapa en alta definición / estilo Google Maps 3D.** Propuesta
   en `ROADMAP.md`, pendiente de evaluar costos (API key, facturación)
   e integración (conexión a internet rompe el offline-first actual).
+
 - [ ] **Menú ☰ + timeline de dónde se ganaron puntos.** Evaluado como
   factible (el dato ya existe en `ProgresoMisionEntity.fechaHora` /
   `puntosObtenidos`). Falta decidir si se implementa ahora.

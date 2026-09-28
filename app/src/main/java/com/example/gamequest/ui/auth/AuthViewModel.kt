@@ -40,7 +40,27 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
         }
     }
 
+    fun entrarConCredenciales(
+        correo: String,
+        contrasena: String,
+        onExito: (UsuarioEntity) -> Unit
+    ) {
+        _uiState.value = AuthUiState(cargando = true)
+        viewModelScope.launch {
+            when (val resultado = authRepository.iniciarSesionConCredenciales(correo, contrasena)) {
+                is AuthResult.Exito -> {
+                    _uiState.value = AuthUiState()
+                    onExito(resultado.usuario)
+                }
+                is AuthResult.Error -> {
+                    _uiState.value = AuthUiState(error = resultado.mensaje)
+                }
+            }
+        }
+    }
+
     fun limpiarError() {
         _uiState.value = _uiState.value.copy(error = null)
     }
 }
+
