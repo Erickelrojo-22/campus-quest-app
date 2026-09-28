@@ -1,7 +1,6 @@
 package com.example.gamequest.data.local.dao
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
@@ -17,10 +16,10 @@ interface MisionDao {
     @Update
     suspend fun actualizar(mision: MisionEntity)
 
-    @Delete
-    suspend fun eliminar(mision: MisionEntity)
+    @Query("UPDATE mision SET activa = 0 WHERE id = :misionId")
+    suspend fun archivar(misionId: Int)
 
-    @Query("SELECT * FROM mision ORDER BY id")
+    @Query("SELECT * FROM mision WHERE activa = 1 ORDER BY id")
     fun observarTodas(): Flow<List<MisionEntity>>
 
     @Query("SELECT * FROM mision WHERE id = :id LIMIT 1")
@@ -29,7 +28,7 @@ interface MisionDao {
     @Query("SELECT * FROM mision WHERE id = :id LIMIT 1")
     fun observarPorId(id: Int): Flow<MisionEntity?>
 
-    @Query("SELECT * FROM mision WHERE puntoInteresId = :puntoId")
+    @Query("SELECT * FROM mision WHERE puntoInteresId = :puntoId AND activa = 1")
     suspend fun buscarPorPunto(puntoId: Int): List<MisionEntity>
 
     @Query("SELECT COUNT(*) FROM mision")

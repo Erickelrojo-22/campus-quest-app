@@ -1,6 +1,7 @@
 package com.example.gamequest.data.local.entity
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
@@ -8,7 +9,7 @@ import androidx.room.PrimaryKey
  * `posX`/`posY` ubican el punto dentro del mapa estilizado del campus (0f..1f),
  * equivalente conceptual a latitud/longitud dentro de un plano cerrado sin GPS real.
  */
-@Entity(tableName = "punto_interes")
+@Entity(tableName = "punto_interes", indices = [Index(value = ["codigoQr"], unique = true)])
 data class PuntoInteresEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val nombre: String,

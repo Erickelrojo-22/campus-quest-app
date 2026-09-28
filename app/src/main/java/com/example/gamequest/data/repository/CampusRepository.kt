@@ -1,5 +1,9 @@
 package com.example.gamequest.data.repository
 
+import android.database.sqlite.SQLiteConstraintException
+import androidx.room.withTransaction
+import com.example.gamequest.data.local.AppDatabase
+
 import com.example.gamequest.data.local.dao.MisionDao
 import com.example.gamequest.data.local.dao.ProgresoMisionDao
 import com.example.gamequest.data.local.dao.PuntoInteresDao
@@ -39,6 +43,7 @@ sealed class ValidacionQrResult {
  * aplicación funciona igual con o sin conexión (RF-20).
  */
 class CampusRepository(
+    private val database: AppDatabase,
     private val puntoDao: PuntoInteresDao,
     private val misionDao: MisionDao,
     private val progresoDao: ProgresoMisionDao,
@@ -98,6 +103,16 @@ class CampusRepository(
      * registra el progreso, otorga puntos y actualiza el nivel del usuario.
      */
     suspend fun validarCodigo(codigo: String, usuarioId: Int): ValidacionQrResult {
+        return try {
+            database.withTransaction {
+                validarCodigoEnTransaccion(codigo, usuarioId)
+            }
+        } catch (_: SQLiteConstraintException) {
+            ValidacionQrResult.YaCompletada
+        }
+    }
+
+    private suspend fun validarCodigoEnTransaccion(codigo: String, usuarioId: Int): ValidacionQrResult {
         val codigoNormalizado = codigo.trim().uppercase()
         val punto = puntoDao.buscarPorCodigoQr(codigoNormalizado)
             ?: return ValidacionQrResult.CodigoNoReconocido
@@ -150,7 +165,7 @@ class CampusRepository(
         dificultad: String,
         insigniaNombre: String,
         insigniaEmoji: String
-    ): Int {
+    ): Int = database.withTransaction {
         val puntoId = puntoDao.insertar(punto).toInt()
         misionDao.insertar(
             MisionEntity(
@@ -164,21 +179,23 @@ class CampusRepository(
                 insigniaEmoji = insigniaEmoji
             )
         )
-        return puntoId
+        puntoId
     }
 
     suspend fun actualizarMisionYPunto(mision: MisionEntity, punto: PuntoInteresEntity) {
+        require(!puntoDao.existeOtroConCodigoQr(punto.codigoQr, punto.id)) {
+            "Ya existe otro punto con ese código QR."
+        }
         misionDao.actualizar(mision)
         puntoDao.actualizar(punto)
     }
 
     suspend fun eliminarMision(mision: MisionEntity) {
-        misionDao.eliminar(mision)
+        misionDao.archivar(mision.id)
     }
 
     fun generarCodigoQr(categoria: String): String {
         val prefijo = categoria.take(3).uppercase().ifBlank { "CQ0" }
-        val sufijo = (100..999).random()
-        return "CQ-$prefijo-$sufijo"
+        return "CQ-$prefijo-${java.util.UUID.randomUUID().toString().replace("-", "").take(12).uppercase()}"
     }
 }

@@ -28,7 +28,11 @@ object EstadoMision {
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("usuarioId"), Index("misionId")]
+    indices = [
+        Index("usuarioId"),
+        Index("misionId"),
+        Index(value = ["usuarioId", "misionId"], unique = true)
+    ]
 )
 data class ProgresoMisionEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,

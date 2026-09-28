@@ -34,4 +34,7 @@ interface PuntoInteresDao {
 
     @Query("SELECT COUNT(*) FROM punto_interes")
     suspend fun contar(): Int
+
+    @Query("SELECT EXISTS(SELECT 1 FROM punto_interes WHERE codigoQr = :codigo AND id != :puntoId)")
+    suspend fun existeOtroConCodigoQr(codigo: String, puntoId: Int): Boolean
 }
