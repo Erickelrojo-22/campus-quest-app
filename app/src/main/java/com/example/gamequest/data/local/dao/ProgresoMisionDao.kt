@@ -26,4 +26,7 @@ interface ProgresoMisionDao {
 
     @Query("SELECT COUNT(*) FROM progreso_mision WHERE usuarioId = :usuarioId")
     suspend fun contarCompletadas(usuarioId: Int): Int
+
+    @Query("SELECT COUNT(*) FROM progreso_mision WHERE misionId = :misionId")
+    suspend fun contarPorMision(misionId: Int): Int
 }

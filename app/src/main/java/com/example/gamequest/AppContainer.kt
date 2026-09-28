@@ -24,6 +24,7 @@ class AppContainer(context: Context) {
     val authRepository = AuthRepository(database.usuarioDao())
 
     val campusRepository = CampusRepository(
+        database = database,
         puntoDao = database.puntoInteresDao(),
         misionDao = database.misionDao(),
         progresoDao = database.progresoMisionDao(),

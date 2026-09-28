@@ -35,5 +35,6 @@ data class MisionEntity(
     val dificultad: String,
     val puntoInteresId: Int,
     val insigniaNombre: String,
-    val insigniaEmoji: String
+    val insigniaEmoji: String,
+    val activa: Boolean = true
 )
