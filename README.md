@@ -57,12 +57,13 @@ Toda la información (usuarios, puntos, misiones y progreso) se sirve desde **Ro
 
 ```
 Splash ──▶ Login ──▶ Home (mapa) ──▶ Detalle de misión ──▶ Escáner QR ──▶ Insignia obtenida
-                        │
-                        ├─▶ Misiones (lista + filtros)
+             │          │
+             ├─▶ Registro├─▶ Misiones (lista + filtros)
                         ├─▶ Insignias
                         └─▶ Perfil ──▶ Ajustes
                                    └─▶ Gestión de misiones (CRUD) ──▶ Formulario
 ```
+
 
 ---
 
