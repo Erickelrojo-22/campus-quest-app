@@ -13,6 +13,7 @@ sealed class ScannerUiState {
     data object Escaneando : ScannerUiState()
     data object Procesando : ScannerUiState()
     data class Resultado(val resultado: ValidacionQrResult) : ScannerUiState()
+    data class Error(val mensaje: String) : ScannerUiState()
 }
 
 /** RF-10 escanear QR, RF-11 ingresar código manualmente, RF-12 registrar progreso, RF-13 otorgar insignias. */
@@ -28,8 +29,9 @@ class ScannerViewModel(
         if (_uiState.value !is ScannerUiState.Escaneando) return
         _uiState.value = ScannerUiState.Procesando
         viewModelScope.launch {
-            val resultado = campusRepository.validarCodigo(codigo, usuarioId)
-            _uiState.value = ScannerUiState.Resultado(resultado)
+            runCatching { campusRepository.validarCodigo(codigo, usuarioId) }
+                .onSuccess { _uiState.value = ScannerUiState.Resultado(it) }
+                .onFailure { _uiState.value = ScannerUiState.Error(it.message ?: "No se pudo validar el código.") }
         }
     }
 

@@ -3,6 +3,8 @@ package com.example.gamequest.ui.navigation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -16,6 +18,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.gamequest.AppContainer
+import com.example.gamequest.data.local.entity.Rol
 import com.example.gamequest.ui.auth.AuthViewModel
 import com.example.gamequest.ui.auth.LoginScreen
 import com.example.gamequest.ui.auth.RegisterScreen
@@ -245,31 +248,39 @@ fun CampusQuestNavHost(container: AppContainer) {
         }
 
         composable(Routes.MISSION_MANAGEMENT) {
-            val managementViewModel: MissionManagementViewModel = viewModel(
-                factory = GenericViewModelFactory { MissionManagementViewModel(container.campusRepository) }
-            )
-            MissionManagementScreen(
-                viewModel = managementViewModel,
-                onBack = { navController.popBackStack() },
-                onNuevaMision = { navController.navigate(Routes.missionFormNuevo()) },
-                onEditarMision = { puntoId -> navController.navigate(Routes.missionFormEditar(puntoId)) }
-            )
+            if (usuario?.rol == Rol.TUTOR) {
+                val managementViewModel: MissionManagementViewModel = viewModel(
+                    factory = GenericViewModelFactory { MissionManagementViewModel(container.campusRepository) }
+                )
+                MissionManagementScreen(
+                    viewModel = managementViewModel,
+                    onBack = { navController.popBackStack() },
+                    onNuevaMision = { navController.navigate(Routes.missionFormNuevo()) },
+                    onEditarMision = { puntoId -> navController.navigate(Routes.missionFormEditar(puntoId)) }
+                )
+            } else {
+                AccesoNoAutorizado { navController.popBackStack() }
+            }
         }
 
         composable(
             Routes.MISSION_FORM,
             arguments = listOf(navArgument("puntoId") { type = NavType.IntType; defaultValue = -1 })
         ) { backStackEntry ->
-            val puntoId = backStackEntry.arguments?.getInt("puntoId")?.takeIf { it > 0 }
-            val formViewModel: MissionFormViewModel = viewModel(
-                key = "form-$puntoId",
-                factory = GenericViewModelFactory { MissionFormViewModel(container.campusRepository, puntoId) }
-            )
-            MissionFormScreen(
-                viewModel = formViewModel,
-                onGuardado = { navController.popBackStack() },
-                onCancelar = { navController.popBackStack() }
-            )
+            if (usuario?.rol == Rol.TUTOR) {
+                val puntoId = backStackEntry.arguments?.getInt("puntoId")?.takeIf { it > 0 }
+                val formViewModel: MissionFormViewModel = viewModel(
+                    key = "form-$puntoId",
+                    factory = GenericViewModelFactory { MissionFormViewModel(container.campusRepository, puntoId) }
+                )
+                MissionFormScreen(
+                    viewModel = formViewModel,
+                    onGuardado = { navController.popBackStack() },
+                    onCancelar = { navController.popBackStack() }
+                )
+            } else {
+                AccesoNoAutorizado { navController.popBackStack() }
+            }
         }
     }
 }
@@ -278,5 +289,15 @@ fun CampusQuestNavHost(container: AppContainer) {
 private fun CargandoPantallaCompleta() {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         CircularProgressIndicator()
+    }
+}
+
+@Composable
+private fun AccesoNoAutorizado(onBack: () -> Unit) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        androidx.compose.foundation.layout.Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("No tienes permisos para acceder a esta sección.")
+            TextButton(onClick = onBack) { Text("Volver") }
+        }
     }
 }
