@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AdminPanelSettings
@@ -36,7 +37,10 @@ import com.example.gamequest.data.local.entity.Rol
 import com.example.gamequest.ui.common.CampusBottomBar
 import com.example.gamequest.ui.common.SessionViewModel
 import com.example.gamequest.ui.navigation.Routes
+import com.example.gamequest.ui.theme.AmberAccent
 import com.example.gamequest.ui.theme.InstitutionalRed
+
+
 
 @Composable
 fun ProfileScreen(
@@ -67,9 +71,35 @@ fun ProfileScreen(
                 }
                 Spacer(Modifier.height(10.dp))
                 Text(usuario?.nombres ?: "", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                if (!usuario?.correoInstitucional.isNullOrBlank()) {
+                    Text(usuario?.correoInstitucional ?: "", color = AmberAccent, style = MaterialTheme.typography.bodySmall)
+                }
+                if (!usuario?.carrera.isNullOrBlank()) {
+                    Text(usuario?.carrera ?: "", color = Color.White.copy(alpha = 0.85f), style = MaterialTheme.typography.bodySmall)
+                }
                 if (usuario?.rol == Rol.TUTOR) {
                     Text("Tutor del programa de bienvenida", color = Color.White.copy(alpha = 0.85f), style = MaterialTheme.typography.bodySmall)
                 }
+                Spacer(Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Surface(color = Color.White.copy(alpha = 0.2f), shape = RoundedCornerShape(4.dp)) {
+                        Text(
+                            "⭐ Nivel ${usuario?.nivel ?: 1}",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            color = Color.White,
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
+                    Surface(color = AmberAccent.copy(alpha = 0.3f), shape = RoundedCornerShape(4.dp)) {
+                        Text(
+                            "🏆 ${usuario?.puntajeAcumulado ?: 0} pts",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            color = AmberAccent,
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
+                }
+
             }
 
             Spacer(Modifier.height(16.dp))
