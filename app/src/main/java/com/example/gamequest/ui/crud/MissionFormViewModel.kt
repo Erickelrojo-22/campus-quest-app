@@ -96,26 +96,27 @@ class MissionFormViewModel(
         }
         _state.value = s.copy(guardando = true, error = null)
         viewModelScope.launch {
-            if (s.esEdicion && puntoOriginal != null && misionOriginal != null) {
-                val puntoActualizado = puntoOriginal!!.copy(
-                    nombre = s.nombreLugar,
-                    categoria = s.categoria,
-                    horarioAtencion = s.horarioAtencion,
-                    tramites = s.tramites,
-                    codigoQr = s.codigoQr.uppercase()
-                )
-                val misionActualizada = misionOriginal!!.copy(
-                    titulo = s.titulo,
-                    descripcionPista = s.descripcionPista,
-                    puntos = s.puntos.toIntOrNull() ?: 0,
-                    tiempoEstimadoMin = s.tiempoEstimadoMin.toIntOrNull() ?: 0,
-                    dificultad = s.dificultad,
-                    insigniaNombre = s.insigniaNombre,
-                    insigniaEmoji = s.insigniaEmoji
-                )
-                campusRepository.actualizarMisionYPunto(misionActualizada, puntoActualizado)
-            } else {
-                campusRepository.crearPuntoConMision(
+            try {
+                if (s.esEdicion && puntoOriginal != null && misionOriginal != null) {
+                    val puntoActualizado = puntoOriginal!!.copy(
+                        nombre = s.nombreLugar,
+                        categoria = s.categoria,
+                        horarioAtencion = s.horarioAtencion,
+                        tramites = s.tramites,
+                        codigoQr = s.codigoQr.uppercase()
+                    )
+                    val misionActualizada = misionOriginal!!.copy(
+                        titulo = s.titulo,
+                        descripcionPista = s.descripcionPista,
+                        puntos = s.puntos.toIntOrNull() ?: 0,
+                        tiempoEstimadoMin = s.tiempoEstimadoMin.toIntOrNull() ?: 0,
+                        dificultad = s.dificultad,
+                        insigniaNombre = s.insigniaNombre,
+                        insigniaEmoji = s.insigniaEmoji
+                    )
+                    campusRepository.actualizarMisionYPunto(misionActualizada, puntoActualizado)
+                } else {
+                    campusRepository.crearPuntoConMision(
                     punto = PuntoInteresEntity(
                         nombre = s.nombreLugar,
                         categoria = s.categoria,
@@ -133,10 +134,16 @@ class MissionFormViewModel(
                     dificultad = s.dificultad,
                     insigniaNombre = s.insigniaNombre,
                     insigniaEmoji = s.insigniaEmoji
+                    )
+                }
+                _state.value = _state.value.copy(guardando = false, guardadoOk = true)
+                onExito()
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(
+                    guardando = false,
+                    error = e.message ?: "No se pudo guardar la misión."
                 )
             }
-            _state.value = _state.value.copy(guardando = false, guardadoOk = true)
-            onExito()
         }
     }
 }

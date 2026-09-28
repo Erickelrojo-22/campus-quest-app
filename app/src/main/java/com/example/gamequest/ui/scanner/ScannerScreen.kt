@@ -193,6 +193,13 @@ fun ScannerScreen(
                             }
                         })
                     }
+                    is ScannerUiState.Error -> {
+                        Text(estado.mensaje, color = Color.White)
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedButton(onClick = viewModel::reiniciar) {
+                            Text("REINTENTAR")
+                        }
+                    }
                     ScannerUiState.Escaneando -> {
                         OutlinedButton(
                             onClick = { mostrarDialogoManual = true },
@@ -304,6 +311,7 @@ private fun CamaraPreview(activo: Boolean, onQrDetectado: (String) -> Unit) {
     val previewView = remember { PreviewView(context) }
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
     var camera by remember { mutableStateOf<androidx.camera.core.Camera?>(null) }
+    var errorCamara by remember { mutableStateOf<String?>(null) }
     val analysis = remember {
         val resolutionSelector = ResolutionSelector.Builder()
             .setResolutionStrategy(
@@ -352,11 +360,8 @@ private fun CamaraPreview(activo: Boolean, onQrDetectado: (String) -> Unit) {
                         androidx.camera.core.FocusMeteringAction.FLAG_AF
                     ).setAutoCancelDuration(3, java.util.concurrent.TimeUnit.SECONDS).build()
                 )
-            } catch (_: Exception) {
-                // Si la cámara no está disponible (por ejemplo en un emulador sin
-                // sensor virtual configurado, o porque otra app/ventana la tiene
-                // tomada) se deja la vista sin analizador activo en vez de tumbar
-                // la app.
+            } catch (exception: Exception) {
+                errorCamara = exception.message ?: "La cámara no está disponible."
             }
         }, ContextCompat.getMainExecutor(context))
 
@@ -386,5 +391,24 @@ private fun CamaraPreview(activo: Boolean, onQrDetectado: (String) -> Unit) {
             analysis.clearAnalyzer()
         }
         onDispose { }
+    }
+
+    errorCamara?.let { mensaje ->
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = Color.Black.copy(alpha = 0.82f)
+        ) {
+            Column(
+                Modifier.fillMaxSize().padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(Icons.Filled.Error, contentDescription = null, tint = Color.White, modifier = Modifier.size(48.dp))
+                Spacer(Modifier.height(12.dp))
+                Text("No se pudo iniciar la cámara.", color = Color.White, style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(8.dp))
+                Text(mensaje, color = Color.White, style = MaterialTheme.typography.bodySmall)
+            }
+        }
     }
 }
