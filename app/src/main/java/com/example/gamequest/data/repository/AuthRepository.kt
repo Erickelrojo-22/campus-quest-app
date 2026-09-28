@@ -65,6 +65,24 @@ class AuthRepository(private val usuarioDao: UsuarioDao) {
         return AuthResult.Exito(nuevoUsuario.copy(id = id.toInt()))
     }
 
+    suspend fun iniciarSesionConCredenciales(correo: String, contrasena: String): AuthResult {
+        val mail = correo.trim().lowercase()
+        val pass = contrasena.trim()
+
+        if (mail.isBlank()) return AuthResult.Error("Ingresa tu correo institucional.")
+        if (pass.isBlank()) return AuthResult.Error("Ingresa tu contraseña.")
+
+        val usuario = usuarioDao.buscarPorCorreo(mail)
+            ?: return AuthResult.Error("No existe una cuenta registrada con este correo.")
+
+        if (usuario.contrasenaHash.isNotBlank() && !PasswordHasher.matches(pass, usuario.contrasenaHash)) {
+            return AuthResult.Error("Contraseña incorrecta.")
+        }
+
+        return AuthResult.Exito(usuario)
+    }
+
+
 
 
     suspend fun entrarConNombre(nombre: String, esTutor: Boolean): AuthResult {
