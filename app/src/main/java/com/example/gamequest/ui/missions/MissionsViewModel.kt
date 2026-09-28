@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 enum class FiltroMisiones { ACTIVAS, COMPLETADAS, TODAS }
@@ -33,12 +34,14 @@ class MissionsViewModel(
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // Los contadores dependen solo de la lista, no del filtro seleccionado;
+    // antes recombinaban con _filtro y se recalculaban al cambiar de pestaña.
     val contadorActivas: StateFlow<Int> = todasLasMisiones
-        .combine(_filtro) { lista, _ -> lista.count { !it.completada } }
+        .map { lista -> lista.count { !it.completada } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
     val contadorCompletadas: StateFlow<Int> = todasLasMisiones
-        .combine(_filtro) { lista, _ -> lista.count { it.completada } }
+        .map { lista -> lista.count { it.completada } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
     fun onFiltroChange(nuevo: FiltroMisiones) {
