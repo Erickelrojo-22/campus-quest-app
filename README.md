@@ -7,9 +7,6 @@
 Aplicación Android que **gamifica el reconocimiento del campus universitario**: recorre puntos de interés, escanea códigos QR, completa misiones, gana puntos e insignias y sube de nivel.
 
 <br>
-
-[![Android CI](https://github.com/Erickelrojo-22/campus-quest-app/actions/workflows/android-ci.yml/badge.svg)](https://github.com/Erickelrojo-22/campus-quest-app/actions/workflows/android-ci.yml)
-
 <br>
 
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.2.10-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)
@@ -175,20 +172,6 @@ El proyecto incluye un paso de análisis y optimización de rendimiento:
 - **Flujos derivados eficientes**: se reemplazaron `combine` innecesarios por `map` en los ViewModels para no recalcular datos en cada pulsación del buscador o cambio de filtro.
 
 > ⚠️ Al activar R8 por primera vez, se recomienda validar un build de release (`./gradlew assembleRelease`) en dispositivo antes de publicar.
-
----
-
-## 🔄 Integración continua (CI)
-
-El repositorio incluye un pipeline de **GitHub Actions** ([`.github/workflows/android-ci.yml`](.github/workflows/android-ci.yml)) que se ejecuta en cada *push* y *pull request* a `main`:
-
-| Job | Qué hace |
-|---|---|
-| 🏗️ **Build · Lint · Unit tests** | Valida el wrapper de Gradle, corre `lintDebug`, `testDebugUnitTest` y `assembleDebug`, y publica el APK de debug + reportes como artefactos. |
-| 🔒 **Release check (R8)** | Ejecuta `assembleRelease` para ejercitar la minificación/shrink y detectar reglas `keep` faltantes antes de publicar. |
-| 📱 **Pruebas instrumentadas** | Levanta un emulador (API 29, acelerado por KVM) y corre `connectedDebugAndroidTest`. Solo en *push* a `main` o de forma manual, por costo de tiempo. |
-
-Los artefactos (APKs y reportes de Lint/tests) quedan descargables desde la pestaña **Actions** de cada ejecución.
 
 ---
 
