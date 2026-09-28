@@ -16,8 +16,9 @@ interface UsuarioDao {
     @Update
     suspend fun actualizar(usuario: UsuarioEntity)
 
-    @Query("SELECT * FROM usuario WHERE correoInstitucional = :correo LIMIT 1")
+    @Query("SELECT * FROM usuario WHERE LOWER(correoInstitucional) = LOWER(:correo) LIMIT 1")
     suspend fun buscarPorCorreo(correo: String): UsuarioEntity?
+
 
     @Query("SELECT * FROM usuario WHERE LOWER(nombres) = LOWER(:nombre) LIMIT 1")
     suspend fun buscarPorNombre(nombre: String): UsuarioEntity?

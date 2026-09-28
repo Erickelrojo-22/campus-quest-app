@@ -49,11 +49,16 @@ import com.example.gamequest.ui.theme.TealPrimaryDark
 @Composable
 fun LoginScreen(
     viewModel: AuthViewModel,
-    onLoginExitoso: (UsuarioEntity) -> Unit
+    onLoginExitoso: (UsuarioEntity) -> Unit,
+    onIrARegistro: () -> Unit = {}
 ) {
+
     val uiState by viewModel.uiState.collectAsState()
 
+    var modoInstitucional by remember { mutableStateOf(false) }
     var nombre by remember { mutableStateOf("") }
+    var correo by remember { mutableStateOf("") }
+    var contrasena by remember { mutableStateOf("") }
     var esTutor by remember { mutableStateOf(false) }
 
     Scaffold(containerColor = TealPrimaryDark) { padding ->
@@ -62,7 +67,7 @@ fun LoginScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 32.dp),
+                .padding(horizontal = 20.dp, vertical = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
@@ -79,10 +84,8 @@ fun LoginScreen(
                     modifier = Modifier.size(48.dp)
                 )
             }
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(16.dp))
 
-            // Panel tipo "consola retro" — borde grueso dorado sobre fondo
-            // verde azulado, como en el mockup "Campus Login".
             Surface(
                 color = MaterialTheme.colorScheme.primary,
                 shape = RoundedCornerShape(6.dp),
@@ -100,65 +103,151 @@ fun LoginScreen(
                     )
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        "Escribe tu nombre para empezar tu aventura",
+                        if (modoInstitucional) "Acceso con cuenta institucional" else "Escribe tu nombre para empezar tu aventura",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.9f)
                     )
-                    Spacer(Modifier.height(20.dp))
-
-                    Text(
-                        "TU NOMBRE",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = AmberAccent,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    OutlinedTextField(
-                        value = nombre,
-                        onValueChange = { nombre = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = RoundedCornerShape(2.dp),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = PixelCream,
-                            unfocusedContainerColor = PixelCream,
-                            focusedTextColor = PixelInkOnCream,
-                            unfocusedTextColor = PixelInkOnCream,
-                            focusedIndicatorColor = PixelInkOnCream,
-                            unfocusedIndicatorColor = PixelInkOnCream,
-                            cursorColor = PixelInkOnCream
-                        )
-                    )
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(16.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
+                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceEvenly
                     ) {
-                        Checkbox(
-                            checked = esTutor,
-                            onCheckedChange = { esTutor = it },
-                            colors = CheckboxDefaults.colors(
-                                checkedColor = AmberAccent,
-                                checkmarkColor = PixelInkOnCream,
-                                uncheckedColor = Color.White
+                        androidx.compose.material3.FilterChip(
+                            selected = !modoInstitucional,
+                            onClick = {
+                                modoInstitucional = false
+                                viewModel.limpiarError()
+                            },
+                            label = { Text("Acceso rápido") }
+                        )
+                        androidx.compose.material3.FilterChip(
+                            selected = modoInstitucional,
+                            onClick = {
+                                modoInstitucional = true
+                                viewModel.limpiarError()
+                            },
+                            label = { Text("Institucional") }
+                        )
+                    }
+                    Spacer(Modifier.height(16.dp))
+
+                    if (!modoInstitucional) {
+                        Text(
+                            "TU NOMBRE",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = AmberAccent,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        OutlinedTextField(
+                            value = nombre,
+                            onValueChange = { nombre = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(2.dp),
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = PixelCream,
+                                unfocusedContainerColor = PixelCream,
+                                focusedTextColor = PixelInkOnCream,
+                                unfocusedTextColor = PixelInkOnCream,
+                                focusedIndicatorColor = PixelInkOnCream,
+                                unfocusedIndicatorColor = PixelInkOnCream,
+                                cursorColor = PixelInkOnCream
                             )
                         )
+                        Spacer(Modifier.height(12.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = esTutor,
+                                onCheckedChange = { esTutor = it },
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = AmberAccent,
+                                    checkmarkColor = PixelInkOnCream,
+                                    uncheckedColor = Color.White
+                                )
+                            )
+                            Text(
+                                "Soy tutor del programa de bienvenida",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White
+                            )
+                        }
+                    } else {
                         Text(
-                            "Soy tutor del programa de bienvenida",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.White
+                            "CORREO INSTITUCIONAL",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = AmberAccent,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        OutlinedTextField(
+                            value = correo,
+                            onValueChange = { correo = it },
+                            placeholder = { Text("usuario@live.uleam.edu.ec") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(2.dp),
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = PixelCream,
+                                unfocusedContainerColor = PixelCream,
+                                focusedTextColor = PixelInkOnCream,
+                                unfocusedTextColor = PixelInkOnCream,
+                                focusedIndicatorColor = PixelInkOnCream,
+                                unfocusedIndicatorColor = PixelInkOnCream,
+                                cursorColor = PixelInkOnCream
+                            )
+                        )
+                        Spacer(Modifier.height(12.dp))
+
+                        Text(
+                            "CONTRASEÑA",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = AmberAccent,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        OutlinedTextField(
+                            value = contrasena,
+                            onValueChange = { contrasena = it },
+                            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(2.dp),
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = PixelCream,
+                                unfocusedContainerColor = PixelCream,
+                                focusedTextColor = PixelInkOnCream,
+                                unfocusedTextColor = PixelInkOnCream,
+                                focusedIndicatorColor = PixelInkOnCream,
+                                unfocusedIndicatorColor = PixelInkOnCream,
+                                cursorColor = PixelInkOnCream
+                            )
                         )
                     }
 
                     uiState.error?.let { mensaje ->
-                        Spacer(Modifier.height(4.dp))
-                        Text(mensaje, color = AmberAccent, style = MaterialTheme.typography.bodySmall)
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            mensaje,
+                            color = AmberAccent,
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
 
                     Spacer(Modifier.height(18.dp))
                     Button(
-                        onClick = { viewModel.entrar(nombre, esTutor, onLoginExitoso) },
+                        onClick = {
+                            if (modoInstitucional) {
+                                viewModel.entrarConCredenciales(correo, contrasena, onLoginExitoso)
+                            } else {
+                                viewModel.entrar(nombre, esTutor, onLoginExitoso)
+                            }
+                        },
                         enabled = !uiState.cargando,
                         shape = RoundedCornerShape(4.dp),
                         colors = ButtonDefaults.buttonColors(
@@ -168,13 +257,30 @@ fun LoginScreen(
                         modifier = Modifier.fillMaxWidth().height(52.dp)
                     ) {
                         if (uiState.cargando) {
-                            CircularProgressIndicator(modifier = Modifier.height(20.dp), strokeWidth = 2.dp, color = PixelInkOnCream)
+                            CircularProgressIndicator(
+                                modifier = Modifier.height(20.dp),
+                                strokeWidth = 2.dp,
+                                color = PixelInkOnCream
+                            )
                         } else {
-                            Text("ENTRAR", style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                if (modoInstitucional) "INICIAR SESIÓN" else "ENTRAR",
+                                style = MaterialTheme.typography.titleMedium
+                            )
                         }
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+                    androidx.compose.material3.TextButton(onClick = onIrARegistro) {
+                        Text(
+                            "¿No tienes una cuenta? Regístrate aquí",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = AmberAccent
+                        )
                     }
                 }
             }
         }
     }
+
 }

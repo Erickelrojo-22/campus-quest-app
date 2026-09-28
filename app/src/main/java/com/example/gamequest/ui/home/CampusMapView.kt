@@ -58,7 +58,8 @@ fun CampusMapView(
                 // podía provocar recomposiciones innecesarias del Canvas.
                 detectTapGestures { tapOffset ->
                     if (size.width == 0) return@detectTapGestures
-                    val radioToque = 28f
+                    // Aumentado a 65f para facilitar el toque táctil en pantallas de alta densidad (QA issue)
+                    val radioToque = 65f
                     val objetivo = puntos.minByOrNull { punto ->
                         val px = punto.posX * size.width
                         val py = punto.posY * size.height
@@ -70,6 +71,7 @@ fun CampusMapView(
                         val distancia = hypot((px - tapOffset.x).toDouble(), (py - tapOffset.y).toDouble())
                         if (distancia <= radioToque) onPuntoClick(objetivo)
                     }
+
                 }
             }
     ) {
@@ -142,13 +144,21 @@ fun CampusMapView(
 
         puntos.forEach { punto ->
             val center = Offset(punto.posX * size.width, punto.posY * size.height)
-            val color = if (punto.id in completados) {
+            val esCompletado = punto.id in completados
+            val color = if (esCompletado) {
                 Color(0xFF2E7D32)
             } else {
                 colorPorCategoria(punto.categoria, primary, secondary, tertiary)
             }
-            drawCircle(color = Color(0xFF0A2E2C), radius = 21f, center = center)
-            drawCircle(color = color, radius = 16f, center = center)
+            // Halo exterior translúcido para visibilidad y contraste
+            drawCircle(color = Color.Black.copy(alpha = 0.35f), radius = 27f, center = center)
+            // Borde retro oscuro
+            drawCircle(color = Color(0xFF0A2E2C), radius = 24f, center = center)
+            // Círculo temático
+            drawCircle(color = color, radius = 19f, center = center)
+            // Indicador central brillante
+            drawCircle(color = if (esCompletado) Color.White else AmberAccent, radius = 6f, center = center)
         }
     }
 }
+
