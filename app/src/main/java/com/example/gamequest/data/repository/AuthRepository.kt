@@ -15,6 +15,17 @@ sealed class AuthResult {
  */
 class AuthRepository(private val usuarioDao: UsuarioDao) {
 
+    companion object {
+        const val DOMINIO_INSTITUCIONAL = "@live.uleam.edu.ec"
+        const val MIN_CONTRASENA_LENGTH = 6
+    }
+
+    fun validarCorreoInstitucional(correo: String): Boolean {
+        val email = correo.trim().lowercase()
+        return email.contains("@") && email.endsWith(DOMINIO_INSTITUCIONAL) && email.length > DOMINIO_INSTITUCIONAL.length
+    }
+
+
     suspend fun entrarConNombre(nombre: String, esTutor: Boolean): AuthResult {
         val nombreNormalizado = nombre.trim()
         if (nombreNormalizado.isBlank()) return AuthResult.Error("Escribe tu nombre para continuar.")
