@@ -39,6 +39,11 @@ jobs:
 
       - name: Configurar el SDK de Android
         uses: android-actions/setup-android@v3
+        with:
+          # Evita que el action instale el paquete obsoleto "tools"
+          # (eliminado de las cmdline-tools recientes); lo necesario se
+          # instala en el paso siguiente.
+          packages: ''
 
       - name: Instalar plataforma y build-tools requeridas
         run: sdkmanager "platforms;android-37" "build-tools;36.0.0"
@@ -93,6 +98,11 @@ jobs:
 
       - name: Configurar el SDK de Android
         uses: android-actions/setup-android@v3
+        with:
+          # Evita que el action instale el paquete obsoleto "tools"
+          # (eliminado de las cmdline-tools recientes); lo necesario se
+          # instala en el paso siguiente.
+          packages: ''
 
       - name: Instalar plataforma y build-tools requeridas
         run: sdkmanager "platforms;android-37" "build-tools;36.0.0"
@@ -138,6 +148,11 @@ jobs:
 
       - name: Configurar el SDK de Android
         uses: android-actions/setup-android@v3
+        with:
+          # Evita que el action instale el paquete obsoleto "tools"
+          # (eliminado de las cmdline-tools recientes); lo necesario se
+          # instala en el paso siguiente.
+          packages: ''
 
       - name: Instalar plataforma y build-tools requeridas
         run: sdkmanager "platforms;android-37" "build-tools;36.0.0"
