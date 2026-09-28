@@ -46,7 +46,10 @@ jobs:
           packages: ''
 
       - name: Instalar plataforma y build-tools requeridas
-        run: sdkmanager "platforms;android-37" "build-tools;36.0.0"
+        # android-37 puede no estar publicada en el repo de sdkmanager; si no
+        # se encuentra, se continúa con la versión preinstalada en el runner
+        # sin marcar el job como fallido.
+        run: sdkmanager "platforms;android-37" "build-tools;36.0.0" || echo "Plataforma no disponible en el repo publico; se usara la preinstalada del runner"
 
       - name: Permisos de ejecución para gradlew
         run: chmod +x ./gradlew
@@ -105,7 +108,10 @@ jobs:
           packages: ''
 
       - name: Instalar plataforma y build-tools requeridas
-        run: sdkmanager "platforms;android-37" "build-tools;36.0.0"
+        # android-37 puede no estar publicada en el repo de sdkmanager; si no
+        # se encuentra, se continúa con la versión preinstalada en el runner
+        # sin marcar el job como fallido.
+        run: sdkmanager "platforms;android-37" "build-tools;36.0.0" || echo "Plataforma no disponible en el repo publico; se usara la preinstalada del runner"
 
       - name: Permisos de ejecución para gradlew
         run: chmod +x ./gradlew
@@ -155,7 +161,10 @@ jobs:
           packages: ''
 
       - name: Instalar plataforma y build-tools requeridas
-        run: sdkmanager "platforms;android-37" "build-tools;36.0.0"
+        # android-37 puede no estar publicada en el repo de sdkmanager; si no
+        # se encuentra, se continúa con la versión preinstalada en el runner
+        # sin marcar el job como fallido.
+        run: sdkmanager "platforms;android-37" "build-tools;36.0.0" || echo "Plataforma no disponible en el repo publico; se usara la preinstalada del runner"
 
       - name: Permisos de ejecución para gradlew
         run: chmod +x ./gradlew
