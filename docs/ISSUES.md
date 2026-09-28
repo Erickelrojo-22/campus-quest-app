@@ -48,9 +48,7 @@ tenga remoto en GitHub. Formato pensado para migrarse 1 a 1 con
 - [ ] **Menú ☰ + timeline de dónde se ganaron puntos.** Evaluado como
   factible (el dato ya existe en `ProgresoMisionEntity.fechaHora` /
   `puntosObtenidos`). Falta decidir si se implementa ahora.
-- [ ] **Servicio backend para que la app lo consuma.** Propuesta
-  completa en `BACKEND.md` (entidades, endpoints, integración con
-  Retrofit/Room). Nada implementado todavía.
+- [ ] **Servicio backend dedicado / BaaS (Railway / Supabase / PocketBase / PaaS).** [Issue #1 en GitHub](https://github.com/Erickelrojo-22/campus-quest-app/issues/1). Propuesta detallada en `BACKEND.md` (entidades, endpoints, autenticación institucional y sincronización con Room). Nada implementado todavía.
 - [ ] **Modelo de roles `estudiante`/`visitante` en la app + rol
   `admin` en panel web separado (mismo backend).** Decisión tomada
   (ver `BACKEND.md`), falta implementar: retirar `Rol.TUTOR` del
