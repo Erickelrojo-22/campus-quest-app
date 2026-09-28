@@ -32,6 +32,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -124,10 +125,17 @@ fun HomeScreen(
                     }
                 }
             } else {
+                // Se recalculan solo cuando cambia la lista de misiones, no en
+                // cada recomposición (p. ej. al teclear en el buscador o al
+                // actualizarse el usuario/puntaje).
+                val puntosMapa = remember(misiones) { misiones.map { it.punto }.distinctBy { it.id } }
+                val completadosMapa = remember(misiones) {
+                    misiones.filter { it.completada }.map { it.punto.id }.toSet()
+                }
                 Box(modifier = Modifier.weight(1f).padding(16.dp)) {
                     CampusMapView(
-                        puntos = misiones.map { it.punto }.distinctBy { it.id },
-                        completados = misiones.filter { it.completada }.map { it.punto.id }.toSet(),
+                        puntos = puntosMapa,
+                        completados = completadosMapa,
                         onPuntoClick = { punto ->
                             misiones.firstOrNull { it.punto.id == punto.id }?.let { onMisionClick(it.mision.id) }
                         }
