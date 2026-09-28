@@ -1,0 +1,327 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "246675087c301517bd5d09551013c4fb",
+    "entities": [
+      {
+        "tableName": "usuario",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nombres` TEXT NOT NULL, `correoInstitucional` TEXT NOT NULL, `carrera` TEXT NOT NULL, `contrasenaHash` TEXT NOT NULL, `puntajeAcumulado` INTEGER NOT NULL, `nivel` INTEGER NOT NULL, `rol` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombres",
+            "columnName": "nombres",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "correoInstitucional",
+            "columnName": "correoInstitucional",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "carrera",
+            "columnName": "carrera",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contrasenaHash",
+            "columnName": "contrasenaHash",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "puntajeAcumulado",
+            "columnName": "puntajeAcumulado",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nivel",
+            "columnName": "nivel",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rol",
+            "columnName": "rol",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "punto_interes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nombre` TEXT NOT NULL, `categoria` TEXT NOT NULL, `descripcion` TEXT NOT NULL, `horarioAtencion` TEXT NOT NULL, `tramites` TEXT NOT NULL, `posX` REAL NOT NULL, `posY` REAL NOT NULL, `codigoQr` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "categoria",
+            "columnName": "categoria",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "descripcion",
+            "columnName": "descripcion",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "horarioAtencion",
+            "columnName": "horarioAtencion",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tramites",
+            "columnName": "tramites",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "posX",
+            "columnName": "posX",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "posY",
+            "columnName": "posY",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "codigoQr",
+            "columnName": "codigoQr",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "mision",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `titulo` TEXT NOT NULL, `descripcionPista` TEXT NOT NULL, `puntos` INTEGER NOT NULL, `tiempoEstimadoMin` INTEGER NOT NULL, `dificultad` TEXT NOT NULL, `puntoInteresId` INTEGER NOT NULL, `insigniaNombre` TEXT NOT NULL, `insigniaEmoji` TEXT NOT NULL, FOREIGN KEY(`puntoInteresId`) REFERENCES `punto_interes`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "titulo",
+            "columnName": "titulo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "descripcionPista",
+            "columnName": "descripcionPista",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "puntos",
+            "columnName": "puntos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tiempoEstimadoMin",
+            "columnName": "tiempoEstimadoMin",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dificultad",
+            "columnName": "dificultad",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "puntoInteresId",
+            "columnName": "puntoInteresId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "insigniaNombre",
+            "columnName": "insigniaNombre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "insigniaEmoji",
+            "columnName": "insigniaEmoji",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_mision_puntoInteresId",
+            "unique": false,
+            "columnNames": [
+              "puntoInteresId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_mision_puntoInteresId` ON `${TABLE_NAME}` (`puntoInteresId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "punto_interes",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "puntoInteresId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "progreso_mision",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `usuarioId` INTEGER NOT NULL, `misionId` INTEGER NOT NULL, `fechaHora` INTEGER NOT NULL, `puntosObtenidos` INTEGER NOT NULL, `codigoQrValidado` TEXT NOT NULL, `estado` TEXT NOT NULL, FOREIGN KEY(`usuarioId`) REFERENCES `usuario`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`misionId`) REFERENCES `mision`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "usuarioId",
+            "columnName": "usuarioId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "misionId",
+            "columnName": "misionId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fechaHora",
+            "columnName": "fechaHora",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "puntosObtenidos",
+            "columnName": "puntosObtenidos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "codigoQrValidado",
+            "columnName": "codigoQrValidado",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "estado",
+            "columnName": "estado",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_progreso_mision_usuarioId",
+            "unique": false,
+            "columnNames": [
+              "usuarioId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_progreso_mision_usuarioId` ON `${TABLE_NAME}` (`usuarioId`)"
+          },
+          {
+            "name": "index_progreso_mision_misionId",
+            "unique": false,
+            "columnNames": [
+              "misionId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_progreso_mision_misionId` ON `${TABLE_NAME}` (`misionId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "usuario",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "usuarioId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "mision",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "misionId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '246675087c301517bd5d09551013c4fb')"
+    ]
+  }
+}
