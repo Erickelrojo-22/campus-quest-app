@@ -17,10 +17,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Size
 import com.example.gamequest.data.local.entity.PuntoInteresEntity
 import kotlin.math.hypot
@@ -49,8 +45,6 @@ fun CampusMapView(
     val secondary = MaterialTheme.colorScheme.secondary
     val tertiary = MaterialTheme.colorScheme.tertiary
 
-    var tamano by remember { mutableStateOf(Size.Zero) }
-
     Canvas(
         modifier = modifier
             .fillMaxWidth()
@@ -59,25 +53,26 @@ fun CampusMapView(
             .background(Color(0xFF3E9142))
             .border(3.dp, AmberAccent, RoundedCornerShape(6.dp))
             .pointerInput(puntos) {
+                // `size` (px) lo provee el propio PointerInputScope; así se evita
+                // guardar el tamaño en un estado escrito durante el dibujo, que
+                // podía provocar recomposiciones innecesarias del Canvas.
                 detectTapGestures { tapOffset ->
-                    if (tamano.width == 0f) return@detectTapGestures
+                    if (size.width == 0) return@detectTapGestures
                     val radioToque = 28f
                     val objetivo = puntos.minByOrNull { punto ->
-                        val px = punto.posX * tamano.width
-                        val py = punto.posY * tamano.height
+                        val px = punto.posX * size.width
+                        val py = punto.posY * size.height
                         hypot((px - tapOffset.x).toDouble(), (py - tapOffset.y).toDouble())
                     }
                     if (objetivo != null) {
-                        val px = objetivo.posX * tamano.width
-                        val py = objetivo.posY * tamano.height
+                        val px = objetivo.posX * size.width
+                        val py = objetivo.posY * size.height
                         val distancia = hypot((px - tapOffset.x).toDouble(), (py - tapOffset.y).toDouble())
                         if (distancia <= radioToque) onPuntoClick(objetivo)
                     }
                 }
             }
     ) {
-        tamano = size
-
         // Textura de césped a cuadros, como el suelo de un RPG 2D cenital
         val tile = size.minDimension / 14f
         var fila = 0
