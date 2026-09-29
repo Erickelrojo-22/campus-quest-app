@@ -40,6 +40,8 @@ import com.example.gamequest.ui.common.CampusBottomBar
 import com.example.gamequest.ui.navigation.Routes
 import com.example.gamequest.ui.theme.AmberAccent
 import com.example.gamequest.ui.theme.InstitutionalRed
+import com.example.gamequest.util.LocalSoundManager
+import com.example.gamequest.util.SoundEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,6 +50,7 @@ fun MissionsScreen(
     onMisionClick: (Int) -> Unit,
     onNavigateTab: (String) -> Unit
 ) {
+    val soundManager = LocalSoundManager.current
     val filtro by viewModel.filtro.collectAsState()
     val misiones by viewModel.misionesFiltradas.collectAsState()
     val activas by viewModel.contadorActivas.collectAsState()
@@ -75,17 +78,26 @@ fun MissionsScreen(
             ) {
                 FilterChip(
                     selected = filtro == FiltroMisiones.ACTIVAS,
-                    onClick = { viewModel.onFiltroChange(FiltroMisiones.ACTIVAS) },
+                    onClick = {
+                        soundManager?.play(SoundEffect.CLICK)
+                        viewModel.onFiltroChange(FiltroMisiones.ACTIVAS)
+                    },
                     label = { Text("Activas · $activas") }
                 )
                 FilterChip(
                     selected = filtro == FiltroMisiones.COMPLETADAS,
-                    onClick = { viewModel.onFiltroChange(FiltroMisiones.COMPLETADAS) },
+                    onClick = {
+                        soundManager?.play(SoundEffect.CLICK)
+                        viewModel.onFiltroChange(FiltroMisiones.COMPLETADAS)
+                    },
                     label = { Text("Completadas · $completadas") }
                 )
                 FilterChip(
                     selected = filtro == FiltroMisiones.TODAS,
-                    onClick = { viewModel.onFiltroChange(FiltroMisiones.TODAS) },
+                    onClick = {
+                        soundManager?.play(SoundEffect.CLICK)
+                        viewModel.onFiltroChange(FiltroMisiones.TODAS)
+                    },
                     label = { Text("Todas") }
                 )
             }
@@ -104,7 +116,10 @@ fun MissionsScreen(
             } else {
                 LazyColumn(contentPadding = PaddingValues(16.dp)) {
                     items(misiones, key = { it.mision.id }) { estado ->
-                        MisionCard(estado, onClick = { onMisionClick(estado.mision.id) })
+                        MisionCard(estado, onClick = {
+                            soundManager?.play(SoundEffect.CLICK)
+                            onMisionClick(estado.mision.id)
+                        })
                         Spacer(Modifier.height(12.dp))
                     }
                 }

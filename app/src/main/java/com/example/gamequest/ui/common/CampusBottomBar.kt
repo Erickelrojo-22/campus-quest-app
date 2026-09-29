@@ -17,6 +17,8 @@ import com.example.gamequest.ui.navigation.Routes
 import androidx.compose.ui.unit.dp
 import com.example.gamequest.ui.theme.AmberAccent
 import com.example.gamequest.ui.theme.ContainerDark
+import com.example.gamequest.util.LocalSoundManager
+import com.example.gamequest.util.SoundEffect
 
 data class BottomTab(val route: String, val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector)
 
@@ -35,6 +37,7 @@ val bottomTabs = listOf(
  */
 @Composable
 fun CampusBottomBar(currentRoute: String?, onNavigate: (String) -> Unit) {
+    val soundManager = LocalSoundManager.current
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.primary,
         contentColor = AmberAccent,
@@ -43,7 +46,12 @@ fun CampusBottomBar(currentRoute: String?, onNavigate: (String) -> Unit) {
         bottomTabs.forEach { tab ->
             NavigationBarItem(
                 selected = currentRoute == tab.route,
-                onClick = { onNavigate(tab.route) },
+                onClick = {
+                    if (currentRoute != tab.route) {
+                        soundManager?.play(SoundEffect.CLICK)
+                    }
+                    onNavigate(tab.route)
+                },
                 icon = { Icon(tab.icon, contentDescription = tab.label) },
                 label = { Text(tab.label) },
                 colors = NavigationBarItemDefaults.colors(

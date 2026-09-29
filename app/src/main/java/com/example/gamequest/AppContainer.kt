@@ -5,6 +5,7 @@ import com.example.gamequest.data.local.AppDatabase
 import com.example.gamequest.data.preferences.UserPreferencesRepository
 import com.example.gamequest.data.repository.AuthRepository
 import com.example.gamequest.data.repository.CampusRepository
+import com.example.gamequest.util.SoundEffectManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 
@@ -20,6 +21,8 @@ class AppContainer(context: Context) {
     private val database = AppDatabase.getInstance(context, applicationScope)
 
     val preferencesRepository = UserPreferencesRepository(context)
+
+    val soundEffectManager = SoundEffectManager(context, preferencesRepository, applicationScope)
 
     val authRepository = AuthRepository(database.usuarioDao())
 

@@ -112,7 +112,10 @@ fun CampusQuestNavHost(container: AppContainer) {
                 )
                 HomeScreen(
                     viewModel = homeViewModel,
-                    onMisionClick = { misionId -> navController.navigate(Routes.missionDetail(misionId)) },
+                    onMisionClick = { misionId ->
+                        container.soundEffectManager.play(com.example.gamequest.util.SoundEffect.CLICK)
+                        navController.navigate(Routes.missionDetail(misionId))
+                    },
                     onNavigateTab = { navController.navegarATab(it) }
                 )
             }
@@ -129,7 +132,10 @@ fun CampusQuestNavHost(container: AppContainer) {
                 )
                 MissionsScreen(
                     viewModel = missionsViewModel,
-                    onMisionClick = { misionId -> navController.navigate(Routes.missionDetail(misionId)) },
+                    onMisionClick = { misionId ->
+                        container.soundEffectManager.play(com.example.gamequest.util.SoundEffect.CLICK)
+                        navController.navigate(Routes.missionDetail(misionId))
+                    },
                     onNavigateTab = { navController.navegarATab(it) }
                 )
             }
@@ -150,9 +156,18 @@ fun CampusQuestNavHost(container: AppContainer) {
                 )
                 MissionDetailScreen(
                     viewModel = detailViewModel,
-                    onBack = { navController.popBackStack() },
-                    onEscanear = { navController.navigate(Routes.SCANNER) },
-                    onVerRuta = { navController.navigate(Routes.HOME) { popUpTo(Routes.HOME) } }
+                    onBack = {
+                        container.soundEffectManager.play(com.example.gamequest.util.SoundEffect.CLICK)
+                        navController.popBackStack()
+                    },
+                    onEscanear = {
+                        container.soundEffectManager.play(com.example.gamequest.util.SoundEffect.CLICK)
+                        navController.navigate(Routes.SCANNER)
+                    },
+                    onVerRuta = {
+                        container.soundEffectManager.play(com.example.gamequest.util.SoundEffect.CLICK)
+                        navController.navigate(Routes.HOME) { popUpTo(Routes.HOME) }
+                    }
                 )
             }
         }

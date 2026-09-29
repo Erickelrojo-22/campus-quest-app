@@ -36,16 +36,24 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.gamequest.ui.theme.AmberAccent
 import com.example.gamequest.ui.theme.AmberAccentDark
+import androidx.compose.runtime.LaunchedEffect
 import com.example.gamequest.ui.theme.TealPrimary
 import com.example.gamequest.ui.theme.TealPrimaryDark
+import com.example.gamequest.util.LocalSoundManager
+import com.example.gamequest.util.SoundEffect
 
 @Composable
 fun BadgeEarnedScreen(
     viewModel: BadgeEarnedViewModel,
     onSiguienteMision: () -> Unit
 ) {
+    val soundManager = LocalSoundManager.current
     val estado by viewModel.estado.collectAsState()
     val mision = estado.mision
+
+    LaunchedEffect(Unit) {
+        soundManager?.play(SoundEffect.BADGE_EARNED)
+    }
 
     Scaffold { padding ->
         Box(
