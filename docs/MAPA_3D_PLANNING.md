@@ -1,5 +1,10 @@
 # 🗺️ Plan de Integración: Mapa 3D Animado (Estilo Google Maps / Low-Poly RPG)
 
+> **Estado actual (MVP):** `CampusMapView` muestra el mapa 2.5D local
+> completamente offline. Usa `posX`/`posY` sin modificar Room, conserva la
+> navegación y permite seleccionar los puntos de interés. La integración de
+> un mapa geográfico real queda para una fase posterior.
+
 Este documento de planeación detalla la estrategia de diseño, arquitectura, evaluación técnica y hoja de ruta para evolucionar el mapa 2D actual de **Campus Quest** hacia una **experiencia 3D inmersiva, interactiva y animada**.
 
 ---
@@ -83,7 +88,9 @@ flowchart LR
 ```
 
 ### **Fase 1: Prototipado del Renderizador 3D**
-- [ ] Agregar dependencias de `io.github.sceneview:sceneview:2.2.1` (basado en Filament).
+- [x] Crear una primera capa 2.5D offline sin dependencias externas.
+- [x] Mantener `posX`/`posY` y el toque de marcadores compatible con Room.
+- [ ] Evaluar dependencias de `io.github.sceneview:sceneview:2.2.1` (basado en Filament).
 - [ ] Crear el composable `Campus3DMapView` encapsulando la escena 3D dentro de `AndroidView`.
 - [ ] Configurar la iluminación ambiental y direccional (sombras suaves estilo cel-shading).
 
