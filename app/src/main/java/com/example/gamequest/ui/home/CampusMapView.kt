@@ -4,11 +4,17 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import com.example.gamequest.ui.components.DudeAnimation
+import com.example.gamequest.ui.components.DudeSprite
 import com.example.gamequest.ui.theme.AmberAccent
+import com.example.gamequest.util.SpriteColorEngine.CharacterColor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,20 +50,25 @@ fun CampusMapView(
     puntos: List<PuntoInteresEntity>,
     completados: Set<Int>,
     onPuntoClick: (PuntoInteresEntity) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    characterColor: CharacterColor = CharacterColor.BLUE_ORIGINAL
 ) {
     val primary = MaterialTheme.colorScheme.primary
     val secondary = MaterialTheme.colorScheme.secondary
     val tertiary = MaterialTheme.colorScheme.tertiary
 
-    Canvas(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
             .aspectRatio(0.85f)
             .clip(RoundedCornerShape(6.dp))
             .background(Color(0xFF3E9142))
             .border(3.dp, AmberAccent, RoundedCornerShape(6.dp))
-            .pointerInput(puntos) {
+    ) {
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(puntos) {
                 // `size` (px) lo provee el propio PointerInputScope; así se evita
                 // guardar el tamaño en un estado escrito durante el dibujo, que
                 // podía provocar recomposiciones innecesarias del Canvas.
@@ -126,22 +137,11 @@ fun CampusMapView(
             strokeWidth = 30f
         )
 
-        // Ubicación aproximada del usuario, en el cruce central de caminos
+        // Aura suave de ubicación aproximada del usuario en el cruce de caminos
         drawCircle(
             color = AmberAccent.copy(alpha = 0.25f),
             radius = size.minDimension * 0.11f,
             center = Offset(size.width * 0.5f, size.height * 0.45f)
-        )
-        drawCircle(
-            color = Color(0xFF2F80ED),
-            radius = 14f,
-            center = Offset(size.width * 0.5f, size.height * 0.45f)
-        )
-        drawCircle(
-            color = Color.White,
-            radius = 14f,
-            center = Offset(size.width * 0.5f, size.height * 0.45f),
-            style = Stroke(width = 3f)
         )
 
         puntos.forEach { punto ->
@@ -162,4 +162,16 @@ fun CampusMapView(
             drawCircle(color = if (esCompletado) Color.White else AmberAccent, radius = 6f, center = center)
         }
     }
+
+    // Avatar pixel art animado sobre el cruce de caminos del campus
+    DudeSprite(
+        animation = DudeAnimation.IDLE,
+        color = characterColor,
+        size = 46.dp,
+        modifier = Modifier.offset(
+            x = maxWidth * 0.5f - 23.dp,
+            y = maxHeight * 0.45f - 30.dp
+        )
+    )
+}
 }
