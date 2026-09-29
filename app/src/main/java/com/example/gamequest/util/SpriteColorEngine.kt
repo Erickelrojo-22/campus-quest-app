@@ -9,27 +9,52 @@ import androidx.compose.ui.graphics.asImageBitmap
 import kotlin.math.sqrt
 
 /**
- * Motor de palette swap pixel-a-pixel para los sprites del Dude Monster.
+ * Especies / tipos de personaje disponibles en la app.
+ */
+enum class CharacterSpecies(
+    val label: String,
+    val folder: String,
+) {
+    DUDE(label = "Dude", folder = "dude"),
+    PINK(label = "Pink", folder = "pink"),
+    OWLET(label = "Owlet", folder = "owlet"),
+}
+
+/**
+ * Motor unificado de palette swap pixel-a-pixel para todos los personajes.
  *
- * Paleta original (medida empíricamente del sprite sheet):
- *   OUTLINE      #04193F  — contorno oscuro        → nunca se toca
- *   BODY_DARK    #03396B  — azul oscuro (cuerpo)
- *   BODY_MID     #0696DB  — azul medio (cuerpo)
- *   BODY_LIGHT   #0FEFFB  — azul claro/cyan (cuerpo)
- *   ACCENT_DARK  #C3242F  — rojo oscuro (pañuelo)
- *   ACCENT_LIGHT #E7333B  — rojo claro  (pañuelo)
- *   WHITE        #FCFEFE  — blanco (ojo)            → nunca se toca
+ * Mapea las paletas originales de cada monstruo (Dude, Pink, Owlet) hacia
+ * las 8 variantes de color en tiempo real sin duplicar archivos.
  */
 object SpriteColorEngine {
 
-    // ── Paleta original RGB ────────────────────────────────────────────────
-    private val ORIG_OUTLINE      = intArrayOf(  4,  25,  63)
-    private val ORIG_BODY_DARK    = intArrayOf(  3,  57, 107)
-    private val ORIG_BODY_MID     = intArrayOf(  6, 150, 219)
-    private val ORIG_BODY_LIGHT   = intArrayOf( 15, 239, 251)
-    private val ORIG_ACCENT_DARK  = intArrayOf(195,  36,  47)
-    private val ORIG_ACCENT_LIGHT = intArrayOf(231,  51,  59)
-    private val ORIG_WHITE        = intArrayOf(252, 254, 254)
+    // ── Paletas originales por especie ─────────────────────────────────────
+    // Dude
+    private val DUDE_BODY_DARK    = intArrayOf(  3,  57, 107)
+    private val DUDE_BODY_MID     = intArrayOf(  6, 150, 219)
+    private val DUDE_BODY_LIGHT   = intArrayOf( 15, 239, 251)
+    private val DUDE_ACCENT_DARK  = intArrayOf(195,  36,  47)
+    private val DUDE_ACCENT_LIGHT = intArrayOf(231,  51,  59)
+    private val DUDE_OUTLINE      = intArrayOf(  4,  25,  63)
+    private val DUDE_WHITE        = intArrayOf(252, 254, 254)
+
+    // Pink
+    private val PINK_BODY_DARK    = intArrayOf(120,  11, 247)
+    private val PINK_BODY_MID     = intArrayOf(216,  64, 251)
+    private val PINK_BODY_LIGHT   = intArrayOf(244, 137, 246)
+    private val PINK_OUTLINE      = intArrayOf(  4,  25,  63)
+    private val PINK_WHITE        = intArrayOf(252, 254, 254)
+
+    // Owlet
+    private val OWLET_CLOAK_DARK  = intArrayOf( 42,  48,  78)
+    private val OWLET_CLOAK_MID   = intArrayOf(102, 114, 145)
+    private val OWLET_CLOAK_LIGHT = intArrayOf(148, 160, 186)
+    private val OWLET_WHITE       = intArrayOf(252, 254, 254)
+    private val OWLET_OUTLINE_1   = intArrayOf( 28,  18,  27)
+    private val OWLET_OUTLINE_2   = intArrayOf( 28,  26,  48)
+    private val OWLET_BEAK_LIGHT  = intArrayOf(253, 162,  22)
+    private val OWLET_BEAK_DARK   = intArrayOf(252,  80,   3)
+    private val OWLET_COLLAR      = intArrayOf( 94,  44,  41)
 
     private const val TOLERANCE = 55.0
 
@@ -108,53 +133,122 @@ object SpriteColorEngine {
         ),
     }
 
-    // ── Cache: evita reprocesar el mismo sprite+color ──────────────────────
+    // ── Cache de bitmaps procesados ────────────────────────────────────────
     private val cache = HashMap<Pair<String, CharacterColor>, Bitmap>()
 
     /**
-     * Carga un sprite sheet desde assets (ej. "sprites/dude/idle.png"),
-     * aplica el palette swap y devuelve un Bitmap ARGB_8888 listo para recortar frames.
+     * Carga un sprite sheet desde assets según la especie y archivo.
      */
-    fun getBitmap(context: Context, assetPath: String, color: CharacterColor): Bitmap {
+    fun getBitmap(context: Context, species: CharacterSpecies, filename: String, color: CharacterColor): Bitmap {
+        val assetPath = "sprites/${species.folder}/$filename"
         val key = Pair(assetPath, color)
         cache[key]?.let { return it }
+
         val original = BitmapFactory.decodeStream(
             context.assets.open(assetPath)
         ).copy(Bitmap.Config.ARGB_8888, true)
-        val result = applyPaletteSwap(original, color)
+
+        val result = applyPaletteSwap(original, species, color)
         cache[key] = result
         return result
     }
 
-    /** Devuelve el frame [frameIndex] del sheet como ImageBitmap de Compose. */
-    fun getFrame(context: Context, assetPath: String, color: CharacterColor, frameIndex: Int, frameW: Int = 32): ImageBitmap {
-        val sheet = getBitmap(context, assetPath, color)
+    /**
+     * Compatibilidad directa con rutas completas de asset.
+     */
+    fun getBitmap(context: Context, assetPath: String, color: CharacterColor): Bitmap {
+        val species = when {
+            assetPath.contains("pink")  -> CharacterSpecies.PINK
+            assetPath.contains("owlet") -> CharacterSpecies.OWLET
+            else                        -> CharacterSpecies.DUDE
+        }
+        val filename = assetPath.substringAfterLast("/")
+        return getBitmap(context, species, filename, color)
+    }
+
+    /** Devuelve el frame [frameIndex] recortado como ImageBitmap. */
+    fun getFrame(
+        context: Context,
+        species: CharacterSpecies,
+        filename: String,
+        color: CharacterColor,
+        frameIndex: Int,
+        frameW: Int = 32
+    ): ImageBitmap {
+        val sheet = getBitmap(context, species, filename, color)
         val x = frameIndex * frameW
         return Bitmap.createBitmap(sheet, x.coerceAtMost(sheet.width - frameW), 0, frameW, sheet.height)
             .asImageBitmap()
     }
 
+    /** Sobrecarga por assetPath para compatibilidad */
+    fun getFrame(
+        context: Context,
+        assetPath: String,
+        color: CharacterColor,
+        frameIndex: Int,
+        frameW: Int = 32
+    ): ImageBitmap {
+        val species = when {
+            assetPath.contains("pink")  -> CharacterSpecies.PINK
+            assetPath.contains("owlet") -> CharacterSpecies.OWLET
+            else                        -> CharacterSpecies.DUDE
+        }
+        val filename = assetPath.substringAfterLast("/")
+        return getFrame(context, species, filename, color, frameIndex, frameW)
+    }
+
     fun clearCache() = cache.clear()
 
-    // ── Motor interno ─────────────────────────────────────────────────────
-    private fun applyPaletteSwap(src: Bitmap, variant: CharacterColor): Bitmap {
+    // ── Motor interno de Palette Swap ─────────────────────────────────────
+    private fun applyPaletteSwap(src: Bitmap, species: CharacterSpecies, variant: CharacterColor): Bitmap {
         val w = src.width; val h = src.height
         val pixels = IntArray(w * h)
         src.getPixels(pixels, 0, w, 0, 0, w, h)
 
-        val swapTable = listOf(
-            ORIG_BODY_DARK    to variant.bodyDark,
-            ORIG_BODY_MID     to variant.bodyMid,
-            ORIG_BODY_LIGHT   to variant.bodyLight,
-            ORIG_ACCENT_DARK  to variant.accentDark,
-            ORIG_ACCENT_LIGHT to variant.accentLight,
-        )
+        val swapTable = when (species) {
+            CharacterSpecies.DUDE -> listOf(
+                DUDE_BODY_DARK    to variant.bodyDark,
+                DUDE_BODY_MID     to variant.bodyMid,
+                DUDE_BODY_LIGHT   to variant.bodyLight,
+                DUDE_ACCENT_DARK  to variant.accentDark,
+                DUDE_ACCENT_LIGHT to variant.accentLight,
+            )
+            CharacterSpecies.PINK -> listOf(
+                PINK_BODY_DARK  to variant.bodyDark,
+                PINK_BODY_MID   to variant.bodyMid,
+                PINK_BODY_LIGHT to variant.bodyLight,
+            )
+            CharacterSpecies.OWLET -> listOf(
+                OWLET_CLOAK_DARK  to variant.bodyDark,
+                OWLET_CLOAK_MID   to variant.bodyMid,
+                OWLET_CLOAK_LIGHT to variant.bodyLight,
+            )
+        }
 
         for (i in pixels.indices) {
             if (Color.alpha(pixels[i]) < 10) continue
             val rgb = intArrayOf(Color.red(pixels[i]), Color.green(pixels[i]), Color.blue(pixels[i]))
-            if (colorDist(rgb, ORIG_OUTLINE) < TOLERANCE) continue
-            if (colorDist(rgb, ORIG_WHITE)   < TOLERANCE) continue
+
+            // Proteger colores que nunca deben cambiar según especie
+            when (species) {
+                CharacterSpecies.DUDE -> {
+                    if (colorDist(rgb, DUDE_OUTLINE) < TOLERANCE) continue
+                    if (colorDist(rgb, DUDE_WHITE)   < TOLERANCE) continue
+                }
+                CharacterSpecies.PINK -> {
+                    if (colorDist(rgb, PINK_OUTLINE) < TOLERANCE) continue
+                    if (colorDist(rgb, PINK_WHITE)   < TOLERANCE) continue
+                }
+                CharacterSpecies.OWLET -> {
+                    if (colorDist(rgb, OWLET_WHITE)      < 20.0) continue
+                    if (colorDist(rgb, OWLET_OUTLINE_1)  < 20.0) continue
+                    if (colorDist(rgb, OWLET_OUTLINE_2)  < 20.0) continue
+                    if (colorDist(rgb, OWLET_BEAK_LIGHT) < 30.0) continue
+                    if (colorDist(rgb, OWLET_BEAK_DARK)  < 30.0) continue
+                    if (colorDist(rgb, OWLET_COLLAR)     < 20.0) continue
+                }
+            }
 
             var bestDist = TOLERANCE; var bestColor: Int? = null
             for ((orig, newColor) in swapTable) {

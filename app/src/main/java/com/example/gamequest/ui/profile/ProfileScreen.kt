@@ -29,11 +29,12 @@ import com.example.gamequest.ui.common.CampusBottomBar
 import com.example.gamequest.ui.common.SessionViewModel
 import com.example.gamequest.util.LocalSoundManager
 import com.example.gamequest.util.SoundEffect
-import com.example.gamequest.ui.components.DudeAnimation
-import com.example.gamequest.ui.components.DudeSprite
+import com.example.gamequest.ui.components.CharacterAnimation
+import com.example.gamequest.ui.components.CharacterSprite
 import com.example.gamequest.ui.navigation.Routes
 import com.example.gamequest.ui.theme.AmberAccent
 import com.example.gamequest.ui.theme.InstitutionalRed
+import com.example.gamequest.util.CharacterSpecies
 import com.example.gamequest.util.SpriteColorEngine.CharacterColor
 import kotlinx.coroutines.launch
 
@@ -57,16 +58,17 @@ fun ProfileScreen(
     onMissionManagement: () -> Unit,
     onCerrarSesion: () -> Unit,
 ) {
-    val usuario      by sessionViewModel.usuarioActual.collectAsState()
-    val soundManager  = LocalSoundManager.current
-    val context       = LocalContext.current
-    val scope         = rememberCoroutineScope()
-    val prefsRepo     = remember { UserPreferencesRepository(context) }
-    val prefs        by prefsRepo.preferencias.collectAsState(initial = null)
+    val usuario         by sessionViewModel.usuarioActual.collectAsState()
+    val soundManager     = LocalSoundManager.current
+    val context          = LocalContext.current
+    val scope            = rememberCoroutineScope()
+    val prefsRepo        = remember { UserPreferencesRepository(context) }
+    val prefs           by prefsRepo.preferencias.collectAsState(initial = null)
 
-    val selectedColor = prefs?.characterColor ?: CharacterColor.BLUE_ORIGINAL
+    val selectedSpecies = prefs?.characterSpecies ?: CharacterSpecies.DUDE
+    val selectedColor   = prefs?.characterColor ?: CharacterColor.BLUE_ORIGINAL
     // Alternar IDLE/WALK al tocar el sprite
-    var spriteAnim by remember { mutableStateOf(DudeAnimation.IDLE) }
+    var spriteAnim by remember { mutableStateOf(CharacterAnimation.IDLE) }
 
     Scaffold(
         bottomBar = { CampusBottomBar(currentRoute = Routes.PROFILE, onNavigate = onNavigateTab) }
@@ -93,12 +95,13 @@ fun ProfileScreen(
                         .background(Color.White.copy(alpha = 0.15f))
                         .clickable {
                             soundManager?.play(SoundEffect.CLICK)
-                            spriteAnim = if (spriteAnim == DudeAnimation.IDLE)
-                                DudeAnimation.WALK else DudeAnimation.IDLE
+                            spriteAnim = if (spriteAnim == CharacterAnimation.IDLE)
+                                CharacterAnimation.WALK else CharacterAnimation.IDLE
                         },
                     contentAlignment = Alignment.Center,
                 ) {
-                    DudeSprite(
+                    CharacterSprite(
+                        species   = selectedSpecies,
                         animation = spriteAnim,
                         color     = selectedColor,
                         size      = 72.dp,
@@ -143,7 +146,7 @@ fun ProfileScreen(
                 }
             }
 
-            // ── Selector de color del personaje ─────────────────────────
+            // ── Personalización de personaje (Especie y Color) ──────────
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -152,16 +155,71 @@ fun ProfileScreen(
             ) {
                 Column(Modifier.padding(16.dp)) {
                     Text(
-                        "Color del personaje",
+                        "Personaje",
                         fontWeight = FontWeight.Bold,
                         style      = MaterialTheme.typography.titleSmall,
                     )
                     Text(
-                        "Toca un color para personalizar tu avatar",
+                        "Elige tu héroe y personaliza su color",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(Modifier.height(12.dp))
+
+                    // Selector de especie (Dude, Pink, Owlet)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        CharacterSpecies.values().forEach { species ->
+                            val isSelected = species == selectedSpecies
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .border(
+                                        width = if (isSelected) 2.dp else 1.dp,
+                                        color = if (isSelected) AmberAccent else MaterialTheme.colorScheme.outlineVariant,
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                                    .clickable {
+                                        soundManager?.play(SoundEffect.CLICK)
+                                        scope.launch { prefsRepo.setCharacterSpecies(species) }
+                                    },
+                                color = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                                        else MaterialTheme.colorScheme.surface,
+                                shape = RoundedCornerShape(8.dp),
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(vertical = 8.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                ) {
+                                    CharacterSprite(
+                                        species   = species,
+                                        animation = CharacterAnimation.IDLE,
+                                        color     = selectedColor,
+                                        size      = 38.dp,
+                                    )
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(
+                                        text       = species.label,
+                                        style      = MaterialTheme.typography.labelSmall,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                        color      = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        "Color",
+                        fontWeight = FontWeight.Bold,
+                        style      = MaterialTheme.typography.labelLarge,
+                    )
+                    Spacer(Modifier.height(10.dp))
+
                     // Grid 4×2 de colores
                     val colors = CharacterColor.values()
                     for (row in 0 until 2) {

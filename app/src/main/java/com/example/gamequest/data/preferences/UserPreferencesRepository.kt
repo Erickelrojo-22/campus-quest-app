@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.gamequest.util.CharacterSpecies
 import com.example.gamequest.util.SpriteColorEngine.CharacterColor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -23,6 +24,7 @@ data class UserPreferences(
     val descargarMapaSinConexion: Boolean = true,
     val usuarioActivoId: Int = -1,
     val characterColor: CharacterColor = CharacterColor.BLUE_ORIGINAL,
+    val characterSpecies: CharacterSpecies = CharacterSpecies.DUDE,
 )
 
 /**
@@ -43,6 +45,7 @@ class UserPreferencesRepository(private val context: Context) {
         val DESCARGAR_MAPA = booleanPreferencesKey("descargar_mapa_sin_conexion")
         val USUARIO_ACTIVO_ID = intPreferencesKey("usuario_activo_id")
         val CHARACTER_COLOR = stringPreferencesKey("character_color")
+        val CHARACTER_SPECIES = stringPreferencesKey("character_species")
     }
 
     val preferencias: Flow<UserPreferences> = context.dataStore.data.map { prefs ->
@@ -59,6 +62,9 @@ class UserPreferencesRepository(private val context: Context) {
             characterColor = prefs[Keys.CHARACTER_COLOR]
                 ?.let { runCatching { CharacterColor.valueOf(it) }.getOrNull() }
                 ?: CharacterColor.BLUE_ORIGINAL,
+            characterSpecies = prefs[Keys.CHARACTER_SPECIES]
+                ?.let { runCatching { CharacterSpecies.valueOf(it) }.getOrNull() }
+                ?: CharacterSpecies.DUDE,
         )
     }
 
@@ -96,6 +102,10 @@ class UserPreferencesRepository(private val context: Context) {
 
     suspend fun setCharacterColor(color: CharacterColor) {
         context.dataStore.edit { it[Keys.CHARACTER_COLOR] = color.name }
+    }
+
+    suspend fun setCharacterSpecies(species: CharacterSpecies) {
+        context.dataStore.edit { it[Keys.CHARACTER_SPECIES] = species.name }
     }
 
     suspend fun cerrarSesion() {

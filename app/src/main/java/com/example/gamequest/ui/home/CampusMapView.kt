@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import com.example.gamequest.ui.components.DudeAnimation
 import com.example.gamequest.ui.components.DudeSprite
 import com.example.gamequest.ui.theme.AmberAccent
+import com.example.gamequest.util.CharacterSpecies
 import com.example.gamequest.util.SpriteColorEngine.CharacterColor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -66,7 +67,8 @@ fun CampusMapView(
     completados: Set<Int>,
     onPuntoClick: (PuntoInteresEntity) -> Unit,
     modifier: Modifier = Modifier,
-    characterColor: CharacterColor = CharacterColor.BLUE_ORIGINAL
+    characterColor: CharacterColor = CharacterColor.BLUE_ORIGINAL,
+    characterSpecies: CharacterSpecies = CharacterSpecies.DUDE
 ) {
     val primary = MaterialTheme.colorScheme.primary
     val secondary = MaterialTheme.colorScheme.secondary
@@ -233,6 +235,7 @@ fun CampusMapView(
 
     // Avatar pixel art animado sobre el cruce de caminos del campus
     DudeSprite(
+        species = characterSpecies,
         animation = DudeAnimation.IDLE,
         color = characterColor,
         size = 46.dp,
