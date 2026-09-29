@@ -1,7 +1,6 @@
 package com.example.gamequest.ui.home
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -20,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
@@ -28,9 +28,9 @@ import com.example.gamequest.data.local.entity.PuntoInteresEntity
 import kotlin.math.hypot
 
 /**
- * RF-05: mapa estilizado del campus con los puntos de interés señalizados y
- * la ubicación aproximada del usuario. No usa Google Maps (no requiere clave
- * de API ni conexión), tal como se ilustra en el mockup "Home / Mapa del campus".
+ * Mapa 2.5D offline del campus. Las coordenadas de Room siguen siendo
+ * normalizadas (posX/posY); la profundidad es únicamente visual y no se
+ * persiste. Esto permite evolucionar a un renderer 3D sin cambiar el dominio.
  */
 private fun colorPorCategoria(categoria: String, primary: Color, secondary: Color, tertiary: Color): Color =
     when (categoria) {
@@ -43,6 +43,21 @@ private fun colorPorCategoria(categoria: String, primary: Color, secondary: Colo
 private val posicionesArboles = listOf(
     0.10f to 0.12f, 0.88f to 0.10f,
     0.09f to 0.88f, 0.90f to 0.85f, 0.68f to 0.18f
+)
+
+private data class Edificio(
+    val x: Float,
+    val y: Float,
+    val ancho: Float,
+    val alto: Float,
+    val color: Color
+)
+
+private val edificios = listOf(
+    Edificio(0.12f, 0.26f, 0.23f, 0.13f, Color(0xFFD8A85F)),
+    Edificio(0.63f, 0.20f, 0.24f, 0.15f, Color(0xFFB97C54)),
+    Edificio(0.18f, 0.65f, 0.27f, 0.13f, Color(0xFF9D8BC4)),
+    Edificio(0.62f, 0.60f, 0.22f, 0.17f, Color(0xFF5D9EAD))
 )
 
 @Composable
@@ -62,19 +77,14 @@ fun CampusMapView(
             .fillMaxWidth()
             .aspectRatio(0.85f)
             .clip(RoundedCornerShape(6.dp))
-            .background(Color(0xFF3E9142))
             .border(3.dp, AmberAccent, RoundedCornerShape(6.dp))
     ) {
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
                 .pointerInput(puntos) {
-                // `size` (px) lo provee el propio PointerInputScope; así se evita
-                // guardar el tamaño en un estado escrito durante el dibujo, que
-                // podía provocar recomposiciones innecesarias del Canvas.
                 detectTapGestures { tapOffset ->
                     if (size.width == 0) return@detectTapGestures
-                    // Aumentado a 65f para facilitar el toque táctil en pantallas de alta densidad (QA issue)
                     val radioToque = 65f
                     val objetivo = puntos.minByOrNull { punto ->
                         val px = punto.posX * size.width
@@ -91,59 +101,110 @@ fun CampusMapView(
                 }
             }
     ) {
-        // Textura de césped a cuadros, como el suelo de un RPG 2D cenital
-        val tile = size.minDimension / 14f
-        var fila = 0
-        var y = 0f
-        while (y < size.height) {
-            var columna = 0
-            var x = 0f
-            while (x < size.width) {
-                if ((fila + columna) % 2 == 0) {
-                    drawRect(
-                        color = Color(0xFF3B8A3F),
-                        topLeft = Offset(x, y),
-                        size = Size(tile, tile)
-                    )
-                }
-                x += tile
-                columna++
-            }
-            y += tile
-            fila++
+        drawRect(Color(0xFF173D3A))
+        drawRoundRect(
+            color = Color(0xFF2E7651),
+            topLeft = Offset(size.width * 0.035f, size.height * 0.04f),
+            size = Size(size.width * 0.93f, size.height * 0.91f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(28f)
+        )
+
+        // Líneas de profundidad del terreno para sugerir una vista inclinada.
+        for (index in 1..7) {
+            val y = size.height * (0.10f + index * 0.105f)
+            drawLine(
+                color = Color(0xFF4B9968).copy(alpha = 0.55f),
+                start = Offset(size.width * 0.08f, y),
+                end = Offset(size.width * 0.92f, y + size.height * 0.035f),
+                strokeWidth = 2f
+            )
         }
 
-        // Árboles pixelados en las esquinas del campus (fuera de los caminos)
+        // Caminos con borde y superficie para dar volumen al plano.
+        val camino = Color(0xFFD9C487)
+        drawLine(
+            color = Color(0xFF8C6E49),
+            start = Offset(size.width * 0.50f, size.height * 0.05f),
+            end = Offset(size.width * 0.50f, size.height * 0.95f),
+            strokeWidth = 42f
+        )
+        drawLine(
+            color = camino,
+            start = Offset(size.width * 0.50f, size.height * 0.05f),
+            end = Offset(size.width * 0.50f, size.height * 0.95f),
+            strokeWidth = 34f
+        )
+        drawLine(
+            color = Color(0xFF8C6E49),
+            start = Offset(size.width * 0.07f, size.height * 0.46f),
+            end = Offset(size.width * 0.93f, size.height * 0.49f),
+            strokeWidth = 42f
+        )
+        drawLine(
+            color = camino,
+            start = Offset(size.width * 0.07f, size.height * 0.46f),
+            end = Offset(size.width * 0.93f, size.height * 0.49f),
+            strokeWidth = 34f
+        )
+
+        // Edificios estilizados: una cara frontal y una cara lateral extruida.
+        edificios.forEach { edificio ->
+            val left = size.width * edificio.x
+            val top = size.height * edificio.y
+            val width = size.width * edificio.ancho
+            val height = size.height * edificio.alto
+            val profundidad = size.minDimension * 0.035f
+            val frente = Path().apply {
+                moveTo(left, top)
+                lineTo(left + width, top)
+                lineTo(left + width, top + height)
+                lineTo(left, top + height)
+                close()
+            }
+            val lateral = Path().apply {
+                moveTo(left + width, top)
+                lineTo(left + width + profundidad, top - profundidad * 0.55f)
+                lineTo(left + width + profundidad, top + height - profundidad * 0.55f)
+                lineTo(left + width, top + height)
+                close()
+            }
+            drawPath(lateral, Color(0xFF684D43))
+            drawPath(frente, edificio.color)
+            drawRect(
+                color = Color.White.copy(alpha = 0.22f),
+                topLeft = Offset(left + width * 0.12f, top + height * 0.18f),
+                size = Size(width * 0.16f, height * 0.22f)
+            )
+            drawRect(
+                color = Color.White.copy(alpha = 0.22f),
+                topLeft = Offset(left + width * 0.38f, top + height * 0.18f),
+                size = Size(width * 0.16f, height * 0.22f)
+            )
+        }
+
+        // Árboles decorativos sobre el terreno.
         posicionesArboles.forEach { (rx, ry) ->
             val cx = size.width * rx
             val cy = size.height * ry
             val r = size.minDimension * 0.045f
-            drawCircle(color = Color(0xFF1E5A2A), radius = r, center = Offset(cx, cy + r * 0.3f))
-            drawCircle(color = Color(0xFF2F8F42), radius = r * 0.8f, center = Offset(cx, cy))
-            drawCircle(color = Color(0xFF5E3A1E), radius = r * 0.22f, center = Offset(cx, cy + r * 1.15f))
+            drawCircle(color = Color(0xFF163A2B), radius = r, center = Offset(cx + r * 0.25f, cy + r * 0.55f))
+            drawCircle(color = Color(0xFF276D3E), radius = r * 0.82f, center = Offset(cx, cy))
+            drawCircle(color = Color(0xFF55A85B), radius = r * 0.52f, center = Offset(cx - r * 0.18f, cy - r * 0.18f))
+            drawRect(
+                color = Color(0xFF68432B),
+                topLeft = Offset(cx - r * 0.18f, cy + r * 0.58f),
+                size = Size(r * 0.36f, r * 0.75f)
+            )
         }
 
-        // Caminos principales de tierra, como en un mapa RPG cenital
-        drawLine(
-            color = Color(0xFFD8C58C),
-            start = Offset(size.width * 0.5f, 0f),
-            end = Offset(size.width * 0.5f, size.height),
-            strokeWidth = 30f
-        )
-        drawLine(
-            color = Color(0xFFD8C58C),
-            start = Offset(0f, size.height * 0.45f),
-            end = Offset(size.width, size.height * 0.45f),
-            strokeWidth = 30f
-        )
-
-        // Aura suave de ubicación aproximada del usuario en el cruce de caminos
+        // Ubicación aproximada del usuario en el cruce central.
         drawCircle(
             color = AmberAccent.copy(alpha = 0.25f),
             radius = size.minDimension * 0.11f,
             center = Offset(size.width * 0.5f, size.height * 0.45f)
         )
 
+        // Marcadores elevados: sombra, poste y pin conservan el toque sobre posX/posY.
         puntos.forEach { punto ->
             val center = Offset(punto.posX * size.width, punto.posY * size.height)
             val esCompletado = punto.id in completados
@@ -152,14 +213,21 @@ fun CampusMapView(
             } else {
                 colorPorCategoria(punto.categoria, primary, secondary, tertiary)
             }
-            // Halo exterior translúcido para visibilidad y contraste
-            drawCircle(color = Color.Black.copy(alpha = 0.35f), radius = 27f, center = center)
-            // Borde retro oscuro
-            drawCircle(color = Color(0xFF0A2E2C), radius = 24f, center = center)
-            // Círculo temático
-            drawCircle(color = color, radius = 19f, center = center)
-            // Indicador central brillante
-            drawCircle(color = if (esCompletado) Color.White else AmberAccent, radius = 6f, center = center)
+            val pinCenter = center - Offset(0f, 14f)
+            drawOval(
+                color = Color.Black.copy(alpha = 0.35f),
+                topLeft = Offset(center.x - 24f, center.y - 7f),
+                size = Size(48f, 14f)
+            )
+            drawLine(
+                color = Color(0xFF102D2B),
+                start = center,
+                end = pinCenter,
+                strokeWidth = 5f
+            )
+            drawCircle(color = Color(0xFF102D2B), radius = 25f, center = pinCenter)
+            drawCircle(color = color, radius = 20f, center = pinCenter)
+            drawCircle(color = if (esCompletado) Color.White else AmberAccent, radius = 6f, center = pinCenter)
         }
     }
 
