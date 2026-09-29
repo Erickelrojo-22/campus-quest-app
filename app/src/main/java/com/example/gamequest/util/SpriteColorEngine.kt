@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
-import androidx.annotation.RawRes
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import kotlin.math.sqrt
@@ -110,17 +109,17 @@ object SpriteColorEngine {
     }
 
     // ── Cache: evita reprocesar el mismo sprite+color ──────────────────────
-    private val cache = HashMap<Pair<Int, CharacterColor>, Bitmap>()
+    private val cache = HashMap<Pair<String, CharacterColor>, Bitmap>()
 
     /**
-     * Carga un sprite sheet desde res/raw, aplica el palette swap y devuelve
-     * un Bitmap ARGB_8888 listo para recortar frames.
+     * Carga un sprite sheet desde assets (ej. "sprites/dude/idle.png"),
+     * aplica el palette swap y devuelve un Bitmap ARGB_8888 listo para recortar frames.
      */
-    fun getBitmap(context: Context, @RawRes rawResId: Int, color: CharacterColor): Bitmap {
-        val key = Pair(rawResId, color)
+    fun getBitmap(context: Context, assetPath: String, color: CharacterColor): Bitmap {
+        val key = Pair(assetPath, color)
         cache[key]?.let { return it }
         val original = BitmapFactory.decodeStream(
-            context.resources.openRawResource(rawResId)
+            context.assets.open(assetPath)
         ).copy(Bitmap.Config.ARGB_8888, true)
         val result = applyPaletteSwap(original, color)
         cache[key] = result
@@ -128,8 +127,8 @@ object SpriteColorEngine {
     }
 
     /** Devuelve el frame [frameIndex] del sheet como ImageBitmap de Compose. */
-    fun getFrame(context: Context, @RawRes rawResId: Int, color: CharacterColor, frameIndex: Int, frameW: Int = 32): ImageBitmap {
-        val sheet = getBitmap(context, rawResId, color)
+    fun getFrame(context: Context, assetPath: String, color: CharacterColor, frameIndex: Int, frameW: Int = 32): ImageBitmap {
+        val sheet = getBitmap(context, assetPath, color)
         val x = frameIndex * frameW
         return Bitmap.createBitmap(sheet, x.coerceAtMost(sheet.width - frameW), 0, frameW, sheet.height)
             .asImageBitmap()

@@ -4,7 +4,6 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.SoundPool
 import androidx.compose.runtime.staticCompositionLocalOf
-import com.example.gamequest.R
 import com.example.gamequest.data.preferences.UserPreferencesRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
@@ -40,10 +39,17 @@ class SoundEffectManager(
     private val soundMap = mutableMapOf<SoundEffect, Int>()
 
     init {
-        soundMap[SoundEffect.CLICK] = soundPool.load(context, R.raw.sfx_click, 1)
-        soundMap[SoundEffect.SCAN_SUCCESS] = soundPool.load(context, R.raw.sfx_scan_success, 1)
-        soundMap[SoundEffect.BADGE_EARNED] = soundPool.load(context, R.raw.sfx_badge_earned, 1)
-        soundMap[SoundEffect.ERROR] = soundPool.load(context, R.raw.sfx_error, 1)
+        loadAssetSound(context, SoundEffect.CLICK, "audio/sfx/click.ogg")
+        loadAssetSound(context, SoundEffect.SCAN_SUCCESS, "audio/sfx/scan_success.ogg")
+        loadAssetSound(context, SoundEffect.BADGE_EARNED, "audio/sfx/badge_earned.ogg")
+        loadAssetSound(context, SoundEffect.ERROR, "audio/sfx/error.ogg")
+    }
+
+    private fun loadAssetSound(context: Context, effect: SoundEffect, assetPath: String) {
+        runCatching {
+            val afd = context.assets.openFd(assetPath)
+            soundMap[effect] = soundPool.load(afd, 1)
+        }
     }
 
     fun play(effect: SoundEffect) {

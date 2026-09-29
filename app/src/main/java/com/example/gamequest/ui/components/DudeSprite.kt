@@ -11,31 +11,26 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.example.gamequest.R
 import com.example.gamequest.util.SpriteColorEngine
 import com.example.gamequest.util.SpriteColorEngine.CharacterColor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * Animaciones disponibles del Dude Monster.
- * @param rawRes     recurso PNG en res/raw (sprite sheet horizontal, 32×32 por frame)
+ * Animaciones necesarias del Dude Monster.
+ * @param assetPath  ruta del sprite sheet en assets/ (horizontal, 32×32 por frame)
  * @param frameCount número de frames en el sheet
  * @param fps        velocidad de reproducción
  */
 enum class DudeAnimation(
-    val rawRes: Int,
+    val assetPath: String,
     val frameCount: Int,
     val fps: Int = 8,
 ) {
-    IDLE  (R.raw.sprite_idle_4,    frameCount = 4, fps = 6),
-    WALK  (R.raw.sprite_walk_6,    frameCount = 6, fps = 8),
-    RUN   (R.raw.sprite_run_6,     frameCount = 6, fps = 10),
-    JUMP  (R.raw.sprite_jump_8,    frameCount = 8, fps = 10),
-    ATTACK(R.raw.sprite_attack1_4, frameCount = 4, fps = 10),
-    HURT  (R.raw.sprite_hurt_4,    frameCount = 4, fps = 8),
-    DEATH (R.raw.sprite_death_8,   frameCount = 8, fps = 6),
-    CLIMB (R.raw.sprite_climb_4,   frameCount = 4, fps = 7),
+    IDLE(assetPath = "sprites/dude/idle.png", frameCount = 4, fps = 6),
+    WALK(assetPath = "sprites/dude/walk.png", frameCount = 6, fps = 8),
+    RUN (assetPath = "sprites/dude/run.png",  frameCount = 6, fps = 10),
+    JUMP(assetPath = "sprites/dude/jump.png", frameCount = 8, fps = 10),
 }
 
 /**
@@ -72,7 +67,7 @@ fun DudeSprite(
     LaunchedEffect(animation, color) {
         frames = withContext(Dispatchers.Default) {
             (0 until animation.frameCount).map { i ->
-                SpriteColorEngine.getFrame(context, animation.rawRes, color, i)
+                SpriteColorEngine.getFrame(context, animation.assetPath, color, i)
             }
         }
     }
