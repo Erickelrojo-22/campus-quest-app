@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.gamequest.util.SpriteColorEngine.CharacterColor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -20,7 +21,8 @@ data class UserPreferences(
     val idioma: String = "Español",
     val campusPorDefecto: String = "Manta",
     val descargarMapaSinConexion: Boolean = true,
-    val usuarioActivoId: Int = -1
+    val usuarioActivoId: Int = -1,
+    val characterColor: CharacterColor = CharacterColor.BLUE_ORIGINAL,
 )
 
 /**
@@ -40,6 +42,7 @@ class UserPreferencesRepository(private val context: Context) {
         val CAMPUS_DEFECTO = stringPreferencesKey("campus_por_defecto")
         val DESCARGAR_MAPA = booleanPreferencesKey("descargar_mapa_sin_conexion")
         val USUARIO_ACTIVO_ID = intPreferencesKey("usuario_activo_id")
+        val CHARACTER_COLOR = stringPreferencesKey("character_color")
     }
 
     val preferencias: Flow<UserPreferences> = context.dataStore.data.map { prefs ->
@@ -52,7 +55,10 @@ class UserPreferencesRepository(private val context: Context) {
             idioma = prefs[Keys.IDIOMA] ?: "Español",
             campusPorDefecto = prefs[Keys.CAMPUS_DEFECTO] ?: "Manta",
             descargarMapaSinConexion = prefs[Keys.DESCARGAR_MAPA] ?: true,
-            usuarioActivoId = prefs[Keys.USUARIO_ACTIVO_ID] ?: -1
+            usuarioActivoId = prefs[Keys.USUARIO_ACTIVO_ID] ?: -1,
+            characterColor = prefs[Keys.CHARACTER_COLOR]
+                ?.let { runCatching { CharacterColor.valueOf(it) }.getOrNull() }
+                ?: CharacterColor.BLUE_ORIGINAL,
         )
     }
 
@@ -86,6 +92,10 @@ class UserPreferencesRepository(private val context: Context) {
 
     suspend fun setUsuarioActivoId(id: Int) {
         context.dataStore.edit { it[Keys.USUARIO_ACTIVO_ID] = id }
+    }
+
+    suspend fun setCharacterColor(color: CharacterColor) {
+        context.dataStore.edit { it[Keys.CHARACTER_COLOR] = color.name }
     }
 
     suspend fun cerrarSesion() {

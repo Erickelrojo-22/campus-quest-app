@@ -36,13 +36,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.gamequest.data.preferences.UserPreferencesRepository
 import com.example.gamequest.data.repository.MisionConEstado
 import com.example.gamequest.ui.common.CampusBottomBar
+import com.example.gamequest.ui.components.DudeAnimation
+import com.example.gamequest.ui.components.DudeSprite
 import com.example.gamequest.ui.navigation.Routes
 import com.example.gamequest.ui.theme.AmberAccent
 import com.example.gamequest.ui.theme.AmberAccentDark
+import com.example.gamequest.util.SpriteColorEngine.CharacterColor
 
 @Composable
 fun HomeScreen(
@@ -55,6 +60,11 @@ fun HomeScreen(
     val busqueda by viewModel.busqueda.collectAsState()
     val resultados by viewModel.resultadosBusqueda.collectAsState()
     val sugerida by viewModel.misionSugerida.collectAsState()
+
+    val context = LocalContext.current
+    val prefsRepo = remember { UserPreferencesRepository(context) }
+    val prefs by prefsRepo.preferencias.collectAsState(initial = null)
+    val charColor = prefs?.characterColor ?: CharacterColor.BLUE_ORIGINAL
 
     Scaffold(
         bottomBar = { CampusBottomBar(currentRoute = Routes.HOME, onNavigate = onNavigateTab) }
@@ -71,22 +81,37 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        "Hola, ${usuario?.nombres?.substringBefore(" ") ?: "explorador"} 👋",
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Surface(
-                        color = Color.Black.copy(alpha = 0.25f),
-                        shape = RoundedCornerShape(4.dp),
-                        border = androidx.compose.foundation.BorderStroke(2.dp, AmberAccent)
-                    ) {
+                    Column {
                         Text(
-                            "⭐ ${usuario?.puntajeAcumulado ?: 0} pts",
-                            color = AmberAccent,
-                            style = MaterialTheme.typography.titleSmall,
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                            "Hola, ${usuario?.nombres?.substringBefore(" ") ?: "explorador"} 👋",
+                            color = Color.White,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Surface(
+                            color = Color.Black.copy(alpha = 0.25f),
+                            shape = RoundedCornerShape(4.dp),
+                            border = androidx.compose.foundation.BorderStroke(2.dp, AmberAccent)
+                        ) {
+                            Text(
+                                "⭐ ${usuario?.puntajeAcumulado ?: 0} pts",
+                                color = AmberAccent,
+                                style = MaterialTheme.typography.titleSmall,
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                            )
+                        }
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(72.dp)
+                            .background(Color.White.copy(alpha = 0.12f), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        DudeSprite(
+                            animation = DudeAnimation.IDLE,
+                            color = charColor,
+                            size = 56.dp
                         )
                     }
                 }
@@ -136,6 +161,7 @@ fun HomeScreen(
                     CampusMapView(
                         puntos = puntosMapa,
                         completados = completadosMapa,
+                        characterColor = charColor,
                         onPuntoClick = { punto ->
                             misiones.firstOrNull { it.punto.id == punto.id }?.let { onMisionClick(it.mision.id) }
                         }

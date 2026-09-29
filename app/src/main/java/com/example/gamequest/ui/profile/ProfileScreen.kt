@@ -1,46 +1,53 @@
 package com.example.gamequest.ui.profile
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Card
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.gamequest.data.local.entity.Rol
+import com.example.gamequest.data.preferences.UserPreferencesRepository
 import com.example.gamequest.ui.common.CampusBottomBar
 import com.example.gamequest.ui.common.SessionViewModel
+import com.example.gamequest.util.LocalSoundManager
+import com.example.gamequest.util.SoundEffect
+import com.example.gamequest.ui.components.DudeAnimation
+import com.example.gamequest.ui.components.DudeSprite
 import com.example.gamequest.ui.navigation.Routes
 import com.example.gamequest.ui.theme.AmberAccent
 import com.example.gamequest.ui.theme.InstitutionalRed
+import com.example.gamequest.util.SpriteColorEngine.CharacterColor
+import kotlinx.coroutines.launch
 
-
+/** Convierte el nombre del color a un Color de Compose para la UI del selector. */
+private fun CharacterColor.toComposeColor(): Color = when (this) {
+    CharacterColor.BLUE_ORIGINAL -> Color(0xFF0696DB)
+    CharacterColor.GREEN         -> Color(0xFF23B437)
+    CharacterColor.RED           -> Color(0xFFBE2323)
+    CharacterColor.PURPLE        -> Color(0xFF7828C8)
+    CharacterColor.ORANGE        -> Color(0xFFD76414)
+    CharacterColor.PINK          -> Color(0xFFE650A0)
+    CharacterColor.YELLOW        -> Color(0xFFD2B40F)
+    CharacterColor.GREY          -> Color(0xFF78788C)
+}
 
 @Composable
 fun ProfileScreen(
@@ -48,29 +55,63 @@ fun ProfileScreen(
     onNavigateTab: (String) -> Unit,
     onSettings: () -> Unit,
     onMissionManagement: () -> Unit,
-    onCerrarSesion: () -> Unit
+    onCerrarSesion: () -> Unit,
 ) {
-    val usuario by sessionViewModel.usuarioActual.collectAsState()
+    val usuario      by sessionViewModel.usuarioActual.collectAsState()
+    val soundManager  = LocalSoundManager.current
+    val context       = LocalContext.current
+    val scope         = rememberCoroutineScope()
+    val prefsRepo     = remember { UserPreferencesRepository(context) }
+    val prefs        by prefsRepo.preferencias.collectAsState(initial = null)
 
-    Scaffold(bottomBar = { CampusBottomBar(currentRoute = Routes.PROFILE, onNavigate = onNavigateTab) }) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
+    val selectedColor = prefs?.characterColor ?: CharacterColor.BLUE_ORIGINAL
+    // Alternar IDLE/WALK al tocar el sprite
+    var spriteAnim by remember { mutableStateOf(DudeAnimation.IDLE) }
+
+    Scaffold(
+        bottomBar = { CampusBottomBar(currentRoute = Routes.PROFILE, onNavigate = onNavigateTab) }
+    ) { padding ->
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
+        ) {
+            // ── Header con sprite ────────────────────────────────────────
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.primary)
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .padding(vertical = 24.dp, horizontal = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Surface(shape = CircleShape, color = Color.White.copy(alpha = 0.2f)) {
-                    Icon(
-                        Icons.Filled.Person,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.padding(18.dp).size(36.dp)
+                // Sprite animado — tap para animar Walk
+                Box(
+                    modifier = Modifier
+                        .size(96.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.15f))
+                        .clickable {
+                            soundManager?.play(SoundEffect.CLICK)
+                            spriteAnim = if (spriteAnim == DudeAnimation.IDLE)
+                                DudeAnimation.WALK else DudeAnimation.IDLE
+                        },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    DudeSprite(
+                        animation = spriteAnim,
+                        color     = selectedColor,
+                        size      = 72.dp,
                     )
                 }
+
                 Spacer(Modifier.height(10.dp))
-                Text(usuario?.nombres ?: "", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                Text(
+                    usuario?.nombres ?: "",
+                    color      = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    style      = MaterialTheme.typography.titleLarge,
+                )
                 if (!usuario?.correoInstitucional.isNullOrBlank()) {
                     Text(usuario?.correoInstitucional ?: "", color = AmberAccent, style = MaterialTheme.typography.bodySmall)
                 }
@@ -80,6 +121,7 @@ fun ProfileScreen(
                 if (usuario?.rol == Rol.TUTOR) {
                     Text("Tutor del programa de bienvenida", color = Color.White.copy(alpha = 0.85f), style = MaterialTheme.typography.bodySmall)
                 }
+
                 Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Surface(color = Color.White.copy(alpha = 0.2f), shape = RoundedCornerShape(4.dp)) {
@@ -87,7 +129,7 @@ fun ProfileScreen(
                             "⭐ Nivel ${usuario?.nivel ?: 1}",
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                             color = Color.White,
-                            style = MaterialTheme.typography.labelMedium
+                            style = MaterialTheme.typography.labelMedium,
                         )
                     }
                     Surface(color = AmberAccent.copy(alpha = 0.3f), shape = RoundedCornerShape(4.dp)) {
@@ -95,15 +137,61 @@ fun ProfileScreen(
                             "🏆 ${usuario?.puntajeAcumulado ?: 0} pts",
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                             color = AmberAccent,
-                            style = MaterialTheme.typography.labelMedium
+                            style = MaterialTheme.typography.labelMedium,
                         )
                     }
                 }
-
             }
 
-            Spacer(Modifier.height(16.dp))
+            // ── Selector de color del personaje ─────────────────────────
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                shape = RoundedCornerShape(12.dp),
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    Text(
+                        "Color del personaje",
+                        fontWeight = FontWeight.Bold,
+                        style      = MaterialTheme.typography.titleSmall,
+                    )
+                    Text(
+                        "Toca un color para personalizar tu avatar",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    // Grid 4×2 de colores
+                    val colors = CharacterColor.values()
+                    for (row in 0 until 2) {
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                        ) {
+                            for (col in 0 until 4) {
+                                val idx = row * 4 + col
+                                if (idx >= colors.size) break
+                                val c = colors[idx]
+                                ColorDot(
+                                    color     = c.toComposeColor(),
+                                    label     = c.label,
+                                    selected  = c == selectedColor,
+                                    onClick   = {
+                                        soundManager?.play(SoundEffect.CLICK)
+                                        scope.launch { prefsRepo.setCharacterColor(c) }
+                                    },
+                                )
+                            }
+                        }
+                        if (row == 0) Spacer(Modifier.height(8.dp))
+                    }
+                }
+            }
 
+            Spacer(Modifier.height(4.dp))
+
+            // ── Opciones de perfil ───────────────────────────────────────
             OpcionPerfil(Icons.Filled.Settings, "Configuración", "Tema, notificaciones, idioma", onSettings)
 
             if (usuario?.rol == Rol.TUTOR) {
@@ -111,7 +199,7 @@ fun ProfileScreen(
                     Icons.Filled.AdminPanelSettings,
                     "Gestión de misiones",
                     "Crear, editar y eliminar misiones (modo tutor)",
-                    onMissionManagement
+                    onMissionManagement,
                 )
             }
 
@@ -120,9 +208,35 @@ fun ProfileScreen(
                 "Cerrar sesión",
                 "Tu progreso se mantiene guardado",
                 onCerrarSesion,
-                colorTexto = InstitutionalRed
+                colorTexto = InstitutionalRed,
             )
+
+            Spacer(Modifier.height(16.dp))
         }
+    }
+}
+
+@Composable
+private fun ColorDot(
+    color: Color,
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .size(42.dp)
+                .clip(CircleShape)
+                .background(color)
+                .then(
+                    if (selected) Modifier.border(3.dp, Color.White, CircleShape)
+                    else Modifier.border(1.dp, Color.Gray.copy(alpha = 0.3f), CircleShape)
+                )
+                .clickable(onClick = onClick),
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -132,15 +246,15 @@ private fun OpcionPerfil(
     titulo: String,
     subtitulo: String,
     onClick: () -> Unit,
-    colorTexto: Color = Color.Unspecified
+    colorTexto: Color = Color.Unspecified,
 ) {
     Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)
+        onClick    = onClick,
+        modifier   = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
     ) {
         Row(
-            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            modifier          = Modifier.padding(16.dp).fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(icono, contentDescription = null, tint = if (colorTexto != Color.Unspecified) colorTexto else MaterialTheme.colorScheme.primary)
             Spacer(Modifier.width(14.dp))
