@@ -70,7 +70,9 @@ import com.example.gamequest.ui.theme.AmberAccent
 import com.example.gamequest.ui.theme.AmberAccentDark
 import com.example.gamequest.ui.theme.PixelCream
 import com.example.gamequest.ui.theme.PixelInkOnCream
+import com.example.gamequest.util.LocalSoundManager
 import com.example.gamequest.util.QrAnalyzer
+import com.example.gamequest.util.SoundEffect
 import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 
@@ -82,6 +84,7 @@ fun ScannerScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
+    val soundManager = LocalSoundManager.current
     val uiState by viewModel.uiState.collectAsState()
 
     var permisoConcedido by remember {
@@ -186,6 +189,13 @@ fun ScannerScreen(
                         }
                     }
                     is ScannerUiState.Resultado -> {
+                        LaunchedEffect(estado.resultado) {
+                            if (estado.resultado is ValidacionQrResult.MisionCompletada) {
+                                soundManager?.play(SoundEffect.SCAN_SUCCESS)
+                            } else {
+                                soundManager?.play(SoundEffect.ERROR)
+                            }
+                        }
                         ResultadoPanel(estado.resultado, onContinuar = {
                             when (val r = estado.resultado) {
                                 is ValidacionQrResult.MisionCompletada -> onMisionCompletada(r.mision.id)
@@ -194,6 +204,9 @@ fun ScannerScreen(
                         })
                     }
                     is ScannerUiState.Error -> {
+                        LaunchedEffect(estado.mensaje) {
+                            soundManager?.play(SoundEffect.ERROR)
+                        }
                         Text(estado.mensaje, color = Color.White)
                         Spacer(Modifier.height(8.dp))
                         OutlinedButton(onClick = viewModel::reiniciar) {

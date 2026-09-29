@@ -6,9 +6,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.CompositionLocalProvider
 import com.example.gamequest.data.preferences.UserPreferences
 import com.example.gamequest.ui.navigation.CampusQuestNavHost
 import com.example.gamequest.ui.theme.GamequestTheme
+import com.example.gamequest.util.LocalSoundManager
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -18,8 +20,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             val prefs by container.preferencesRepository.preferencias
                 .collectAsState(initial = UserPreferences())
-            GamequestTheme(darkTheme = prefs.temaOscuro) {
-                CampusQuestNavHost(container = container)
+            CompositionLocalProvider(LocalSoundManager provides container.soundEffectManager) {
+                GamequestTheme(darkTheme = prefs.temaOscuro) {
+                    CampusQuestNavHost(container = container)
+                }
             }
         }
     }
