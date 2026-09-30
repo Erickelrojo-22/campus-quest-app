@@ -164,7 +164,7 @@ fun AvatarEditorSheet(
                                 sp.label,
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isSelected) MaterialTheme.colorScheme.primary
+                                color = if (isSelected) AmberAccent
                                         else MaterialTheme.colorScheme.onSurface,
                             )
                         }
@@ -188,7 +188,7 @@ fun AvatarEditorSheet(
             ) {
                 ZoneTab(
                     label = species.primaryZoneLabel,
-                    subtitle = "Color principal",
+                    subtitle = "Principal",
                     selected = activeZone == ColorZone.PRIMARY,
                     color = Color(primary.preview),
                     modifier = Modifier.weight(1f),
@@ -199,7 +199,7 @@ fun AvatarEditorSheet(
                 )
                 ZoneTab(
                     label = species.secondaryZoneLabel,
-                    subtitle = "Color secundario",
+                    subtitle = "Secundario",
                     selected = activeZone == ColorZone.SECONDARY,
                     color = Color(secondary.preview),
                     modifier = Modifier.weight(1f),
@@ -258,7 +258,7 @@ fun AvatarEditorSheet(
                 ) {
                     Icon(Icons.Filled.RestartAlt, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Restablecer")
+                    Text("Reiniciar")
                 }
 
                 // Guardar
@@ -328,13 +328,14 @@ private fun ZoneTab(
                     label,
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
-                    color = if (selected) MaterialTheme.colorScheme.primary
+                    color = if (selected) AmberAccent
                             else MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
                     subtitle,
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (selected) Color.White.copy(alpha = 0.85f)
+                            else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }

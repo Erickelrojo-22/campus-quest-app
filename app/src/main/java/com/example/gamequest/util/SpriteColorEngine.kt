@@ -305,9 +305,62 @@ object SpriteColorEngine {
 
         if (species == CharacterSpecies.OWLET) {
             tagOwletEyes(pixels, w, h)
+            val numFrames = w / 32
+            for (f in 0 until numFrames) {
+                val fx = f * 32
+                // Encontrar la coordenada Y del collar para este frame específico
+                var collarY = 21
+                for (y in 0 until h) {
+                    for (x in fx until (fx + 32)) {
+                        if (isColor(pixels[y * w + x], 94, 44, 41)) {
+                            collarY = y
+                            break
+                        }
+                    }
+                    if (collarY != 21) break
+                }
+
+                for (y in 0 until h) {
+                    for (x in fx until (fx + 32)) {
+                        val idx = y * w + x
+                        val p = pixels[idx]
+                        if (Color.alpha(p) < 10) continue
+                        val rgb = intArrayOf(Color.red(p), Color.green(p), Color.blue(p))
+
+                        // Elementos protegidos que nunca deben cambiar
+                        if (rgb[0] == 255 && rgb[1] == 255 && rgb[2] == 255) continue // Ojos blancos
+                        if (colorDist(rgb, OWLET_OUTLINE_1)  < 15.0) continue // Contorno / pupila
+                        if (colorDist(rgb, OWLET_OUTLINE_2)  < 15.0) continue // Contorno posterior
+                        if (colorDist(rgb, OWLET_BEAK_LIGHT) < 20.0) continue // Pico / amuleto claro
+                        if (colorDist(rgb, OWLET_BEAK_DARK)  < 20.0) continue // Pico / amuleto oscuro
+                        if (colorDist(rgb, OWLET_COLLAR)     < 15.0) continue // Collar marrón
+
+                        val lx = x % 32
+                        // Contorno de la capucha y sombra profunda del cuerpo -> Primary deep
+                        if (colorDist(rgb, OWLET_CLOAK_DARK) < 20.0) {
+                            pixels[idx] = primary.deep
+                        } else if (colorDist(rgb, OWLET_BODY_LIGHT) < 20.0) {
+                            pixels[idx] = primary.light
+                        } else if (colorDist(rgb, OWLET_HOOD_SHADE) < 20.0) {
+                            pixels[idx] = primary.mid
+                        } else if (colorDist(rgb, OWLET_FACE_MID) < 20.0) {
+                            if (lx >= 11 && y < collarY) {
+                                // Círculo facial real -> Color secundario
+                                pixels[idx] = secondary.mid
+                            } else {
+                                // Sombra de punta de capucha o sombra de patas/cuerpo -> Color primario oscuro
+                                pixels[idx] = primary.dark
+                            }
+                        }
+                    }
+                }
+            }
+            val result = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+            result.setPixels(pixels, 0, w, 0, 0, w, h)
+            return result
         }
 
-        // Construir tabla de swap dual: cada entrada es (colorOriginal → colorNuevo)
+        // Construir tabla de swap dual para Dude y Pink
         val swapTable: List<Pair<IntArray, Int>> = when (species) {
             CharacterSpecies.DUDE -> listOf(
                 // Zona primaria: cuerpo
@@ -319,20 +372,14 @@ object SpriteColorEngine {
                 DUDE_ACCENT_LIGHT to secondary.mid,
             )
             CharacterSpecies.PINK -> listOf(
-                // Zona primaria: pelaje exterior (oscuro + medio)
+                // Zona primaria: TODO el cuerpo / pelaje exterior es primario
                 PINK_BODY_DARK  to primary.dark,
                 PINK_BODY_MID   to primary.mid,
-                // Zona secundaria: vientre y cara (parte clara)
-                PINK_BODY_LIGHT to secondary.mid,
+                PINK_BODY_LIGHT to primary.light,
+                // Zona secundaria: vientre y máscara facial
+                PINK_WHITE to (if (secondary == AvatarColor.SNOW_WHITE) secondary.light else secondary.mid),
             )
-            CharacterSpecies.OWLET -> listOf(
-                // Zona primaria: capucha y plumaje exterior
-                OWLET_BODY_LIGHT  to primary.light,
-                OWLET_HOOD_SHADE  to primary.mid,
-                // Zona secundaria: rostro y manto interior
-                OWLET_FACE_MID    to secondary.dark,
-                OWLET_CLOAK_DARK  to secondary.deep,
-            )
+            else -> emptyList()
         }
 
         for (i in pixels.indices) {
@@ -347,17 +394,8 @@ object SpriteColorEngine {
                 }
                 CharacterSpecies.PINK -> {
                     if (colorDist(rgb, PINK_OUTLINE) < 20.0) continue
-                    if (colorDist(rgb, PINK_WHITE)   < 20.0) continue
                 }
-                CharacterSpecies.OWLET -> {
-                    // Ojos blancos protegidos (pre-etiquetados como 255,255,255)
-                    if (rgb[0] == 255 && rgb[1] == 255 && rgb[2] == 255) continue
-                    if (colorDist(rgb, OWLET_OUTLINE_1)  < 15.0) continue
-                    if (colorDist(rgb, OWLET_OUTLINE_2)  < 15.0) continue
-                    if (colorDist(rgb, OWLET_BEAK_LIGHT) < 20.0) continue
-                    if (colorDist(rgb, OWLET_BEAK_DARK)  < 20.0) continue
-                    if (colorDist(rgb, OWLET_COLLAR)     < 15.0) continue
-                }
+                else -> {}
             }
 
             var bestDist = TOLERANCE; var bestColor: Int? = null
