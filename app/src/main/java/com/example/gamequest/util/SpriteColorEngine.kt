@@ -46,17 +46,18 @@ object SpriteColorEngine {
     private val PINK_WHITE        = intArrayOf(252, 254, 254)
 
     // Owlet
-    private val OWLET_CLOAK_DARK  = intArrayOf( 42,  48,  78)
-    private val OWLET_CLOAK_MID   = intArrayOf(102, 114, 145)
-    private val OWLET_CLOAK_LIGHT = intArrayOf(148, 160, 186)
-    private val OWLET_WHITE       = intArrayOf(252, 254, 254)
-    private val OWLET_OUTLINE_1   = intArrayOf( 28,  18,  27)
-    private val OWLET_OUTLINE_2   = intArrayOf( 28,  26,  48)
-    private val OWLET_BEAK_LIGHT  = intArrayOf(253, 162,  22)
-    private val OWLET_BEAK_DARK   = intArrayOf(252,  80,   3)
-    private val OWLET_COLLAR      = intArrayOf( 94,  44,  41)
+    private val OWLET_BODY_LIGHT  = intArrayOf(252, 254, 254) // Plumaje exterior y capucha
+    private val OWLET_HOOD_SHADE  = intArrayOf(148, 160, 186) // Sombra de transición capucha
+    private val OWLET_FACE_MID    = intArrayOf(102, 114, 145) // Cara y manto derecho
+    private val OWLET_CLOAK_DARK  = intArrayOf( 42,  48,  78) // Sombra profunda manto
+    private val OWLET_OUTLINE_1   = intArrayOf( 28,  18,  27) // Contorno oscuro y pupilas
+    private val OWLET_OUTLINE_2   = intArrayOf( 28,  26,  48) // Contorno posterior
+    private val OWLET_BEAK_LIGHT  = intArrayOf(253, 162,  22) // Pico / amuleto claro
+    private val OWLET_BEAK_DARK   = intArrayOf(252,  80,   3) // Pico / amuleto oscuro
+    private val OWLET_COLLAR      = intArrayOf( 94,  44,  41) // Collar marrón
+    private val OWLET_EYE_WHITE   = intArrayOf(255, 255, 255) // Ojos blancos
 
-    private const val TOLERANCE = 55.0
+    private const val TOLERANCE = 45.0
 
     // ── Variantes de color disponibles ────────────────────────────────────
     enum class CharacterColor(
@@ -64,6 +65,7 @@ object SpriteColorEngine {
         val bodyDark:    Int,
         val bodyMid:     Int,
         val bodyLight:   Int,
+        val bodyDeep:    Int,
         val accentDark:  Int,
         val accentLight: Int,
     ) {
@@ -72,62 +74,70 @@ object SpriteColorEngine {
             bodyDark     = 0xFF03396B.toInt(),
             bodyMid      = 0xFF0696DB.toInt(),
             bodyLight    = 0xFF0FEFFB.toInt(),
+            bodyDeep     = 0xFF021E3C.toInt(),
             accentDark   = 0xFFC3242F.toInt(),
             accentLight  = 0xFFE7333B.toInt(),
         ),
         GREEN(
             label        = "Verde",
-            bodyDark     = 0xFF0F5514.toInt(),
+            bodyDark     = 0xFF14691E.toInt(),
             bodyMid      = 0xFF23B437.toInt(),
             bodyLight    = 0xFF50F064.toInt(),
+            bodyDeep     = 0xFF0A370F.toInt(),
             accentDark   = 0xFFB45A0A.toInt(),
             accentLight  = 0xFFE68214.toInt(),
         ),
         RED(
             label        = "Rojo",
-            bodyDark     = 0xFF5A0C0C.toInt(),
-            bodyMid      = 0xFFBE2323.toInt(),
-            bodyLight    = 0xFFFF5A5A.toInt(),
+            bodyDark     = 0xFF871616.toInt(),
+            bodyMid      = 0xFFC82828.toInt(),
+            bodyLight    = 0xFFFF5F5F.toInt(),
+            bodyDeep     = 0xFF4B0C0C.toInt(),
             accentDark   = 0xFF0F3C78.toInt(),
             accentLight  = 0xFF196EC8.toInt(),
         ),
         PURPLE(
             label        = "Morado",
-            bodyDark     = 0xFF370A5A.toInt(),
-            bodyMid      = 0xFF7828C8.toInt(),
+            bodyDark     = 0xFF55168C.toInt(),
+            bodyMid      = 0xFF872DD7.toInt(),
             bodyLight    = 0xFFC364FF.toInt(),
+            bodyDeep     = 0xFF300A50.toInt(),
             accentDark   = 0xFFC8910A.toInt(),
             accentLight  = 0xFFF5BE1E.toInt(),
         ),
         ORANGE(
             label        = "Naranja",
-            bodyDark     = 0xFF823705.toInt(),
-            bodyMid      = 0xFFD76414.toInt(),
-            bodyLight    = 0xFFFFA53C.toInt(),
-            accentDark   = 0xFF1E50AA.toInt(),
-            accentLight  = 0xFF3282E6.toInt(),
+            bodyDark     = 0xFF964108.toInt(),
+            bodyMid      = 0xFFE16E14.toInt(),
+            bodyLight    = 0xFFFFAA41.toInt(),
+            bodyDeep     = 0xFF552305.toInt(),
+            accentDark   = 0xFF194BA0.toInt(),
+            accentLight  = 0xFF2D78DC.toInt(),
         ),
         PINK(
             label        = "Rosa",
-            bodyDark     = 0xFF8C1E5A.toInt(),
-            bodyMid      = 0xFFE650A0.toInt(),
-            bodyLight    = 0xFFFF9BD2.toInt(),
+            bodyDark     = 0xFFA02369.toInt(),
+            bodyMid      = 0xFFEB55A5.toInt(),
+            bodyLight    = 0xFFFF9FD7.toInt(),
+            bodyDeep     = 0xFF5A123C.toInt(),
             accentDark   = 0xFF1464AA.toInt(),
             accentLight  = 0xFF28A0E6.toInt(),
         ),
         YELLOW(
             label        = "Amarillo",
-            bodyDark     = 0xFF786405.toInt(),
-            bodyMid      = 0xFFD2B40F.toInt(),
+            bodyDark     = 0xFF9B7D08.toInt(),
+            bodyMid      = 0xFFE1BE0F.toInt(),
             bodyLight    = 0xFFFFEB3C.toInt(),
+            bodyDeep     = 0xFF554605.toInt(),
             accentDark   = 0xFF321E82.toInt(),
             accentLight  = 0xFF5A3CC8.toInt(),
         ),
         GREY(
             label        = "Gris",
-            bodyDark     = 0xFF373746.toInt(),
-            bodyMid      = 0xFF78788C.toInt(),
-            bodyLight    = 0xFFC3C3D2.toInt(),
+            bodyDark     = 0xFF464655.toInt(),
+            bodyMid      = 0xFF828296.toInt(),
+            bodyLight    = 0xFFC8C8D7.toInt(),
+            bodyDeep     = 0xFF282832.toInt(),
             accentDark   = 0xFF642808.toInt(),
             accentLight  = 0xFFA54614.toInt(),
         ),
@@ -206,6 +216,10 @@ object SpriteColorEngine {
         val pixels = IntArray(w * h)
         src.getPixels(pixels, 0, w, 0, 0, w, h)
 
+        if (species == CharacterSpecies.OWLET) {
+            tagOwletEyes(pixels, w, h)
+        }
+
         val swapTable = when (species) {
             CharacterSpecies.DUDE -> listOf(
                 DUDE_BODY_DARK    to variant.bodyDark,
@@ -220,9 +234,10 @@ object SpriteColorEngine {
                 PINK_BODY_LIGHT to variant.bodyLight,
             )
             CharacterSpecies.OWLET -> listOf(
-                OWLET_CLOAK_DARK  to variant.bodyDark,
-                OWLET_CLOAK_MID   to variant.bodyMid,
-                OWLET_CLOAK_LIGHT to variant.bodyLight,
+                OWLET_BODY_LIGHT  to variant.bodyLight,
+                OWLET_HOOD_SHADE  to variant.bodyMid,
+                OWLET_FACE_MID    to variant.bodyDark,
+                OWLET_CLOAK_DARK  to variant.bodyDeep,
             )
         }
 
@@ -233,20 +248,21 @@ object SpriteColorEngine {
             // Proteger colores que nunca deben cambiar según especie
             when (species) {
                 CharacterSpecies.DUDE -> {
-                    if (colorDist(rgb, DUDE_OUTLINE) < TOLERANCE) continue
-                    if (colorDist(rgb, DUDE_WHITE)   < TOLERANCE) continue
+                    if (colorDist(rgb, DUDE_OUTLINE) < 20.0) continue
+                    if (colorDist(rgb, DUDE_WHITE)   < 20.0) continue
                 }
                 CharacterSpecies.PINK -> {
-                    if (colorDist(rgb, PINK_OUTLINE) < TOLERANCE) continue
-                    if (colorDist(rgb, PINK_WHITE)   < TOLERANCE) continue
+                    if (colorDist(rgb, PINK_OUTLINE) < 20.0) continue
+                    if (colorDist(rgb, PINK_WHITE)   < 20.0) continue
                 }
                 CharacterSpecies.OWLET -> {
-                    if (colorDist(rgb, OWLET_WHITE)      < 20.0) continue
-                    if (colorDist(rgb, OWLET_OUTLINE_1)  < 20.0) continue
-                    if (colorDist(rgb, OWLET_OUTLINE_2)  < 20.0) continue
-                    if (colorDist(rgb, OWLET_BEAK_LIGHT) < 30.0) continue
-                    if (colorDist(rgb, OWLET_BEAK_DARK)  < 30.0) continue
-                    if (colorDist(rgb, OWLET_COLLAR)     < 20.0) continue
+                    // Ojos blancos protegidos
+                    if (rgb[0] == 255 && rgb[1] == 255 && rgb[2] == 255) continue
+                    if (colorDist(rgb, OWLET_OUTLINE_1)  < 15.0) continue
+                    if (colorDist(rgb, OWLET_OUTLINE_2)  < 15.0) continue
+                    if (colorDist(rgb, OWLET_BEAK_LIGHT) < 20.0) continue
+                    if (colorDist(rgb, OWLET_BEAK_DARK)  < 20.0) continue
+                    if (colorDist(rgb, OWLET_COLLAR)     < 15.0) continue
                 }
             }
 
@@ -265,6 +281,43 @@ object SpriteColorEngine {
         result.setPixels(pixels, 0, w, 0, 0, w, h)
         return result
     }
+
+    /**
+     * Detecta y protege los píxeles de los ojos del Owlet Monster si no están pre-etiquetados con (255, 255, 255).
+     */
+    private fun tagOwletEyes(pixels: IntArray, w: Int, h: Int) {
+        val numFrames = w / 32
+        for (f in 0 until numFrames) {
+            val fx = f * 32
+            for (y in 0 until h) {
+                for (x in (fx + 10)..(fx + 24)) {
+                    if (x + 6 < fx + 32) {
+                        val iLPre = y * w + (x - 1)
+                        val iW1 = y * w + x
+                        val iW2 = y * w + (x + 1)
+                        val iMid = y * w + (x + 2)
+                        val iW3 = y * w + (x + 6)
+                        val iRPost = y * w + (x + 7)
+
+                        if (isColor(pixels[iW1], 252, 254, 254) &&
+                            isColor(pixels[iW2], 252, 254, 254) &&
+                            isColor(pixels[iW3], 252, 254, 254) &&
+                            (isColor(pixels[iLPre], 42, 48, 78) || isColor(pixels[iLPre], 28, 26, 48)) &&
+                            isColor(pixels[iMid], 102, 114, 145) &&
+                            (isColor(pixels[iRPost], 42, 48, 78) || isColor(pixels[iRPost], 28, 26, 48))
+                        ) {
+                            pixels[iW1] = Color.argb(255, 255, 255, 255)
+                            pixels[iW2] = Color.argb(255, 255, 255, 255)
+                            pixels[iW3] = Color.argb(255, 255, 255, 255)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun isColor(pixel: Int, r: Int, g: Int, b: Int): Boolean =
+        Color.red(pixel) == r && Color.green(pixel) == g && Color.blue(pixel) == b
 
     private fun colorDist(a: IntArray, b: IntArray): Double =
         sqrt(((a[0] - b[0]).toLong() * (a[0] - b[0]) +
