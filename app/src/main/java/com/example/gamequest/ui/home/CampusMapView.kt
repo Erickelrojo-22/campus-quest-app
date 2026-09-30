@@ -153,9 +153,9 @@ fun CampusMapView(
     // Instanciar algunos NPCs
     val npcs = remember {
         listOf(
-            NpcState(1, CharacterSpecies.DRAKE, AvatarColor.FOREST_GREEN, AvatarColor.SUNSET_ORANGE, 0.40f, 0.50f),
-            NpcState(2, CharacterSpecies.PINK, AvatarColor.LAVENDER_PURPLE, AvatarColor.ROSE_PINK, 0.55f, 0.65f),
-            NpcState(3, CharacterSpecies.OWLET, AvatarColor.AQUA_CYAN, AvatarColor.SLATE_GRAY, 0.60f, 0.45f)
+            NpcState(1, CharacterSpecies.DRAKE, AvatarColor.EMERALD, AvatarColor.FIRE_ORANGE, 0.40f, 0.50f),
+            NpcState(2, CharacterSpecies.PINK, AvatarColor.LAVENDER, AvatarColor.PASTEL_PINK, 0.55f, 0.65f),
+            NpcState(3, CharacterSpecies.OWLET, AvatarColor.ICE_BLUE, AvatarColor.STEEL_GREY, 0.60f, 0.45f)
         )
     }
 
