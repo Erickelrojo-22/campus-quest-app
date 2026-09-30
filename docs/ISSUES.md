@@ -32,6 +32,8 @@ tenga remoto en GitHub. Formato pensado para migrarse 1 a 1 con
 - [x] **Visualización de carrera y correo en el perfil.**
   `ProfileScreen.kt`: ahora muestra el correo institucional, carrera,
   nivel del usuario y puntaje acumulado con estilo retro.
+- [x] **Configuración de correo institucional en Git.**
+  Actualizada la configuración local y global de Git con `e1312842246@live.uleam.edu.ec` y usuario `JhonnyCM` para vincular correctamente los commits en GitHub.
 
 ## Pendientes
 
