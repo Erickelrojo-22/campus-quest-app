@@ -11,9 +11,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.example.gamequest.util.AvatarColor
 import com.example.gamequest.util.CharacterSpecies
 import com.example.gamequest.util.SpriteColorEngine
-import com.example.gamequest.util.SpriteColorEngine.CharacterColor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -36,25 +36,31 @@ typealias DudeAnimation = CharacterAnimation
 
 /**
  * Composable universal para renderizar cualquier especie de personaje (Dude, Pink, Owlet)
- * con animación continua y palette swap en tiempo real.
+ * con animación continua y palette swap dual en tiempo real.
  */
 @Composable
 fun CharacterSprite(
-    species: CharacterSpecies     = CharacterSpecies.DUDE,
-    animation: CharacterAnimation = CharacterAnimation.IDLE,
-    color: CharacterColor         = CharacterColor.BLUE_ORIGINAL,
-    size: Dp                      = 64.dp,
-    loop: Boolean                 = true,
-    modifier: Modifier            = Modifier,
+    species: CharacterSpecies       = CharacterSpecies.DUDE,
+    animation: CharacterAnimation   = CharacterAnimation.IDLE,
+    primaryColor: AvatarColor       = AvatarColor.COBALT_BLUE,
+    secondaryColor: AvatarColor     = AvatarColor.RUBY_RED,
+    size: Dp                        = 64.dp,
+    loop: Boolean                   = true,
+    modifier: Modifier              = Modifier,
 ) {
     val context = LocalContext.current
     val frameDurationMs = (1000f / animation.fps).toInt()
 
-    var frames by remember(species, animation, color) { mutableStateOf<List<ImageBitmap>>(emptyList()) }
-    LaunchedEffect(species, animation, color) {
+    var frames by remember(species, animation, primaryColor, secondaryColor) {
+        mutableStateOf<List<ImageBitmap>>(emptyList())
+    }
+    LaunchedEffect(species, animation, primaryColor, secondaryColor) {
         frames = withContext(Dispatchers.Default) {
             (0 until animation.frameCount).map { i ->
-                SpriteColorEngine.getFrame(context, species, animation.filename, color, i)
+                SpriteColorEngine.getFrame(
+                    context, species, animation.filename,
+                    primaryColor, secondaryColor, i
+                )
             }
         }
     }
@@ -97,19 +103,21 @@ fun CharacterSprite(
 /** Alias retrocompatible con llamadas existentes de DudeSprite */
 @Composable
 fun DudeSprite(
-    animation: CharacterAnimation = CharacterAnimation.IDLE,
-    color: CharacterColor         = CharacterColor.BLUE_ORIGINAL,
-    species: CharacterSpecies     = CharacterSpecies.DUDE,
-    size: Dp                      = 64.dp,
-    loop: Boolean                 = true,
-    modifier: Modifier            = Modifier,
+    animation: CharacterAnimation   = CharacterAnimation.IDLE,
+    primaryColor: AvatarColor       = AvatarColor.COBALT_BLUE,
+    secondaryColor: AvatarColor     = AvatarColor.RUBY_RED,
+    species: CharacterSpecies       = CharacterSpecies.DUDE,
+    size: Dp                        = 64.dp,
+    loop: Boolean                   = true,
+    modifier: Modifier              = Modifier,
 ) {
     CharacterSprite(
-        species   = species,
-        animation = animation,
-        color     = color,
-        size      = size,
-        loop      = loop,
-        modifier  = modifier,
+        species        = species,
+        animation      = animation,
+        primaryColor   = primaryColor,
+        secondaryColor = secondaryColor,
+        size           = size,
+        loop           = loop,
+        modifier       = modifier,
     )
 }

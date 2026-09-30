@@ -14,166 +14,264 @@ import kotlin.math.sqrt
 enum class CharacterSpecies(
     val label: String,
     val folder: String,
+    /** Nombre legible de la zona primaria (cuerpo / capucha / pelaje). */
+    val primaryZoneLabel: String,
+    /** Nombre legible de la zona secundaria (pañuelo / rostro / vientre). */
+    val secondaryZoneLabel: String,
 ) {
-    DUDE(label = "Dude", folder = "dude"),
-    PINK(label = "Pink", folder = "pink"),
-    OWLET(label = "Owlet", folder = "owlet"),
+    DUDE(
+        label = "Dude",
+        folder = "dude",
+        primaryZoneLabel = "Cuerpo",
+        secondaryZoneLabel = "Pañuelo",
+    ),
+    PINK(
+        label = "Pink",
+        folder = "pink",
+        primaryZoneLabel = "Pelaje",
+        secondaryZoneLabel = "Vientre",
+    ),
+    OWLET(
+        label = "Owlet",
+        folder = "owlet",
+        primaryZoneLabel = "Capucha",
+        secondaryZoneLabel = "Rostro",
+    ),
+}
+
+/**
+ * Paleta de 16 colores pixel-art con rampas de sombreado (light → mid → dark → deep).
+ *
+ * Cada color se usa tanto para la zona primaria como la secundaria del avatar.
+ * El campo [preview] es un ARGB compacto para la miniatura de selector de la UI.
+ */
+enum class AvatarColor(
+    val label: String,
+    val preview: Int,
+    val light: Int,
+    val mid: Int,
+    val dark: Int,
+    val deep: Int,
+) {
+    COBALT_BLUE(
+        label   = "Cobalto",
+        preview = 0xFF0696DB.toInt(),
+        light   = 0xFF0FEFFB.toInt(),
+        mid     = 0xFF0696DB.toInt(),
+        dark    = 0xFF03396B.toInt(),
+        deep    = 0xFF021E3C.toInt(),
+    ),
+    ICE_BLUE(
+        label   = "Celeste",
+        preview = 0xFF7EC8E3.toInt(),
+        light   = 0xFFB8E8F5.toInt(),
+        mid     = 0xFF7EC8E3.toInt(),
+        dark    = 0xFF3D8EAF.toInt(),
+        deep    = 0xFF1E5A73.toInt(),
+    ),
+    EMERALD(
+        label   = "Esmeralda",
+        preview = 0xFF23B437.toInt(),
+        light   = 0xFF50F064.toInt(),
+        mid     = 0xFF23B437.toInt(),
+        dark    = 0xFF14691E.toInt(),
+        deep    = 0xFF0A370F.toInt(),
+    ),
+    LIME(
+        label   = "Lima",
+        preview = 0xFF8CD43C.toInt(),
+        light   = 0xFFCCFF66.toInt(),
+        mid     = 0xFF8CD43C.toInt(),
+        dark    = 0xFF4E8C14.toInt(),
+        deep    = 0xFF2D5508.toInt(),
+    ),
+    RUBY_RED(
+        label   = "Rubí",
+        preview = 0xFFC82828.toInt(),
+        light   = 0xFFFF5F5F.toInt(),
+        mid     = 0xFFC82828.toInt(),
+        dark    = 0xFF871616.toInt(),
+        deep    = 0xFF4B0C0C.toInt(),
+    ),
+    CRIMSON(
+        label   = "Carmesí",
+        preview = 0xFF8C1443.toInt(),
+        light   = 0xFFD24678.toInt(),
+        mid     = 0xFF8C1443.toInt(),
+        dark    = 0xFF550A2D.toInt(),
+        deep    = 0xFF370618.toInt(),
+    ),
+    FIRE_ORANGE(
+        label   = "Fuego",
+        preview = 0xFFE16E14.toInt(),
+        light   = 0xFFFFAA41.toInt(),
+        mid     = 0xFFE16E14.toInt(),
+        dark    = 0xFF964108.toInt(),
+        deep    = 0xFF552305.toInt(),
+    ),
+    AMBER(
+        label   = "Ámbar",
+        preview = 0xFFDCA01E.toInt(),
+        light   = 0xFFFFC846.toInt(),
+        mid     = 0xFFDCA01E.toInt(),
+        dark    = 0xFF8C6E0A.toInt(),
+        deep    = 0xFF554205.toInt(),
+    ),
+    SUN_YELLOW(
+        label   = "Sol",
+        preview = 0xFFE1BE0F.toInt(),
+        light   = 0xFFFFEB3C.toInt(),
+        mid     = 0xFFE1BE0F.toInt(),
+        dark    = 0xFF9B7D08.toInt(),
+        deep    = 0xFF554605.toInt(),
+    ),
+    ROYAL_PURPLE(
+        label   = "Púrpura",
+        preview = 0xFF872DD7.toInt(),
+        light   = 0xFFC364FF.toInt(),
+        mid     = 0xFF872DD7.toInt(),
+        dark    = 0xFF55168C.toInt(),
+        deep    = 0xFF300A50.toInt(),
+    ),
+    LAVENDER(
+        label   = "Lavanda",
+        preview = 0xFFAA82D2.toInt(),
+        light   = 0xFFD4B4F0.toInt(),
+        mid     = 0xFFAA82D2.toInt(),
+        dark    = 0xFF6E4696.toInt(),
+        deep    = 0xFF3C1E5A.toInt(),
+    ),
+    PASTEL_PINK(
+        label   = "Rosa",
+        preview = 0xFFEB55A5.toInt(),
+        light   = 0xFFFF9FD7.toInt(),
+        mid     = 0xFFEB55A5.toInt(),
+        dark    = 0xFFA02369.toInt(),
+        deep    = 0xFF5A123C.toInt(),
+    ),
+    NEON_MAGENTA(
+        label   = "Magenta",
+        preview = 0xFFE6289B.toInt(),
+        light   = 0xFFFF6EC7.toInt(),
+        mid     = 0xFFE6289B.toInt(),
+        dark    = 0xFF9B1464.toInt(),
+        deep    = 0xFF5A0A3C.toInt(),
+    ),
+    SNOW_WHITE(
+        label   = "Nieve",
+        preview = 0xFFE6E6F0.toInt(),
+        light   = 0xFFF5F5FF.toInt(),
+        mid     = 0xFFE6E6F0.toInt(),
+        dark    = 0xFFBEBECE.toInt(),
+        deep    = 0xFF8C8CA0.toInt(),
+    ),
+    STEEL_GREY(
+        label   = "Acero",
+        preview = 0xFF828296.toInt(),
+        light   = 0xFFC8C8D7.toInt(),
+        mid     = 0xFF828296.toInt(),
+        dark    = 0xFF464655.toInt(),
+        deep    = 0xFF282832.toInt(),
+    ),
+    OBSIDIAN(
+        label   = "Obsidiana",
+        preview = 0xFF3C3C50.toInt(),
+        light   = 0xFF6E6E82.toInt(),
+        mid     = 0xFF3C3C50.toInt(),
+        dark    = 0xFF1E1E28.toInt(),
+        deep    = 0xFF0F0F14.toInt(),
+    ),
 }
 
 /**
  * Motor unificado de palette swap pixel-a-pixel para todos los personajes.
  *
- * Mapea las paletas originales de cada monstruo (Dude, Pink, Owlet) hacia
- * las 8 variantes de color en tiempo real sin duplicar archivos.
+ * Soporta **personalización dual**: zona primaria (cuerpo/capucha/pelaje)
+ * y zona secundaria (pañuelo/rostro/vientre) con colores independientes.
  */
 object SpriteColorEngine {
 
     // ── Paletas originales por especie ─────────────────────────────────────
-    // Dude
+    // Dude - Zona primaria: cuerpo
     private val DUDE_BODY_DARK    = intArrayOf(  3,  57, 107)
     private val DUDE_BODY_MID     = intArrayOf(  6, 150, 219)
     private val DUDE_BODY_LIGHT   = intArrayOf( 15, 239, 251)
+    // Dude - Zona secundaria: pañuelo
     private val DUDE_ACCENT_DARK  = intArrayOf(195,  36,  47)
     private val DUDE_ACCENT_LIGHT = intArrayOf(231,  51,  59)
+    // Dude - Protegidos
     private val DUDE_OUTLINE      = intArrayOf(  4,  25,  63)
     private val DUDE_WHITE        = intArrayOf(252, 254, 254)
 
-    // Pink
+    // Pink - Zona primaria: pelaje exterior
     private val PINK_BODY_DARK    = intArrayOf(120,  11, 247)
     private val PINK_BODY_MID     = intArrayOf(216,  64, 251)
+    // Pink - Zona secundaria: vientre / cara
     private val PINK_BODY_LIGHT   = intArrayOf(244, 137, 246)
+    // Pink - Protegidos
     private val PINK_OUTLINE      = intArrayOf(  4,  25,  63)
     private val PINK_WHITE        = intArrayOf(252, 254, 254)
 
-    // Owlet
-    private val OWLET_BODY_LIGHT  = intArrayOf(252, 254, 254) // Plumaje exterior y capucha
-    private val OWLET_HOOD_SHADE  = intArrayOf(148, 160, 186) // Sombra de transición capucha
-    private val OWLET_FACE_MID    = intArrayOf(102, 114, 145) // Cara y manto derecho
-    private val OWLET_CLOAK_DARK  = intArrayOf( 42,  48,  78) // Sombra profunda manto
-    private val OWLET_OUTLINE_1   = intArrayOf( 28,  18,  27) // Contorno oscuro y pupilas
-    private val OWLET_OUTLINE_2   = intArrayOf( 28,  26,  48) // Contorno posterior
-    private val OWLET_BEAK_LIGHT  = intArrayOf(253, 162,  22) // Pico / amuleto claro
-    private val OWLET_BEAK_DARK   = intArrayOf(252,  80,   3) // Pico / amuleto oscuro
-    private val OWLET_COLLAR      = intArrayOf( 94,  44,  41) // Collar marrón
-    private val OWLET_EYE_WHITE   = intArrayOf(255, 255, 255) // Ojos blancos
+    // Owlet - Zona primaria: capucha y plumaje exterior
+    private val OWLET_BODY_LIGHT  = intArrayOf(252, 254, 254)
+    private val OWLET_HOOD_SHADE  = intArrayOf(148, 160, 186)
+    // Owlet - Zona secundaria: rostro y manto interior
+    private val OWLET_FACE_MID    = intArrayOf(102, 114, 145)
+    private val OWLET_CLOAK_DARK  = intArrayOf( 42,  48,  78)
+    // Owlet - Protegidos
+    private val OWLET_OUTLINE_1   = intArrayOf( 28,  18,  27)
+    private val OWLET_OUTLINE_2   = intArrayOf( 28,  26,  48)
+    private val OWLET_BEAK_LIGHT  = intArrayOf(253, 162,  22)
+    private val OWLET_BEAK_DARK   = intArrayOf(252,  80,   3)
+    private val OWLET_COLLAR      = intArrayOf( 94,  44,  41)
 
     private const val TOLERANCE = 45.0
 
-    // ── Variantes de color disponibles ────────────────────────────────────
+    // ── Retrocompatibilidad: CharacterColor se mapea a AvatarColor ────────
+    /**
+     * Mapeo de los 8 colores originales a AvatarColor para migración transparente.
+     */
+    @Deprecated("Usar AvatarColor directamente", ReplaceWith("AvatarColor"))
     enum class CharacterColor(
         val label: String,
-        val bodyDark:    Int,
-        val bodyMid:     Int,
-        val bodyLight:   Int,
-        val bodyDeep:    Int,
-        val accentDark:  Int,
-        val accentLight: Int,
+        val primary: AvatarColor,
+        val secondary: AvatarColor,
     ) {
-        BLUE_ORIGINAL(
-            label        = "Azul",
-            bodyDark     = 0xFF03396B.toInt(),
-            bodyMid      = 0xFF0696DB.toInt(),
-            bodyLight    = 0xFF0FEFFB.toInt(),
-            bodyDeep     = 0xFF021E3C.toInt(),
-            accentDark   = 0xFFC3242F.toInt(),
-            accentLight  = 0xFFE7333B.toInt(),
-        ),
-        GREEN(
-            label        = "Verde",
-            bodyDark     = 0xFF14691E.toInt(),
-            bodyMid      = 0xFF23B437.toInt(),
-            bodyLight    = 0xFF50F064.toInt(),
-            bodyDeep     = 0xFF0A370F.toInt(),
-            accentDark   = 0xFFB45A0A.toInt(),
-            accentLight  = 0xFFE68214.toInt(),
-        ),
-        RED(
-            label        = "Rojo",
-            bodyDark     = 0xFF871616.toInt(),
-            bodyMid      = 0xFFC82828.toInt(),
-            bodyLight    = 0xFFFF5F5F.toInt(),
-            bodyDeep     = 0xFF4B0C0C.toInt(),
-            accentDark   = 0xFF0F3C78.toInt(),
-            accentLight  = 0xFF196EC8.toInt(),
-        ),
-        PURPLE(
-            label        = "Morado",
-            bodyDark     = 0xFF55168C.toInt(),
-            bodyMid      = 0xFF872DD7.toInt(),
-            bodyLight    = 0xFFC364FF.toInt(),
-            bodyDeep     = 0xFF300A50.toInt(),
-            accentDark   = 0xFFC8910A.toInt(),
-            accentLight  = 0xFFF5BE1E.toInt(),
-        ),
-        ORANGE(
-            label        = "Naranja",
-            bodyDark     = 0xFF964108.toInt(),
-            bodyMid      = 0xFFE16E14.toInt(),
-            bodyLight    = 0xFFFFAA41.toInt(),
-            bodyDeep     = 0xFF552305.toInt(),
-            accentDark   = 0xFF194BA0.toInt(),
-            accentLight  = 0xFF2D78DC.toInt(),
-        ),
-        PINK(
-            label        = "Rosa",
-            bodyDark     = 0xFFA02369.toInt(),
-            bodyMid      = 0xFFEB55A5.toInt(),
-            bodyLight    = 0xFFFF9FD7.toInt(),
-            bodyDeep     = 0xFF5A123C.toInt(),
-            accentDark   = 0xFF1464AA.toInt(),
-            accentLight  = 0xFF28A0E6.toInt(),
-        ),
-        YELLOW(
-            label        = "Amarillo",
-            bodyDark     = 0xFF9B7D08.toInt(),
-            bodyMid      = 0xFFE1BE0F.toInt(),
-            bodyLight    = 0xFFFFEB3C.toInt(),
-            bodyDeep     = 0xFF554605.toInt(),
-            accentDark   = 0xFF321E82.toInt(),
-            accentLight  = 0xFF5A3CC8.toInt(),
-        ),
-        GREY(
-            label        = "Gris",
-            bodyDark     = 0xFF464655.toInt(),
-            bodyMid      = 0xFF828296.toInt(),
-            bodyLight    = 0xFFC8C8D7.toInt(),
-            bodyDeep     = 0xFF282832.toInt(),
-            accentDark   = 0xFF642808.toInt(),
-            accentLight  = 0xFFA54614.toInt(),
-        ),
+        BLUE_ORIGINAL("Azul",      AvatarColor.COBALT_BLUE,   AvatarColor.RUBY_RED),
+        GREEN        ("Verde",     AvatarColor.EMERALD,       AvatarColor.FIRE_ORANGE),
+        RED          ("Rojo",      AvatarColor.RUBY_RED,      AvatarColor.COBALT_BLUE),
+        PURPLE       ("Morado",    AvatarColor.ROYAL_PURPLE,  AvatarColor.AMBER),
+        ORANGE       ("Naranja",   AvatarColor.FIRE_ORANGE,   AvatarColor.COBALT_BLUE),
+        PINK         ("Rosa",      AvatarColor.PASTEL_PINK,   AvatarColor.ICE_BLUE),
+        YELLOW       ("Amarillo",  AvatarColor.SUN_YELLOW,    AvatarColor.ROYAL_PURPLE),
+        GREY         ("Gris",      AvatarColor.STEEL_GREY,    AvatarColor.CRIMSON),
     }
 
     // ── Cache de bitmaps procesados ────────────────────────────────────────
-    private val cache = HashMap<Pair<String, CharacterColor>, Bitmap>()
+    private data class CacheKey(val path: String, val primary: AvatarColor, val secondary: AvatarColor)
+    private val cache = HashMap<CacheKey, Bitmap>()
 
     /**
-     * Carga un sprite sheet desde assets según la especie y archivo.
+     * Carga un sprite sheet con doble color personalizado.
      */
-    fun getBitmap(context: Context, species: CharacterSpecies, filename: String, color: CharacterColor): Bitmap {
+    fun getBitmap(
+        context: Context,
+        species: CharacterSpecies,
+        filename: String,
+        primaryColor: AvatarColor,
+        secondaryColor: AvatarColor,
+    ): Bitmap {
         val assetPath = "sprites/${species.folder}/$filename"
-        val key = Pair(assetPath, color)
+        val key = CacheKey(assetPath, primaryColor, secondaryColor)
         cache[key]?.let { return it }
 
         val original = BitmapFactory.decodeStream(
             context.assets.open(assetPath)
         ).copy(Bitmap.Config.ARGB_8888, true)
 
-        val result = applyPaletteSwap(original, species, color)
+        val result = applyDualPaletteSwap(original, species, primaryColor, secondaryColor)
         cache[key] = result
         return result
-    }
-
-    /**
-     * Compatibilidad directa con rutas completas de asset.
-     */
-    fun getBitmap(context: Context, assetPath: String, color: CharacterColor): Bitmap {
-        val species = when {
-            assetPath.contains("pink")  -> CharacterSpecies.PINK
-            assetPath.contains("owlet") -> CharacterSpecies.OWLET
-            else                        -> CharacterSpecies.DUDE
-        }
-        val filename = assetPath.substringAfterLast("/")
-        return getBitmap(context, species, filename, color)
     }
 
     /** Devuelve el frame [frameIndex] recortado como ImageBitmap. */
@@ -181,37 +279,26 @@ object SpriteColorEngine {
         context: Context,
         species: CharacterSpecies,
         filename: String,
-        color: CharacterColor,
+        primaryColor: AvatarColor,
+        secondaryColor: AvatarColor,
         frameIndex: Int,
-        frameW: Int = 32
+        frameW: Int = 32,
     ): ImageBitmap {
-        val sheet = getBitmap(context, species, filename, color)
+        val sheet = getBitmap(context, species, filename, primaryColor, secondaryColor)
         val x = frameIndex * frameW
         return Bitmap.createBitmap(sheet, x.coerceAtMost(sheet.width - frameW), 0, frameW, sheet.height)
             .asImageBitmap()
     }
 
-    /** Sobrecarga por assetPath para compatibilidad */
-    fun getFrame(
-        context: Context,
-        assetPath: String,
-        color: CharacterColor,
-        frameIndex: Int,
-        frameW: Int = 32
-    ): ImageBitmap {
-        val species = when {
-            assetPath.contains("pink")  -> CharacterSpecies.PINK
-            assetPath.contains("owlet") -> CharacterSpecies.OWLET
-            else                        -> CharacterSpecies.DUDE
-        }
-        val filename = assetPath.substringAfterLast("/")
-        return getFrame(context, species, filename, color, frameIndex, frameW)
-    }
-
     fun clearCache() = cache.clear()
 
-    // ── Motor interno de Palette Swap ─────────────────────────────────────
-    private fun applyPaletteSwap(src: Bitmap, species: CharacterSpecies, variant: CharacterColor): Bitmap {
+    // ── Motor interno de Palette Swap dual ─────────────────────────────────
+    private fun applyDualPaletteSwap(
+        src: Bitmap,
+        species: CharacterSpecies,
+        primary: AvatarColor,
+        secondary: AvatarColor,
+    ): Bitmap {
         val w = src.width; val h = src.height
         val pixels = IntArray(w * h)
         src.getPixels(pixels, 0, w, 0, 0, w, h)
@@ -220,24 +307,31 @@ object SpriteColorEngine {
             tagOwletEyes(pixels, w, h)
         }
 
-        val swapTable = when (species) {
+        // Construir tabla de swap dual: cada entrada es (colorOriginal → colorNuevo)
+        val swapTable: List<Pair<IntArray, Int>> = when (species) {
             CharacterSpecies.DUDE -> listOf(
-                DUDE_BODY_DARK    to variant.bodyDark,
-                DUDE_BODY_MID     to variant.bodyMid,
-                DUDE_BODY_LIGHT   to variant.bodyLight,
-                DUDE_ACCENT_DARK  to variant.accentDark,
-                DUDE_ACCENT_LIGHT to variant.accentLight,
+                // Zona primaria: cuerpo
+                DUDE_BODY_DARK    to primary.dark,
+                DUDE_BODY_MID     to primary.mid,
+                DUDE_BODY_LIGHT   to primary.light,
+                // Zona secundaria: pañuelo
+                DUDE_ACCENT_DARK  to secondary.dark,
+                DUDE_ACCENT_LIGHT to secondary.mid,
             )
             CharacterSpecies.PINK -> listOf(
-                PINK_BODY_DARK  to variant.bodyDark,
-                PINK_BODY_MID   to variant.bodyMid,
-                PINK_BODY_LIGHT to variant.bodyLight,
+                // Zona primaria: pelaje exterior (oscuro + medio)
+                PINK_BODY_DARK  to primary.dark,
+                PINK_BODY_MID   to primary.mid,
+                // Zona secundaria: vientre y cara (parte clara)
+                PINK_BODY_LIGHT to secondary.mid,
             )
             CharacterSpecies.OWLET -> listOf(
-                OWLET_BODY_LIGHT  to variant.bodyLight,
-                OWLET_HOOD_SHADE  to variant.bodyMid,
-                OWLET_FACE_MID    to variant.bodyDark,
-                OWLET_CLOAK_DARK  to variant.bodyDeep,
+                // Zona primaria: capucha y plumaje exterior
+                OWLET_BODY_LIGHT  to primary.light,
+                OWLET_HOOD_SHADE  to primary.mid,
+                // Zona secundaria: rostro y manto interior
+                OWLET_FACE_MID    to secondary.dark,
+                OWLET_CLOAK_DARK  to secondary.deep,
             )
         }
 
@@ -256,7 +350,7 @@ object SpriteColorEngine {
                     if (colorDist(rgb, PINK_WHITE)   < 20.0) continue
                 }
                 CharacterSpecies.OWLET -> {
-                    // Ojos blancos protegidos
+                    // Ojos blancos protegidos (pre-etiquetados como 255,255,255)
                     if (rgb[0] == 255 && rgb[1] == 255 && rgb[2] == 255) continue
                     if (colorDist(rgb, OWLET_OUTLINE_1)  < 15.0) continue
                     if (colorDist(rgb, OWLET_OUTLINE_2)  < 15.0) continue
@@ -283,7 +377,7 @@ object SpriteColorEngine {
     }
 
     /**
-     * Detecta y protege los píxeles de los ojos del Owlet Monster si no están pre-etiquetados con (255, 255, 255).
+     * Detecta y protege los píxeles de los ojos del Owlet Monster.
      */
     private fun tagOwletEyes(pixels: IntArray, w: Int, h: Int) {
         val numFrames = w / 32

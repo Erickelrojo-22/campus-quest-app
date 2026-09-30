@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.gamequest.util.AvatarColor
 import com.example.gamequest.util.CharacterSpecies
 import com.example.gamequest.util.SpriteColorEngine.CharacterColor
 import kotlinx.coroutines.flow.Flow
@@ -23,8 +24,14 @@ data class UserPreferences(
     val campusPorDefecto: String = "Manta",
     val descargarMapaSinConexion: Boolean = true,
     val usuarioActivoId: Int = -1,
-    val characterColor: CharacterColor = CharacterColor.BLUE_ORIGINAL,
     val characterSpecies: CharacterSpecies = CharacterSpecies.DUDE,
+    /** Color primario del avatar (cuerpo / capucha / pelaje). */
+    val avatarPrimaryColor: AvatarColor = AvatarColor.COBALT_BLUE,
+    /** Color secundario del avatar (pañuelo / rostro / vientre). */
+    val avatarSecondaryColor: AvatarColor = AvatarColor.RUBY_RED,
+    // Retrocompatibilidad — se mantiene pero ya no se usa directamente
+    @Deprecated("Usar avatarPrimaryColor / avatarSecondaryColor")
+    val characterColor: CharacterColor = CharacterColor.BLUE_ORIGINAL,
 )
 
 /**
@@ -46,9 +53,26 @@ class UserPreferencesRepository(private val context: Context) {
         val USUARIO_ACTIVO_ID = intPreferencesKey("usuario_activo_id")
         val CHARACTER_COLOR = stringPreferencesKey("character_color")
         val CHARACTER_SPECIES = stringPreferencesKey("character_species")
+        val AVATAR_PRIMARY_COLOR = stringPreferencesKey("avatar_primary_color")
+        val AVATAR_SECONDARY_COLOR = stringPreferencesKey("avatar_secondary_color")
     }
 
     val preferencias: Flow<UserPreferences> = context.dataStore.data.map { prefs ->
+        // Migrar del antiguo CharacterColor si no hay AvatarColor guardado aún
+        @Suppress("DEPRECATION")
+        val legacyColor = prefs[Keys.CHARACTER_COLOR]
+            ?.let { runCatching { CharacterColor.valueOf(it) }.getOrNull() }
+            ?: CharacterColor.BLUE_ORIGINAL
+
+        val primaryColor = prefs[Keys.AVATAR_PRIMARY_COLOR]
+            ?.let { runCatching { AvatarColor.valueOf(it) }.getOrNull() }
+            ?: legacyColor.primary  // migración automática
+
+        val secondaryColor = prefs[Keys.AVATAR_SECONDARY_COLOR]
+            ?.let { runCatching { AvatarColor.valueOf(it) }.getOrNull() }
+            ?: legacyColor.secondary  // migración automática
+
+        @Suppress("DEPRECATION")
         UserPreferences(
             temaOscuro = prefs[Keys.TEMA_OSCURO] ?: true,
             tamanoTexto = prefs[Keys.TAMANO_TEXTO] ?: "Mediano",
@@ -59,12 +83,12 @@ class UserPreferencesRepository(private val context: Context) {
             campusPorDefecto = prefs[Keys.CAMPUS_DEFECTO] ?: "Manta",
             descargarMapaSinConexion = prefs[Keys.DESCARGAR_MAPA] ?: true,
             usuarioActivoId = prefs[Keys.USUARIO_ACTIVO_ID] ?: -1,
-            characterColor = prefs[Keys.CHARACTER_COLOR]
-                ?.let { runCatching { CharacterColor.valueOf(it) }.getOrNull() }
-                ?: CharacterColor.BLUE_ORIGINAL,
             characterSpecies = prefs[Keys.CHARACTER_SPECIES]
                 ?.let { runCatching { CharacterSpecies.valueOf(it) }.getOrNull() }
                 ?: CharacterSpecies.DUDE,
+            avatarPrimaryColor = primaryColor,
+            avatarSecondaryColor = secondaryColor,
+            characterColor = legacyColor,
         )
     }
 
@@ -100,12 +124,23 @@ class UserPreferencesRepository(private val context: Context) {
         context.dataStore.edit { it[Keys.USUARIO_ACTIVO_ID] = id }
     }
 
-    suspend fun setCharacterColor(color: CharacterColor) {
-        context.dataStore.edit { it[Keys.CHARACTER_COLOR] = color.name }
-    }
-
     suspend fun setCharacterSpecies(species: CharacterSpecies) {
         context.dataStore.edit { it[Keys.CHARACTER_SPECIES] = species.name }
+    }
+
+    /** Guarda el color primario (cuerpo / capucha / pelaje). */
+    suspend fun setAvatarPrimaryColor(color: AvatarColor) {
+        context.dataStore.edit { it[Keys.AVATAR_PRIMARY_COLOR] = color.name }
+    }
+
+    /** Guarda el color secundario (pañuelo / rostro / vientre). */
+    suspend fun setAvatarSecondaryColor(color: AvatarColor) {
+        context.dataStore.edit { it[Keys.AVATAR_SECONDARY_COLOR] = color.name }
+    }
+
+    @Deprecated("Usar setAvatarPrimaryColor / setAvatarSecondaryColor")
+    suspend fun setCharacterColor(color: CharacterColor) {
+        context.dataStore.edit { it[Keys.CHARACTER_COLOR] = color.name }
     }
 
     suspend fun cerrarSesion() {

@@ -34,11 +34,9 @@ import androidx.compose.ui.unit.dp
 import com.example.gamequest.data.local.entity.PuntoInteresEntity
 import com.example.gamequest.ui.components.CharacterAnimation
 import com.example.gamequest.ui.components.CharacterSprite
-import com.example.gamequest.ui.components.DudeAnimation
-import com.example.gamequest.ui.components.DudeSprite
 import com.example.gamequest.ui.theme.AmberAccent
+import com.example.gamequest.util.AvatarColor
 import com.example.gamequest.util.CharacterSpecies
-import com.example.gamequest.util.SpriteColorEngine.CharacterColor
 import kotlinx.coroutines.launch
 import kotlin.math.hypot
 import kotlin.math.roundToInt
@@ -69,7 +67,8 @@ fun CampusMapView(
     completados: Set<Int>,
     onPuntoClick: (PuntoInteresEntity) -> Unit,
     modifier: Modifier = Modifier,
-    characterColor: CharacterColor = CharacterColor.BLUE_ORIGINAL,
+    primaryColor: AvatarColor = AvatarColor.COBALT_BLUE,
+    secondaryColor: AvatarColor = AvatarColor.RUBY_RED,
     characterSpecies: CharacterSpecies = CharacterSpecies.DUDE,
     mapAssetPath: String = "maps/campus_map_uleam.png",
 ) {
@@ -292,10 +291,11 @@ fun CampusMapView(
             contentAlignment = Alignment.Center
         ) {
             CharacterSprite(
-                species   = characterSpecies,
-                animation = if (isWalking) CharacterAnimation.WALK else CharacterAnimation.IDLE,
-                color     = characterColor,
-                size      = spriteSizeDp,
+                species        = characterSpecies,
+                animation      = if (isWalking) CharacterAnimation.WALK else CharacterAnimation.IDLE,
+                primaryColor   = primaryColor,
+                secondaryColor = secondaryColor,
+                size           = spriteSizeDp,
             )
         }
 

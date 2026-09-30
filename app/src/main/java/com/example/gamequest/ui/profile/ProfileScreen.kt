@@ -1,8 +1,6 @@
 package com.example.gamequest.ui.profile
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -13,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,6 +26,7 @@ import com.example.gamequest.data.local.entity.Rol
 import com.example.gamequest.data.preferences.UserPreferencesRepository
 import com.example.gamequest.ui.common.CampusBottomBar
 import com.example.gamequest.ui.common.SessionViewModel
+import com.example.gamequest.util.AvatarColor
 import com.example.gamequest.util.LocalSoundManager
 import com.example.gamequest.util.SoundEffect
 import com.example.gamequest.ui.components.CharacterAnimation
@@ -35,20 +35,7 @@ import com.example.gamequest.ui.navigation.Routes
 import com.example.gamequest.ui.theme.AmberAccent
 import com.example.gamequest.ui.theme.InstitutionalRed
 import com.example.gamequest.util.CharacterSpecies
-import com.example.gamequest.util.SpriteColorEngine.CharacterColor
 import kotlinx.coroutines.launch
-
-/** Convierte el nombre del color a un Color de Compose para la UI del selector. */
-private fun CharacterColor.toComposeColor(): Color = when (this) {
-    CharacterColor.BLUE_ORIGINAL -> Color(0xFF0696DB)
-    CharacterColor.GREEN         -> Color(0xFF23B437)
-    CharacterColor.RED           -> Color(0xFFBE2323)
-    CharacterColor.PURPLE        -> Color(0xFF7828C8)
-    CharacterColor.ORANGE        -> Color(0xFFD76414)
-    CharacterColor.PINK          -> Color(0xFFE650A0)
-    CharacterColor.YELLOW        -> Color(0xFFD2B40F)
-    CharacterColor.GREY          -> Color(0xFF78788C)
-}
 
 @Composable
 fun ProfileScreen(
@@ -66,9 +53,14 @@ fun ProfileScreen(
     val prefs           by prefsRepo.preferencias.collectAsState(initial = null)
 
     val selectedSpecies = prefs?.characterSpecies ?: CharacterSpecies.DUDE
-    val selectedColor   = prefs?.characterColor ?: CharacterColor.BLUE_ORIGINAL
+    val primaryColor    = prefs?.avatarPrimaryColor ?: AvatarColor.COBALT_BLUE
+    val secondaryColor  = prefs?.avatarSecondaryColor ?: AvatarColor.RUBY_RED
+
     // Alternar IDLE/WALK al tocar el sprite
     var spriteAnim by remember { mutableStateOf(CharacterAnimation.IDLE) }
+
+    // Controlar visibilidad del editor de avatar
+    var showEditor by remember { mutableStateOf(false) }
 
     Scaffold(
         bottomBar = { CampusBottomBar(currentRoute = Routes.PROFILE, onNavigate = onNavigateTab) }
@@ -101,10 +93,11 @@ fun ProfileScreen(
                     contentAlignment = Alignment.Center,
                 ) {
                     CharacterSprite(
-                        species   = selectedSpecies,
-                        animation = spriteAnim,
-                        color     = selectedColor,
-                        size      = 72.dp,
+                        species        = selectedSpecies,
+                        animation      = spriteAnim,
+                        primaryColor   = primaryColor,
+                        secondaryColor = secondaryColor,
+                        size           = 72.dp,
                     )
                 }
 
@@ -146,110 +139,21 @@ fun ProfileScreen(
                 }
             }
 
-            // ── Personalización de personaje (Especie y Color) ──────────
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                shape = RoundedCornerShape(12.dp),
-            ) {
-                Column(Modifier.padding(16.dp)) {
-                    Text(
-                        "Personaje",
-                        fontWeight = FontWeight.Bold,
-                        style      = MaterialTheme.typography.titleSmall,
-                    )
-                    Text(
-                        "Elige tu héroe y personaliza su color",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(Modifier.height(12.dp))
-
-                    // Selector de especie (Dude, Pink, Owlet)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        CharacterSpecies.values().forEach { species ->
-                            val isSelected = species == selectedSpecies
-                            Surface(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .border(
-                                        width = if (isSelected) 2.dp else 1.dp,
-                                        color = if (isSelected) AmberAccent else MaterialTheme.colorScheme.outlineVariant,
-                                        shape = RoundedCornerShape(8.dp)
-                                    )
-                                    .clickable {
-                                        soundManager?.play(SoundEffect.CLICK)
-                                        scope.launch { prefsRepo.setCharacterSpecies(species) }
-                                    },
-                                color = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-                                        else MaterialTheme.colorScheme.surface,
-                                shape = RoundedCornerShape(8.dp),
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(vertical = 8.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                ) {
-                                    CharacterSprite(
-                                        species   = species,
-                                        animation = CharacterAnimation.IDLE,
-                                        color     = selectedColor,
-                                        size      = 38.dp,
-                                    )
-                                    Spacer(Modifier.height(4.dp))
-                                    Text(
-                                        text       = species.label,
-                                        style      = MaterialTheme.typography.labelSmall,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                        color      = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(Modifier.height(16.dp))
-                    Text(
-                        "Color",
-                        fontWeight = FontWeight.Bold,
-                        style      = MaterialTheme.typography.labelLarge,
-                    )
-                    Spacer(Modifier.height(10.dp))
-
-                    // Grid 4×2 de colores
-                    val colors = CharacterColor.values()
-                    for (row in 0 until 2) {
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                        ) {
-                            for (col in 0 until 4) {
-                                val idx = row * 4 + col
-                                if (idx >= colors.size) break
-                                val c = colors[idx]
-                                ColorDot(
-                                    color     = c.toComposeColor(),
-                                    label     = c.label,
-                                    selected  = c == selectedColor,
-                                    onClick   = {
-                                        soundManager?.play(SoundEffect.CLICK)
-                                        scope.launch { prefsRepo.setCharacterColor(c) }
-                                    },
-                                )
-                            }
-                        }
-                        if (row == 0) Spacer(Modifier.height(8.dp))
-                    }
-                }
-            }
-
             Spacer(Modifier.height(4.dp))
 
             // ── Opciones de perfil ───────────────────────────────────────
+
+            // Botón para abrir el editor de avatar
+            OpcionPerfil(
+                icono     = Icons.Filled.Palette,
+                titulo    = "Personalizar Avatar",
+                subtitulo = "Especie, colores y estilo",
+                onClick   = {
+                    soundManager?.play(SoundEffect.CLICK)
+                    showEditor = true
+                },
+            )
+
             OpcionPerfil(Icons.Filled.Settings, "Configuración", "Tema, notificaciones, idioma", onSettings)
 
             if (usuario?.rol == Rol.TUTOR) {
@@ -272,29 +176,23 @@ fun ProfileScreen(
             Spacer(Modifier.height(16.dp))
         }
     }
-}
 
-@Composable
-private fun ColorDot(
-    color: Color,
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            modifier = Modifier
-                .size(42.dp)
-                .clip(CircleShape)
-                .background(color)
-                .then(
-                    if (selected) Modifier.border(3.dp, Color.White, CircleShape)
-                    else Modifier.border(1.dp, Color.Gray.copy(alpha = 0.3f), CircleShape)
-                )
-                .clickable(onClick = onClick),
+    // ── Modal de edición de avatar ───────────────────────────────────────
+    if (showEditor) {
+        AvatarEditorSheet(
+            currentSpecies   = selectedSpecies,
+            currentPrimary   = primaryColor,
+            currentSecondary = secondaryColor,
+            onSave = { newSpecies, newPrimary, newSecondary ->
+                scope.launch {
+                    prefsRepo.setCharacterSpecies(newSpecies)
+                    prefsRepo.setAvatarPrimaryColor(newPrimary)
+                    prefsRepo.setAvatarSecondaryColor(newSecondary)
+                }
+                showEditor = false
+            },
+            onDismiss = { showEditor = false },
         )
-        Spacer(Modifier.height(2.dp))
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
