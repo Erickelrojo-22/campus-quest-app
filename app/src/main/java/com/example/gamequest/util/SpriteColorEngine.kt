@@ -37,6 +37,12 @@ enum class CharacterSpecies(
         primaryZoneLabel = "Capucha",
         secondaryZoneLabel = "Rostro",
     ),
+    DRAKE(
+        label = "Drake",
+        folder = "drake",
+        primaryZoneLabel = "Escamas",
+        secondaryZoneLabel = "Ojos / Fuego",
+    ),
 }
 
 /**
@@ -225,6 +231,21 @@ object SpriteColorEngine {
     private val OWLET_BEAK_DARK   = intArrayOf(252,  80,   3)
     private val OWLET_COLLAR      = intArrayOf( 94,  44,  41)
 
+    // Drake - Zona primaria: escamas del cuerpo
+    private val DRAKE_SCALES_DARK   = intArrayOf( 15, 105,  30)
+    private val DRAKE_SCALES_MID    = intArrayOf( 35, 180,  55)
+    private val DRAKE_SCALES_LIGHT  = intArrayOf( 80, 240, 100)
+    private val DRAKE_WING          = intArrayOf( 25, 140,  45)
+    // Drake - Zona secundaria: cuernos, ojos y llama
+    private val DRAKE_ACCENT_DARK   = intArrayOf(195,  50,  15)
+    private val DRAKE_ACCENT_MID    = intArrayOf(255, 140,  20)
+    private val DRAKE_ACCENT_LIGHT  = intArrayOf(255, 200,  50)
+    // Drake - Protegidos
+    private val DRAKE_OUTLINE       = intArrayOf(  4,  25,  63)
+    private val DRAKE_BELLY_LIGHT   = intArrayOf(250, 235, 185)
+    private val DRAKE_BELLY_DARK    = intArrayOf(215, 185, 135)
+    private val DRAKE_WHITE         = intArrayOf(255, 255, 255)
+
     private const val TOLERANCE = 45.0
 
     // ── Retrocompatibilidad: CharacterColor se mapea a AvatarColor ────────
@@ -360,7 +381,7 @@ object SpriteColorEngine {
             return result
         }
 
-        // Construir tabla de swap dual para Dude y Pink
+        // Construir tabla de swap dual para Dude, Pink y Drake
         val swapTable: List<Pair<IntArray, Int>> = when (species) {
             CharacterSpecies.DUDE -> listOf(
                 // Zona primaria: cuerpo
@@ -379,6 +400,17 @@ object SpriteColorEngine {
                 // Zona secundaria: vientre y máscara facial
                 PINK_WHITE to (if (secondary == AvatarColor.SNOW_WHITE) secondary.light else secondary.mid),
             )
+            CharacterSpecies.DRAKE -> listOf(
+                // Zona primaria: escamas del cuerpo y alas
+                DRAKE_SCALES_DARK   to primary.dark,
+                DRAKE_SCALES_MID    to primary.mid,
+                DRAKE_SCALES_LIGHT  to primary.light,
+                DRAKE_WING          to primary.mid,
+                // Zona secundaria: cuernos, ojos y llama de la cola
+                DRAKE_ACCENT_DARK   to secondary.dark,
+                DRAKE_ACCENT_MID    to secondary.mid,
+                DRAKE_ACCENT_LIGHT  to secondary.light,
+            )
             else -> emptyList()
         }
 
@@ -394,6 +426,12 @@ object SpriteColorEngine {
                 }
                 CharacterSpecies.PINK -> {
                     if (colorDist(rgb, PINK_OUTLINE) < 20.0) continue
+                }
+                CharacterSpecies.DRAKE -> {
+                    if (colorDist(rgb, DRAKE_OUTLINE)     < 20.0) continue
+                    if (colorDist(rgb, DRAKE_WHITE)       < 10.0) continue
+                    if (colorDist(rgb, DRAKE_BELLY_LIGHT) < 20.0) continue
+                    if (colorDist(rgb, DRAKE_BELLY_DARK)  < 20.0) continue
                 }
                 else -> {}
             }
