@@ -25,6 +25,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -40,6 +41,11 @@ import com.example.gamequest.util.CharacterSpecies
 import kotlinx.coroutines.launch
 import kotlin.math.hypot
 import kotlin.math.roundToInt
+import kotlin.random.Random
+import kotlinx.coroutines.delay
+import java.util.Calendar
+import com.example.gamequest.util.LocalSoundManager
+import com.example.gamequest.util.SoundEffect
 
 private fun colorPorCategoria(categoria: String, primary: Color, secondary: Color, tertiary: Color): Color =
     when (categoria) {
@@ -48,6 +54,38 @@ private fun colorPorCategoria(categoria: String, primary: Color, secondary: Colo
         "Recreación" -> Color(0xFF6BC96B)
         else         -> tertiary
     }
+
+/**
+ * Clase para manejar el estado y animaciones de NPCs en el mapa
+ */
+class NpcState(
+    val id: Int,
+    val species: CharacterSpecies,
+    val primaryColor: AvatarColor,
+    val secondaryColor: AvatarColor,
+    initialX: Float,
+    initialY: Float
+) {
+    val x = Animatable(initialX)
+    val y = Animatable(initialY)
+    var isWalking by mutableStateOf(false)
+    var flipX by mutableStateOf(false)
+}
+
+/**
+ * Entidad renderizable para ordenar correctamente por Y (profundidad)
+ */
+data class RenderableEntity(
+    val isPlayer: Boolean,
+    val id: Int,
+    val x: Float,
+    val y: Float,
+    val isWalking: Boolean,
+    val species: CharacterSpecies,
+    val primary: AvatarColor,
+    val secondary: AvatarColor,
+    val flipX: Boolean
+)
 
 /**
  * Mapa estilo Pokémon GO / RPG interactivo.
@@ -60,6 +98,8 @@ private fun colorPorCategoria(categoria: String, primary: Color, secondary: Colo
  *  - Tocar cualquier punto del mapa hace que el avatar camine suavemente hacia allá con animación WALK.
  *  - Tocar un Punto de Interés hace que el avatar camine hacia la misión y abra sus detalles.
  *  - Permite arrastrar libremente (pan) con el dedo, con botón flotante para recentrar en el avatar.
+ *  - Ciclo de día/noche en base a la hora actual.
+ *  - NPCs caminando por el mapa de manera aleatoria.
  */
 @Composable
 fun CampusMapView(
@@ -80,6 +120,8 @@ fun CampusMapView(
     val secondary = MaterialTheme.colorScheme.secondary
     val tertiary  = MaterialTheme.colorScheme.tertiary
 
+    val soundManager = LocalSoundManager.current
+
     // Cargar mapa en memoria desde assets
     val mapImage = remember(mapAssetPath) {
         runCatching {
@@ -96,6 +138,48 @@ fun CampusMapView(
 
     // Estado de la animación del avatar (IDLE cuando está quieto, WALK cuando camina)
     var isWalking by remember { mutableStateOf(false) }
+    var playerFlipX by remember { mutableStateOf(false) }
+
+    // Determinar color de overlay basado en la hora (Ciclo Día/Noche)
+    val currentHour = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
+    val timeOverlayColor = remember(currentHour) {
+        when (currentHour) {
+            in 0..5, in 19..23 -> Color(0x66000033) // Noche (azul oscuro)
+            in 17..18 -> Color(0x33FF6600) // Atardecer (naranja)
+            else -> Color.Transparent // Día
+        }
+    }
+
+    // Instanciar algunos NPCs
+    val npcs = remember {
+        listOf(
+            NpcState(1, CharacterSpecies.DRAKE, AvatarColor.FOREST_GREEN, AvatarColor.SUNSET_ORANGE, 0.40f, 0.50f),
+            NpcState(2, CharacterSpecies.PINK, AvatarColor.LAVENDER_PURPLE, AvatarColor.ROSE_PINK, 0.55f, 0.65f),
+            NpcState(3, CharacterSpecies.OWLET, AvatarColor.AQUA_CYAN, AvatarColor.SLATE_GRAY, 0.60f, 0.45f)
+        )
+    }
+
+    // Lógica de movimiento automático para los NPCs
+    LaunchedEffect(Unit) {
+        npcs.forEach { npc ->
+            launch {
+                while (true) {
+                    // Esperar un tiempo aleatorio antes de moverse
+                    delay(Random.nextLong(2000, 7000))
+                    val newX = (npc.x.value + Random.nextFloat() * 0.2f - 0.1f).coerceIn(0.1f, 0.9f)
+                    val newY = (npc.y.value + Random.nextFloat() * 0.2f - 0.1f).coerceIn(0.1f, 0.9f)
+                    val dist = hypot((newX - npc.x.value).toDouble(), (newY - npc.y.value).toDouble()).toFloat()
+                    val duration = (dist * 3500).roundToInt().coerceIn(800, 3000)
+
+                    npc.flipX = newX < npc.x.value
+                    npc.isWalking = true
+                    launch { npc.x.animateTo(newX, tween(duration, easing = LinearOutSlowInEasing)) }
+                    npc.y.animateTo(newY, tween(duration, easing = LinearOutSlowInEasing))
+                    npc.isWalking = false
+                }
+            }
+        }
+    }
 
     // Nivel de zoom del mapa para ver solo el sector actual (estilo Pokémon GO)
     val zoomFactor = 2.4f
@@ -177,6 +261,8 @@ fun CampusMapView(
                     detectTapGestures { tapOffset ->
                         val tapWorldX = tapOffset.x - camX
                         val tapWorldY = tapOffset.y - camY
+                        
+                        soundManager?.play(SoundEffect.CLICK)
 
                         // 1. Verificar si tocó cerca de un Punto de Interés
                         val radioPin = 60f
@@ -193,6 +279,7 @@ fun CampusMapView(
                             if (dist <= radioPin) {
                                 // Caminar hacia el punto y abrir misión
                                 scope.launch {
+                                    playerFlipX = clickedPunto.posX < curX
                                     isWalking = true
                                     dragPanX = 0f; dragPanY = 0f
                                     launch { playerX.animateTo(clickedPunto.posX, tween(1100, easing = LinearOutSlowInEasing)) }
@@ -212,6 +299,7 @@ fun CampusMapView(
                         val duration = (distNorm * 3500).roundToInt().coerceIn(600, 2200)
 
                         scope.launch {
+                            playerFlipX = targetNormX < curX
                             isWalking = true
                             dragPanX = 0f; dragPanY = 0f
                             launch { playerX.animateTo(targetNormX, tween(duration, easing = LinearOutSlowInEasing)) }
@@ -227,11 +315,15 @@ fun CampusMapView(
                     drawImage(
                         image = mapImage,
                         dstSize = IntSize(mapW.roundToInt(), mapH.roundToInt()),
-                        filterQuality = FilterQuality.Low
+                        filterQuality = FilterQuality.Low,
+                        colorFilter = if (timeOverlayColor != Color.Transparent) ColorFilter.tint(timeOverlayColor, BlendMode.Darken) else null
                     )
                 } else {
                     // Fallback visual si el mapa aún carga
                     drawRect(Color(0xFF2E7651), size = Size(mapW, mapH))
+                    if (timeOverlayColor != Color.Transparent) {
+                        drawRect(timeOverlayColor, size = Size(mapW, mapH), blendMode = BlendMode.Darken)
+                    }
                 }
 
                 // 2. Pulso / Radar estilo Pokémon GO a los pies del jugador
@@ -275,28 +367,55 @@ fun CampusMapView(
             }
         }
 
-        // 4. Avatar animado sobre el punto exacto de la pantalla
+        // 4. Avatares animados sobre el punto exacto de la pantalla (Jugador + NPCs ordenados por Y)
         val spriteSizeDp = 52.dp
         val spriteHalfPx = with(density) { (spriteSizeDp / 2).toPx() }
 
-        Box(
-            modifier = Modifier
-                .offset {
-                    IntOffset(
-                        x = (screenPlayerX - spriteHalfPx).roundToInt(),
-                        y = (screenPlayerY - spriteHalfPx - with(density) { 8.dp.toPx() }).roundToInt()
-                    )
-                }
-                .size(spriteSizeDp),
-            contentAlignment = Alignment.Center
-        ) {
-            CharacterSprite(
-                species        = characterSpecies,
-                animation      = if (isWalking) CharacterAnimation.WALK else CharacterAnimation.IDLE,
-                primaryColor   = primaryColor,
-                secondaryColor = secondaryColor,
-                size           = spriteSizeDp,
+        val renderables = remember(curX, curY, isWalking, playerFlipX, characterSpecies, primaryColor, secondaryColor, npcs) {
+            val list = mutableListOf<RenderableEntity>()
+            list.add(
+                RenderableEntity(
+                    isPlayer = true, id = 0, x = curX, y = curY, isWalking = isWalking,
+                    species = characterSpecies, primary = primaryColor, secondary = secondaryColor, flipX = playerFlipX
+                )
             )
+            npcs.forEach { npc ->
+                list.add(
+                    RenderableEntity(
+                        isPlayer = false, id = npc.id, x = npc.x.value, y = npc.y.value, isWalking = npc.isWalking,
+                        species = npc.species, primary = npc.primaryColor, secondary = npc.secondaryColor, flipX = npc.flipX
+                    )
+                )
+            }
+            list.sortedBy { it.y } // Ordenar por Y para simular profundidad
+        }
+
+        renderables.forEach { entity ->
+            val screenEntityX = entity.x * mapW + camX
+            val screenEntityY = entity.y * mapH + camY
+
+            Box(
+                modifier = Modifier
+                    .offset {
+                        IntOffset(
+                            x = (screenEntityX - spriteHalfPx).roundToInt(),
+                            y = (screenEntityY - spriteHalfPx - with(density) { 8.dp.toPx() }).roundToInt()
+                        )
+                    }
+                    .size(spriteSizeDp),
+                contentAlignment = Alignment.Center
+            ) {
+                // Para hacer flip visual (mirar izq/der) usamos graphicsLayer scaleX = -1f si lo implementamos,
+                // pero por ahora pasamos los colores
+                CharacterSprite(
+                    species        = entity.species,
+                    animation      = if (entity.isWalking) CharacterAnimation.WALK else CharacterAnimation.IDLE,
+                    primaryColor   = entity.primary,
+                    secondaryColor = entity.secondary,
+                    size           = spriteSizeDp,
+                    modifier       = if (entity.flipX) Modifier.graphicsLayer { scaleX = -1f } else Modifier
+                )
+            }
         }
 
         // 5. Botón flotante para recentrar en el avatar si el usuario arrastró el mapa
