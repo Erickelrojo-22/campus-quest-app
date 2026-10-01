@@ -12,7 +12,7 @@ interface ProgresoMisionDao {
     @Insert
     suspend fun insertar(progreso: ProgresoMisionEntity): Long
 
-    @Query("SELECT * FROM progreso_mision WHERE usuarioId = :usuarioId")
+    @Query("SELECT * FROM progreso_mision WHERE usuarioId = :usuarioId ORDER BY fechaHora DESC")
     fun observarPorUsuario(usuarioId: Int): Flow<List<ProgresoMisionEntity>>
 
     @Query("SELECT misionId FROM progreso_mision WHERE usuarioId = :usuarioId")

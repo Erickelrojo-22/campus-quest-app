@@ -22,6 +22,13 @@ data class MisionConEstado(
     val completada: Boolean
 )
 
+/** Progreso detallado con datos de la misión y el lugar donde se completó (timeline/historial). */
+data class ProgresoDetallado(
+    val progreso: ProgresoMisionEntity,
+    val mision: MisionEntity?,
+    val punto: PuntoInteresEntity?
+)
+
 sealed class ValidacionQrResult {
     data class MisionCompletada(
         val mision: MisionEntity,
@@ -97,6 +104,26 @@ class CampusRepository(
     fun observarPuntoPorId(id: Int): Flow<PuntoInteresEntity?> = puntoDao.observarPorId(id)
 
     fun observarTotalInsignias(usuarioId: Int): Flow<Int> = progresoDao.observarTotalCompletadas(usuarioId)
+
+    /** RF-15 / Timeline: Historial de actividades y puntos ganados por el usuario en orden cronológico. */
+    fun observarHistorialProgreso(usuarioId: Int): Flow<List<ProgresoDetallado>> =
+        combine(
+            progresoDao.observarPorUsuario(usuarioId),
+            misionDao.observarTodas(),
+            puntoDao.observarTodos()
+        ) { progresos, misiones, puntos ->
+            val misionesPorId = misiones.associateBy { it.id }
+            val puntosPorId = puntos.associateBy { it.id }
+            progresos.map { prog ->
+                val mision = misionesPorId[prog.misionId]
+                val punto = mision?.let { puntosPorId[it.puntoInteresId] }
+                ProgresoDetallado(
+                    progreso = prog,
+                    mision = mision,
+                    punto = punto
+                )
+            }
+        }
 
     /**
      * RF-10 / RF-11 / RF-12 / RF-13: valida un código QR (o ingresado a mano),
