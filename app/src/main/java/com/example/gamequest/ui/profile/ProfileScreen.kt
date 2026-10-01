@@ -36,6 +36,7 @@ import com.example.gamequest.ui.theme.AmberAccent
 import com.example.gamequest.ui.theme.InstitutionalRed
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.History
 import com.example.gamequest.data.repository.CampusRepository
 import com.example.gamequest.data.repository.ProgresoDetallado
@@ -63,6 +64,11 @@ fun ProfileScreen(
     val primaryColor    = prefs?.avatarPrimaryColor ?: AvatarColor.COBALT_BLUE
     val secondaryColor  = prefs?.avatarSecondaryColor ?: AvatarColor.RUBY_RED
 
+    val totalInsignias  by remember(usuario?.id, campusRepository) {
+        campusRepository?.observarTotalInsignias(usuario?.id ?: -1)
+            ?: kotlinx.coroutines.flow.flowOf(0)
+    }.collectAsState(initial = 0)
+
     // Alternar IDLE/WALK al tocar el sprite
     var spriteAnim by remember { mutableStateOf(CharacterAnimation.IDLE) }
 
@@ -71,6 +77,9 @@ fun ProfileScreen(
 
     // Controlar visibilidad del historial / timeline de puntos
     var showTimeline by remember { mutableStateOf(false) }
+
+    // Controlar visibilidad del carné de aventurero RPG
+    var showAdventurerCard by remember { mutableStateOf(false) }
 
     Scaffold(
         bottomBar = { CampusBottomBar(currentRoute = Routes.PROFILE, onNavigate = onNavigateTab) }
@@ -172,6 +181,17 @@ fun ProfileScreen(
                 onClick   = {
                     soundManager?.play(SoundEffect.CLICK)
                     showTimeline = true
+                },
+            )
+
+            // Carné de Aventurero RPG
+            OpcionPerfil(
+                icono     = Icons.Filled.Badge,
+                titulo    = "Carné de Aventurero",
+                subtitulo = "Credencial institucional RPG y compartir logros",
+                onClick   = {
+                    soundManager?.play(SoundEffect.CLICK)
+                    showAdventurerCard = true
                 },
             )
 
@@ -361,6 +381,18 @@ fun ProfileScreen(
                 showEditor = false
             },
             onDismiss = { showEditor = false },
+        )
+    }
+
+    // ── Diálogo de Carné de Aventurero RPG ────────────────────────────────
+    if (showAdventurerCard) {
+        AdventurerCardDialog(
+            usuario        = usuario,
+            species        = selectedSpecies,
+            primaryColor   = primaryColor,
+            secondaryColor = secondaryColor,
+            totalInsignias = totalInsignias,
+            onDismiss      = { showAdventurerCard = false }
         )
     }
 }
