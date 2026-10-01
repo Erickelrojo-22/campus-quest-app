@@ -371,24 +371,24 @@ fun CampusMapView(
         val spriteSizeDp = 52.dp
         val spriteHalfPx = with(density) { (spriteSizeDp / 2).toPx() }
 
-        val renderables = remember(curX, curY, isWalking, playerFlipX, characterSpecies, primaryColor, secondaryColor, npcs) {
-            val list = mutableListOf<RenderableEntity>()
-            list.add(
+        // Entidades a dibujar ordenadas por Y para simular profundidad
+        // Calculado dinámicamente para que los NPCs continúen caminando incluso si el jugador está quieto
+        val renderables = buildList {
+            add(
                 RenderableEntity(
                     isPlayer = true, id = 0, x = curX, y = curY, isWalking = isWalking,
                     species = characterSpecies, primary = primaryColor, secondary = secondaryColor, flipX = playerFlipX
                 )
             )
             npcs.forEach { npc ->
-                list.add(
+                add(
                     RenderableEntity(
                         isPlayer = false, id = npc.id, x = npc.x.value, y = npc.y.value, isWalking = npc.isWalking,
                         species = npc.species, primary = npc.primaryColor, secondary = npc.secondaryColor, flipX = npc.flipX
                     )
                 )
             }
-            list.sortedBy { it.y } // Ordenar por Y para simular profundidad
-        }
+        }.sortedBy { it.y }
 
         renderables.forEach { entity ->
             val screenEntityX = entity.x * mapW + camX
