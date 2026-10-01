@@ -238,6 +238,7 @@ fun CampusQuestNavHost(container: AppContainer) {
         composable(Routes.PROFILE) {
             ProfileScreen(
                 sessionViewModel = sessionViewModel,
+                campusRepository = container.campusRepository,
                 onNavigateTab = { navController.navegarATab(it) },
                 onSettings = { navController.navigate(Routes.SETTINGS) },
                 onMissionManagement = { navController.navigate(Routes.MISSION_MANAGEMENT) },

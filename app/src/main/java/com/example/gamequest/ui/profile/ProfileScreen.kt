@@ -34,12 +34,19 @@ import com.example.gamequest.ui.components.CharacterSprite
 import com.example.gamequest.ui.navigation.Routes
 import com.example.gamequest.ui.theme.AmberAccent
 import com.example.gamequest.ui.theme.InstitutionalRed
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.filled.History
+import com.example.gamequest.data.repository.CampusRepository
+import com.example.gamequest.data.repository.ProgresoDetallado
 import com.example.gamequest.util.CharacterSpecies
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     sessionViewModel: SessionViewModel,
+    campusRepository: CampusRepository? = null,
     onNavigateTab: (String) -> Unit,
     onSettings: () -> Unit,
     onMissionManagement: () -> Unit,
@@ -61,6 +68,9 @@ fun ProfileScreen(
 
     // Controlar visibilidad del editor de avatar
     var showEditor by remember { mutableStateOf(false) }
+
+    // Controlar visibilidad del historial / timeline de puntos
+    var showTimeline by remember { mutableStateOf(false) }
 
     Scaffold(
         bottomBar = { CampusBottomBar(currentRoute = Routes.PROFILE, onNavigate = onNavigateTab) }
@@ -154,6 +164,17 @@ fun ProfileScreen(
                 },
             )
 
+            // RF-15 / Timeline: Botón para ver el historial y actividades completadas
+            OpcionPerfil(
+                icono     = Icons.Filled.History,
+                titulo    = "Historial de Puntos",
+                subtitulo = "Línea de tiempo de misiones completadas",
+                onClick   = {
+                    soundManager?.play(SoundEffect.CLICK)
+                    showTimeline = true
+                },
+            )
+
             OpcionPerfil(Icons.Filled.Settings, "Configuración", "Tema, notificaciones, idioma", onSettings)
 
             if (usuario?.rol == Rol.TUTOR) {
@@ -174,6 +195,154 @@ fun ProfileScreen(
             )
 
             Spacer(Modifier.height(16.dp))
+        }
+    }
+
+    // ── Modal de historial y timeline de puntos ──────────────────────────
+    if (showTimeline) {
+        val historial by remember(usuario?.id, campusRepository) {
+            campusRepository?.observarHistorialProgreso(usuario?.id ?: -1)
+                ?: kotlinx.coroutines.flow.flowOf(emptyList())
+        }.collectAsState(initial = emptyList())
+
+        ModalBottomSheet(
+            onDismissRequest = { showTimeline = false },
+            containerColor = MaterialTheme.colorScheme.surface,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
+                    .padding(bottom = 32.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            "Historial de Puntos",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "Misiones completadas y recompensas",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Surface(
+                        color = AmberAccent.copy(alpha = 0.25f),
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            "⭐ ${usuario?.puntajeAcumulado ?: 0} pts",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            color = AmberAccent,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                if (historial.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 40.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("🗺️", style = MaterialTheme.typography.headlineLarge)
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                "Aún no has completado misiones.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                "¡Explora el campus y escanea códigos QR para sumar puntos!",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                        }
+                    }
+                } else {
+                    val dateFormat = remember {
+                        java.text.SimpleDateFormat("dd/MM/yyyy · HH:mm", java.util.Locale.getDefault())
+                    }
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 380.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(historial) { item ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+                                )
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .padding(12.dp)
+                                        .fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.primaryContainer),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            item.mision?.insigniaEmoji ?: "⭐",
+                                            style = MaterialTheme.typography.titleMedium
+                                        )
+                                    }
+                                    Spacer(Modifier.width(12.dp))
+                                    Column(Modifier.weight(1f)) {
+                                        Text(
+                                            item.mision?.titulo ?: "Misión completada",
+                                            fontWeight = FontWeight.Bold,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                        Text(
+                                            item.punto?.nombre ?: "Punto del campus",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            dateFormat.format(java.util.Date(item.progreso.fechaHora)),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.outline
+                                        )
+                                    }
+                                    Surface(
+                                        color = AmberAccent.copy(alpha = 0.2f),
+                                        shape = RoundedCornerShape(4.dp)
+                                    ) {
+                                        Text(
+                                            "+${item.progreso.puntosObtenidos} pts",
+                                            color = AmberAccent,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
