@@ -34,22 +34,25 @@ tenga remoto en GitHub. Formato pensado para migrarse 1 a 1 con
   nivel del usuario y puntaje acumulado con estilo retro.
 - [x] **Configuración de correo institucional en Git.**
   Actualizada la configuración local y global de Git con `e1312842246@live.uleam.edu.ec` y usuario `JhonnyCM` para vincular correctamente los commits en GitHub.
+- [x] **Historial y timeline de actividades y puntos ganados (RF-15).**
+  Implementada la función `observarHistorialProgreso` en `CampusRepository` y DAOs con orden cronológico (`ORDER BY fechaHora DESC`), integrando un modal bottom sheet en `ProfileScreen.kt` con fecha/hora formateada, emojis, lugar del campus y puntos ganados (`+X pts`).
+- [x] **Movimiento fluido e independiente de NPCs en el mapa.**
+  `CampusMapView.kt`: corregida la memoización en Compose para calcular las posiciones animadas de los NPCs dinámicamente sin congelarse cuando el jugador se detiene.
+- [x] **Optimización de visualización de insignias y dificultad en misiones.**
+  `BadgesScreen.kt`: eliminado el `LazyVerticalGrid` anidado para evitar problemas de altura fija; `MissionsScreen.kt`: agregadas etiquetas cromáticas para todas las dificultades (Baja, Media, Alta).
+- [x] **Cobertura de pruebas unitarias (Repository y ViewModels).**
+  Implementadas suites de tests para `CampusRepositoryTest`, `MissionsViewModelTest` y `HomeViewModelTest` con verificación de filtrado reactivo, búsquedas y progreso.
 
 ## Pendientes
 
 - [ ] **Crash al abrir la sección de Misiones.** Revisados
   `MissionsScreen.kt`, `MissionsViewModel.kt`, `CampusRepository`,
-  los 3 DAOs y el `NavHost` — compila limpio, no se encontró la causa
-  por lectura de código. **Bloqueado**: falta el logcat
+  los 3 DAOs y el `NavHost` — compila limpio y suite de tests pasa al 100%. **Bloqueado**: falta el logcat
   (`FATAL EXCEPTION`/`AndroidRuntime`) o un dispositivo/emulador para
-  reproducirlo.
+  reproducirlo en caso de que aún persista.
 - [ ] **Mapa en alta definición / estilo Google Maps 3D.** Propuesta
   en `ROADMAP.md`, pendiente de evaluar costos (API key, facturación)
   e integración (conexión a internet rompe el offline-first actual).
-
-- [ ] **Menú ☰ + timeline de dónde se ganaron puntos.** Evaluado como
-  factible (el dato ya existe en `ProgresoMisionEntity.fechaHora` /
-  `puntosObtenidos`). Falta decidir si se implementa ahora.
 - [ ] **Servicio backend dedicado / BaaS (Railway / Supabase / PocketBase / PaaS).** [Issue #1 en GitHub](https://github.com/Erickelrojo-22/campus-quest-app/issues/1). Propuesta detallada en `BACKEND.md` (entidades, endpoints, autenticación institucional y sincronización con Room). Nada implementado todavía.
 - [ ] **Modelo de roles `estudiante`/`visitante` en la app + rol
   `admin` en panel web separado (mismo backend).** Decisión tomada
