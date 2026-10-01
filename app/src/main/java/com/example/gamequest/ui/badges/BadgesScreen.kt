@@ -16,9 +16,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
@@ -142,25 +139,30 @@ private fun InsigniasGrid(emojis: List<String>, bloqueadas: Boolean) {
         )
         return
     }
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(4),
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height((((emojis.size + 3) / 4) * 74).dp)
             .padding(horizontal = 16.dp),
-        userScrollEnabled = false
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        items(emojis) { emoji ->
-            Surface(
-                modifier = Modifier.padding(6.dp).size(60.dp),
-                shape = CircleShape,
-                color = if (bloqueadas) MaterialTheme.colorScheme.surfaceVariant else AmberAccent.copy(alpha = 0.25f)
+        emojis.chunked(4).forEach { filaEmojis ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    if (bloqueadas) {
-                        Icon(Icons.Filled.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.outline)
-                    } else {
-                        Text(emoji, style = MaterialTheme.typography.titleLarge)
+                filaEmojis.forEach { emoji ->
+                    Surface(
+                        modifier = Modifier.size(64.dp),
+                        shape = CircleShape,
+                        color = if (bloqueadas) MaterialTheme.colorScheme.surfaceVariant else AmberAccent.copy(alpha = 0.25f)
+                    ) {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            if (bloqueadas) {
+                                Icon(Icons.Filled.Lock, contentDescription = "Bloqueada", tint = MaterialTheme.colorScheme.outline)
+                            } else {
+                                Text(emoji, style = MaterialTheme.typography.titleLarge)
+                            }
+                        }
                     }
                 }
             }
