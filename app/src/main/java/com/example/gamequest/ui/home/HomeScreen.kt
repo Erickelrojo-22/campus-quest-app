@@ -47,7 +47,8 @@ import com.example.gamequest.ui.components.DudeSprite
 import com.example.gamequest.ui.navigation.Routes
 import com.example.gamequest.ui.theme.AmberAccent
 import com.example.gamequest.ui.theme.AmberAccentDark
-import com.example.gamequest.util.SpriteColorEngine.CharacterColor
+import com.example.gamequest.util.AvatarColor
+import com.example.gamequest.util.CharacterSpecies
 
 @Composable
 fun HomeScreen(
@@ -64,7 +65,9 @@ fun HomeScreen(
     val context = LocalContext.current
     val prefsRepo = remember { UserPreferencesRepository(context) }
     val prefs by prefsRepo.preferencias.collectAsState(initial = null)
-    val charColor = prefs?.characterColor ?: CharacterColor.BLUE_ORIGINAL
+    val charPrimary = prefs?.avatarPrimaryColor ?: AvatarColor.COBALT_BLUE
+    val charSecondary = prefs?.avatarSecondaryColor ?: AvatarColor.RUBY_RED
+    val charSpecies = prefs?.characterSpecies ?: CharacterSpecies.DUDE
 
     Scaffold(
         bottomBar = { CampusBottomBar(currentRoute = Routes.HOME, onNavigate = onNavigateTab) }
@@ -109,8 +112,10 @@ fun HomeScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         DudeSprite(
+                            species = charSpecies,
                             animation = DudeAnimation.IDLE,
-                            color = charColor,
+                            primaryColor = charPrimary,
+                            secondaryColor = charSecondary,
                             size = 56.dp
                         )
                     }
@@ -161,7 +166,9 @@ fun HomeScreen(
                     CampusMapView(
                         puntos = puntosMapa,
                         completados = completadosMapa,
-                        characterColor = charColor,
+                        primaryColor = charPrimary,
+                        secondaryColor = charSecondary,
+                        characterSpecies = charSpecies,
                         onPuntoClick = { punto ->
                             misiones.firstOrNull { it.punto.id == punto.id }?.let { onMisionClick(it.mision.id) }
                         }

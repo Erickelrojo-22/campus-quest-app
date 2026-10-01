@@ -1,8 +1,6 @@
 package com.example.gamequest.ui.profile
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -13,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,46 +26,51 @@ import com.example.gamequest.data.local.entity.Rol
 import com.example.gamequest.data.preferences.UserPreferencesRepository
 import com.example.gamequest.ui.common.CampusBottomBar
 import com.example.gamequest.ui.common.SessionViewModel
+import com.example.gamequest.util.AvatarColor
 import com.example.gamequest.util.LocalSoundManager
 import com.example.gamequest.util.SoundEffect
-import com.example.gamequest.ui.components.DudeAnimation
-import com.example.gamequest.ui.components.DudeSprite
+import com.example.gamequest.ui.components.CharacterAnimation
+import com.example.gamequest.ui.components.CharacterSprite
 import com.example.gamequest.ui.navigation.Routes
 import com.example.gamequest.ui.theme.AmberAccent
 import com.example.gamequest.ui.theme.InstitutionalRed
-import com.example.gamequest.util.SpriteColorEngine.CharacterColor
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.filled.History
+import com.example.gamequest.data.repository.CampusRepository
+import com.example.gamequest.data.repository.ProgresoDetallado
+import com.example.gamequest.util.CharacterSpecies
 import kotlinx.coroutines.launch
 
-/** Convierte el nombre del color a un Color de Compose para la UI del selector. */
-private fun CharacterColor.toComposeColor(): Color = when (this) {
-    CharacterColor.BLUE_ORIGINAL -> Color(0xFF0696DB)
-    CharacterColor.GREEN         -> Color(0xFF23B437)
-    CharacterColor.RED           -> Color(0xFFBE2323)
-    CharacterColor.PURPLE        -> Color(0xFF7828C8)
-    CharacterColor.ORANGE        -> Color(0xFFD76414)
-    CharacterColor.PINK          -> Color(0xFFE650A0)
-    CharacterColor.YELLOW        -> Color(0xFFD2B40F)
-    CharacterColor.GREY          -> Color(0xFF78788C)
-}
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     sessionViewModel: SessionViewModel,
+    campusRepository: CampusRepository? = null,
     onNavigateTab: (String) -> Unit,
     onSettings: () -> Unit,
     onMissionManagement: () -> Unit,
     onCerrarSesion: () -> Unit,
 ) {
-    val usuario      by sessionViewModel.usuarioActual.collectAsState()
-    val soundManager  = LocalSoundManager.current
-    val context       = LocalContext.current
-    val scope         = rememberCoroutineScope()
-    val prefsRepo     = remember { UserPreferencesRepository(context) }
-    val prefs        by prefsRepo.preferencias.collectAsState(initial = null)
+    val usuario         by sessionViewModel.usuarioActual.collectAsState()
+    val soundManager     = LocalSoundManager.current
+    val context          = LocalContext.current
+    val scope            = rememberCoroutineScope()
+    val prefsRepo        = remember { UserPreferencesRepository(context) }
+    val prefs           by prefsRepo.preferencias.collectAsState(initial = null)
 
-    val selectedColor = prefs?.characterColor ?: CharacterColor.BLUE_ORIGINAL
+    val selectedSpecies = prefs?.characterSpecies ?: CharacterSpecies.DUDE
+    val primaryColor    = prefs?.avatarPrimaryColor ?: AvatarColor.COBALT_BLUE
+    val secondaryColor  = prefs?.avatarSecondaryColor ?: AvatarColor.RUBY_RED
+
     // Alternar IDLE/WALK al tocar el sprite
-    var spriteAnim by remember { mutableStateOf(DudeAnimation.IDLE) }
+    var spriteAnim by remember { mutableStateOf(CharacterAnimation.IDLE) }
+
+    // Controlar visibilidad del editor de avatar
+    var showEditor by remember { mutableStateOf(false) }
+
+    // Controlar visibilidad del historial / timeline de puntos
+    var showTimeline by remember { mutableStateOf(false) }
 
     Scaffold(
         bottomBar = { CampusBottomBar(currentRoute = Routes.PROFILE, onNavigate = onNavigateTab) }
@@ -93,15 +97,17 @@ fun ProfileScreen(
                         .background(Color.White.copy(alpha = 0.15f))
                         .clickable {
                             soundManager?.play(SoundEffect.CLICK)
-                            spriteAnim = if (spriteAnim == DudeAnimation.IDLE)
-                                DudeAnimation.WALK else DudeAnimation.IDLE
+                            spriteAnim = if (spriteAnim == CharacterAnimation.IDLE)
+                                CharacterAnimation.WALK else CharacterAnimation.IDLE
                         },
                     contentAlignment = Alignment.Center,
                 ) {
-                    DudeSprite(
-                        animation = spriteAnim,
-                        color     = selectedColor,
-                        size      = 72.dp,
+                    CharacterSprite(
+                        species        = selectedSpecies,
+                        animation      = spriteAnim,
+                        primaryColor   = primaryColor,
+                        secondaryColor = secondaryColor,
+                        size           = 72.dp,
                     )
                 }
 
@@ -143,55 +149,32 @@ fun ProfileScreen(
                 }
             }
 
-            // ── Selector de color del personaje ─────────────────────────
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                shape = RoundedCornerShape(12.dp),
-            ) {
-                Column(Modifier.padding(16.dp)) {
-                    Text(
-                        "Color del personaje",
-                        fontWeight = FontWeight.Bold,
-                        style      = MaterialTheme.typography.titleSmall,
-                    )
-                    Text(
-                        "Toca un color para personalizar tu avatar",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    // Grid 4×2 de colores
-                    val colors = CharacterColor.values()
-                    for (row in 0 until 2) {
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                        ) {
-                            for (col in 0 until 4) {
-                                val idx = row * 4 + col
-                                if (idx >= colors.size) break
-                                val c = colors[idx]
-                                ColorDot(
-                                    color     = c.toComposeColor(),
-                                    label     = c.label,
-                                    selected  = c == selectedColor,
-                                    onClick   = {
-                                        soundManager?.play(SoundEffect.CLICK)
-                                        scope.launch { prefsRepo.setCharacterColor(c) }
-                                    },
-                                )
-                            }
-                        }
-                        if (row == 0) Spacer(Modifier.height(8.dp))
-                    }
-                }
-            }
-
             Spacer(Modifier.height(4.dp))
 
             // ── Opciones de perfil ───────────────────────────────────────
+
+            // Botón para abrir el editor de avatar
+            OpcionPerfil(
+                icono     = Icons.Filled.Palette,
+                titulo    = "Personalizar Avatar",
+                subtitulo = "Especie, colores y estilo",
+                onClick   = {
+                    soundManager?.play(SoundEffect.CLICK)
+                    showEditor = true
+                },
+            )
+
+            // RF-15 / Timeline: Botón para ver el historial y actividades completadas
+            OpcionPerfil(
+                icono     = Icons.Filled.History,
+                titulo    = "Historial de Puntos",
+                subtitulo = "Línea de tiempo de misiones completadas",
+                onClick   = {
+                    soundManager?.play(SoundEffect.CLICK)
+                    showTimeline = true
+                },
+            )
+
             OpcionPerfil(Icons.Filled.Settings, "Configuración", "Tema, notificaciones, idioma", onSettings)
 
             if (usuario?.rol == Rol.TUTOR) {
@@ -214,29 +197,171 @@ fun ProfileScreen(
             Spacer(Modifier.height(16.dp))
         }
     }
-}
 
-@Composable
-private fun ColorDot(
-    color: Color,
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            modifier = Modifier
-                .size(42.dp)
-                .clip(CircleShape)
-                .background(color)
-                .then(
-                    if (selected) Modifier.border(3.dp, Color.White, CircleShape)
-                    else Modifier.border(1.dp, Color.Gray.copy(alpha = 0.3f), CircleShape)
-                )
-                .clickable(onClick = onClick),
+    // ── Modal de historial y timeline de puntos ──────────────────────────
+    if (showTimeline) {
+        val historial by remember(usuario?.id, campusRepository) {
+            campusRepository?.observarHistorialProgreso(usuario?.id ?: -1)
+                ?: kotlinx.coroutines.flow.flowOf(emptyList())
+        }.collectAsState(initial = emptyList())
+
+        ModalBottomSheet(
+            onDismissRequest = { showTimeline = false },
+            containerColor = MaterialTheme.colorScheme.surface,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
+                    .padding(bottom = 32.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            "Historial de Puntos",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "Misiones completadas y recompensas",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Surface(
+                        color = AmberAccent.copy(alpha = 0.25f),
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            "⭐ ${usuario?.puntajeAcumulado ?: 0} pts",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            color = AmberAccent,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                if (historial.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 40.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("🗺️", style = MaterialTheme.typography.headlineLarge)
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                "Aún no has completado misiones.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                "¡Explora el campus y escanea códigos QR para sumar puntos!",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                        }
+                    }
+                } else {
+                    val dateFormat = remember {
+                        java.text.SimpleDateFormat("dd/MM/yyyy · HH:mm", java.util.Locale.getDefault())
+                    }
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 380.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(historial) { item ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+                                )
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .padding(12.dp)
+                                        .fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.primaryContainer),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            item.mision?.insigniaEmoji ?: "⭐",
+                                            style = MaterialTheme.typography.titleMedium
+                                        )
+                                    }
+                                    Spacer(Modifier.width(12.dp))
+                                    Column(Modifier.weight(1f)) {
+                                        Text(
+                                            item.mision?.titulo ?: "Misión completada",
+                                            fontWeight = FontWeight.Bold,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                        Text(
+                                            item.punto?.nombre ?: "Punto del campus",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            dateFormat.format(java.util.Date(item.progreso.fechaHora)),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.outline
+                                        )
+                                    }
+                                    Surface(
+                                        color = AmberAccent.copy(alpha = 0.2f),
+                                        shape = RoundedCornerShape(4.dp)
+                                    ) {
+                                        Text(
+                                            "+${item.progreso.puntosObtenidos} pts",
+                                            color = AmberAccent,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ── Modal de edición de avatar ───────────────────────────────────────
+    if (showEditor) {
+        AvatarEditorSheet(
+            currentSpecies   = selectedSpecies,
+            currentPrimary   = primaryColor,
+            currentSecondary = secondaryColor,
+            onSave = { newSpecies, newPrimary, newSecondary ->
+                scope.launch {
+                    prefsRepo.setCharacterSpecies(newSpecies)
+                    prefsRepo.setAvatarPrimaryColor(newPrimary)
+                    prefsRepo.setAvatarSecondaryColor(newSecondary)
+                }
+                showEditor = false
+            },
+            onDismiss = { showEditor = false },
         )
-        Spacer(Modifier.height(2.dp))
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

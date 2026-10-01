@@ -153,9 +153,12 @@ private fun MisionCard(estado: MisionConEstado, onClick: () -> Unit) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Etiqueta("⭐ ${estado.mision.puntos} pts", AmberAccent)
                         Etiqueta("⏱ ${estado.mision.tiempoEstimadoMin} min", MaterialTheme.colorScheme.primary)
-                        if (estado.mision.dificultad == Dificultad.ALTA) {
-                            Etiqueta(estado.mision.dificultad, InstitutionalRed)
+                        val colorDificultad = when (estado.mision.dificultad) {
+                            Dificultad.ALTA -> InstitutionalRed
+                            Dificultad.MEDIA -> AmberAccent
+                            else -> MaterialTheme.colorScheme.tertiary
                         }
+                        Etiqueta(estado.mision.dificultad, colorDificultad)
                     }
                 }
             }

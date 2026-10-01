@@ -11,77 +11,64 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.example.gamequest.R
+import com.example.gamequest.util.AvatarColor
+import com.example.gamequest.util.CharacterSpecies
 import com.example.gamequest.util.SpriteColorEngine
-import com.example.gamequest.util.SpriteColorEngine.CharacterColor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * Animaciones disponibles del Dude Monster.
- * @param rawRes     recurso PNG en res/raw (sprite sheet horizontal, 32×32 por frame)
- * @param frameCount número de frames en el sheet
- * @param fps        velocidad de reproducción
+ * Animaciones necesarias disponibles para todas las especies de personajes.
  */
-enum class DudeAnimation(
-    val rawRes: Int,
+enum class CharacterAnimation(
+    val filename: String,
     val frameCount: Int,
     val fps: Int = 8,
 ) {
-    IDLE  (R.raw.sprite_idle_4,    frameCount = 4, fps = 6),
-    WALK  (R.raw.sprite_walk_6,    frameCount = 6, fps = 8),
-    RUN   (R.raw.sprite_run_6,     frameCount = 6, fps = 10),
-    JUMP  (R.raw.sprite_jump_8,    frameCount = 8, fps = 10),
-    ATTACK(R.raw.sprite_attack1_4, frameCount = 4, fps = 10),
-    HURT  (R.raw.sprite_hurt_4,    frameCount = 4, fps = 8),
-    DEATH (R.raw.sprite_death_8,   frameCount = 8, fps = 6),
-    CLIMB (R.raw.sprite_climb_4,   frameCount = 4, fps = 7),
+    IDLE("idle.png", frameCount = 4, fps = 6),
+    WALK("walk.png", frameCount = 6, fps = 8),
+    RUN ("run.png",  frameCount = 6, fps = 10),
+    JUMP("jump.png", frameCount = 8, fps = 10),
 }
 
+// Alias para retrocompatibilidad
+typealias DudeAnimation = CharacterAnimation
+
 /**
- * Sprite animado del Dude Monster con palette swap en tiempo real.
- *
- * Uso:
- * ```kotlin
- * DudeSprite(
- *     animation = DudeAnimation.WALK,
- *     color     = CharacterColor.GREEN,
- *     size      = 96.dp,
- * )
- * ```
- *
- * @param animation  Animación a reproducir (default: IDLE)
- * @param color      Color del personaje, persistido desde DataStore
- * @param size       Tamaño en pantalla — se escala pixel-perfect (NEAREST)
- * @param loop       Si la animación hace loop
- * @param modifier   Modifier de Compose
+ * Composable universal para renderizar cualquier especie de personaje (Dude, Pink, Owlet)
+ * con animación continua y palette swap dual en tiempo real.
  */
 @Composable
-fun DudeSprite(
-    animation: DudeAnimation = DudeAnimation.IDLE,
-    color: CharacterColor    = CharacterColor.BLUE_ORIGINAL,
-    size: Dp                 = 64.dp,
-    loop: Boolean            = true,
-    modifier: Modifier       = Modifier,
+fun CharacterSprite(
+    species: CharacterSpecies       = CharacterSpecies.DUDE,
+    animation: CharacterAnimation   = CharacterAnimation.IDLE,
+    primaryColor: AvatarColor       = AvatarColor.COBALT_BLUE,
+    secondaryColor: AvatarColor     = AvatarColor.RUBY_RED,
+    size: Dp                        = 64.dp,
+    loop: Boolean                   = true,
+    modifier: Modifier              = Modifier,
 ) {
     val context = LocalContext.current
     val frameDurationMs = (1000f / animation.fps).toInt()
 
-    // Cargar + procesar el sheet en background (solo cuando cambia animación o color)
-    var frames by remember(animation, color) { mutableStateOf<List<ImageBitmap>>(emptyList()) }
-    LaunchedEffect(animation, color) {
+    var frames by remember(species, animation, primaryColor, secondaryColor) {
+        mutableStateOf<List<ImageBitmap>>(emptyList())
+    }
+    LaunchedEffect(species, animation, primaryColor, secondaryColor) {
         frames = withContext(Dispatchers.Default) {
             (0 until animation.frameCount).map { i ->
-                SpriteColorEngine.getFrame(context, animation.rawRes, color, i)
+                SpriteColorEngine.getFrame(
+                    context, species, animation.filename,
+                    primaryColor, secondaryColor, i
+                )
             }
         }
     }
 
-    if (frames.isEmpty()) return  // Aún cargando — no renderizar nada
+    if (frames.isEmpty()) return
 
-    // Avanzar frames con InfiniteTransition (o Animatable para one-shot)
     val frameIndex: Int = if (loop) {
-        val transition = rememberInfiniteTransition(label = "dude_anim_${animation.name}")
+        val transition = rememberInfiniteTransition(label = "char_anim_${species.name}_${animation.name}")
         val raw by transition.animateValue(
             initialValue  = 0,
             targetValue   = animation.frameCount,
@@ -95,7 +82,7 @@ fun DudeSprite(
         raw % animation.frameCount
     } else {
         var idx by remember { mutableIntStateOf(0) }
-        LaunchedEffect(Unit) {
+        LaunchedEffect(species, animation) {
             repeat(animation.frameCount) {
                 idx = it
                 kotlinx.coroutines.delay(frameDurationMs.toLong())
@@ -106,9 +93,31 @@ fun DudeSprite(
 
     Image(
         bitmap             = frames[frameIndex],
-        contentDescription = "avatar",
-        filterQuality      = FilterQuality.None,   // NEAREST — pixel art nítido
+        contentDescription = "avatar_${species.name}",
+        filterQuality      = FilterQuality.None,
         contentScale       = ContentScale.FillBounds,
         modifier           = modifier.size(size),
+    )
+}
+
+/** Alias retrocompatible con llamadas existentes de DudeSprite */
+@Composable
+fun DudeSprite(
+    animation: CharacterAnimation   = CharacterAnimation.IDLE,
+    primaryColor: AvatarColor       = AvatarColor.COBALT_BLUE,
+    secondaryColor: AvatarColor     = AvatarColor.RUBY_RED,
+    species: CharacterSpecies       = CharacterSpecies.DUDE,
+    size: Dp                        = 64.dp,
+    loop: Boolean                   = true,
+    modifier: Modifier              = Modifier,
+) {
+    CharacterSprite(
+        species        = species,
+        animation      = animation,
+        primaryColor   = primaryColor,
+        secondaryColor = secondaryColor,
+        size           = size,
+        loop           = loop,
+        modifier       = modifier,
     )
 }
