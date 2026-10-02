@@ -17,21 +17,28 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.gamequest.data.local.entity.Dificultad
@@ -52,6 +59,7 @@ fun MissionsScreen(
 ) {
     val soundManager = LocalSoundManager.current
     val filtro by viewModel.filtro.collectAsState()
+    val busqueda by viewModel.busqueda.collectAsState()
     val misiones by viewModel.misionesFiltradas.collectAsState()
     val activas by viewModel.contadorActivas.collectAsState()
     val completadas by viewModel.contadorCompletadas.collectAsState()
@@ -69,46 +77,86 @@ fun MissionsScreen(
         bottomBar = { CampusBottomBar(currentRoute = Routes.MISSIONS, onNavigate = onNavigateTab) }
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
-            Row(
+            // Cabecera superior con buscador y filtros
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.primary)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
-                FilterChip(
-                    selected = filtro == FiltroMisiones.ACTIVAS,
-                    onClick = {
-                        soundManager?.play(SoundEffect.CLICK)
-                        viewModel.onFiltroChange(FiltroMisiones.ACTIVAS)
+                TextField(
+                    value = busqueda,
+                    onValueChange = viewModel::onBusquedaChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    placeholder = { Text("Buscar misión, lugar o dificultad...", color = Color.White.copy(alpha = 0.7f)) },
+                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null, tint = AmberAccent) },
+                    trailingIcon = {
+                        if (busqueda.isNotEmpty()) {
+                            IconButton(onClick = {
+                                soundManager?.play(SoundEffect.CLICK)
+                                viewModel.limpiarBusqueda()
+                            }) {
+                                Icon(Icons.Filled.Close, contentDescription = "Limpiar búsqueda", tint = Color.White.copy(alpha = 0.7f))
+                            }
+                        }
                     },
-                    label = { Text("Activas · $activas") }
+                    singleLine = true,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Black.copy(alpha = 0.25f),
+                        unfocusedContainerColor = Color.Black.copy(alpha = 0.25f),
+                        focusedIndicatorColor = AmberAccent,
+                        unfocusedIndicatorColor = Color.White.copy(alpha = 0.4f),
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        cursorColor = AmberAccent
+                    )
                 )
-                FilterChip(
-                    selected = filtro == FiltroMisiones.COMPLETADAS,
-                    onClick = {
-                        soundManager?.play(SoundEffect.CLICK)
-                        viewModel.onFiltroChange(FiltroMisiones.COMPLETADAS)
-                    },
-                    label = { Text("Completadas · $completadas") }
-                )
-                FilterChip(
-                    selected = filtro == FiltroMisiones.TODAS,
-                    onClick = {
-                        soundManager?.play(SoundEffect.CLICK)
-                        viewModel.onFiltroChange(FiltroMisiones.TODAS)
-                    },
-                    label = { Text("Todas") }
-                )
+
+                Spacer(Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = filtro == FiltroMisiones.ACTIVAS,
+                        onClick = {
+                            soundManager?.play(SoundEffect.CLICK)
+                            viewModel.onFiltroChange(FiltroMisiones.ACTIVAS)
+                        },
+                        label = { Text("Activas · $activas") }
+                    )
+                    FilterChip(
+                        selected = filtro == FiltroMisiones.COMPLETADAS,
+                        onClick = {
+                            soundManager?.play(SoundEffect.CLICK)
+                            viewModel.onFiltroChange(FiltroMisiones.COMPLETADAS)
+                        },
+                        label = { Text("Completadas · $completadas") }
+                    )
+                    FilterChip(
+                        selected = filtro == FiltroMisiones.TODAS,
+                        onClick = {
+                            soundManager?.play(SoundEffect.CLICK)
+                            viewModel.onFiltroChange(FiltroMisiones.TODAS)
+                        },
+                        label = { Text("Todas") }
+                    )
+                }
             }
 
             if (misiones.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
-                        when (filtro) {
-                            FiltroMisiones.ACTIVAS -> "No tienes misiones activas. ¡Completa todas!"
-                            FiltroMisiones.COMPLETADAS -> "Aún no completas ninguna misión."
-                            FiltroMisiones.TODAS -> "Todavía no hay misiones cargadas."
+                        if (busqueda.isNotBlank()) {
+                            "No se encontraron misiones para \"$busqueda\"."
+                        } else {
+                            when (filtro) {
+                                FiltroMisiones.ACTIVAS -> "No tienes misiones activas. ¡Completa todas!"
+                                FiltroMisiones.COMPLETADAS -> "Aún no completas ninguna misión."
+                                FiltroMisiones.TODAS -> "Todavía no hay misiones cargadas."
+                            }
                         },
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

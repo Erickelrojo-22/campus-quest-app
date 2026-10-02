@@ -22,15 +22,29 @@ class MissionsViewModel(
     private val _filtro = MutableStateFlow(FiltroMisiones.ACTIVAS)
     val filtro: StateFlow<FiltroMisiones> = _filtro
 
+    private val _busqueda = MutableStateFlow("")
+    val busqueda: StateFlow<String> = _busqueda
+
     private val todasLasMisiones: StateFlow<List<MisionConEstado>> = campusRepository
         .observarMisionesConEstado(usuarioId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val misionesFiltradas: StateFlow<List<MisionConEstado>> = combine(todasLasMisiones, _filtro) { lista, filtro ->
-        when (filtro) {
+    val misionesFiltradas: StateFlow<List<MisionConEstado>> = combine(todasLasMisiones, _filtro, _busqueda) { lista, filtro, query ->
+        val filtradasPorEstado = when (filtro) {
             FiltroMisiones.ACTIVAS -> lista.filter { !it.completada }
             FiltroMisiones.COMPLETADAS -> lista.filter { it.completada }
             FiltroMisiones.TODAS -> lista
+        }
+        if (query.isBlank()) {
+            filtradasPorEstado
+        } else {
+            val q = query.trim().lowercase()
+            filtradasPorEstado.filter { item ->
+                item.mision.titulo.lowercase().contains(q) ||
+                item.punto.nombre.lowercase().contains(q) ||
+                item.mision.dificultad.lowercase().contains(q) ||
+                item.mision.descripcionPista.lowercase().contains(q)
+            }
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -46,5 +60,13 @@ class MissionsViewModel(
 
     fun onFiltroChange(nuevo: FiltroMisiones) {
         _filtro.value = nuevo
+    }
+
+    fun onBusquedaChange(nuevaBusqueda: String) {
+        _busqueda.value = nuevaBusqueda
+    }
+
+    fun limpiarBusqueda() {
+        _busqueda.value = ""
     }
 }

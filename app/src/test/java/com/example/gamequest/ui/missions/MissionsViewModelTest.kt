@@ -145,6 +145,48 @@ class MissionsViewModelTest {
         assertEquals(1, viewModel.contadorCompletadas.value)
     }
 
+    @Test
+    fun busqueda_filtraPorTitulo() = runTest {
+        backgroundScope.launch(kotlinx.coroutines.test.UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.misionesFiltradas.collect()
+        }
+        viewModel.onFiltroChange(FiltroMisiones.TODAS)
+        viewModel.onBusquedaChange("libro")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val resultado = viewModel.misionesFiltradas.value
+        assertEquals(1, resultado.size)
+        assertEquals("Buscar libro", resultado.first().mision.titulo)
+    }
+
+    @Test
+    fun busqueda_filtraPorNombreLugar() = runTest {
+        backgroundScope.launch(kotlinx.coroutines.test.UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.misionesFiltradas.collect()
+        }
+        viewModel.onFiltroChange(FiltroMisiones.TODAS)
+        viewModel.onBusquedaChange("Biblioteca")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val resultado = viewModel.misionesFiltradas.value
+        assertEquals(2, resultado.size)
+    }
+
+    @Test
+    fun limpiarBusqueda_restauraListaFiltrada() = runTest {
+        backgroundScope.launch(kotlinx.coroutines.test.UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.misionesFiltradas.collect()
+        }
+        viewModel.onFiltroChange(FiltroMisiones.TODAS)
+        viewModel.onBusquedaChange("no_existe")
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(0, viewModel.misionesFiltradas.value.size)
+
+        viewModel.limpiarBusqueda()
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(2, viewModel.misionesFiltradas.value.size)
+    }
+
     private class FakeCampusRepository(
         private val misionesConEstado: List<MisionConEstado>
     ) : CampusRepository() {
