@@ -1,6 +1,9 @@
 package com.example.gamequest.ui.badges
 
+import android.content.Intent
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +33,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -47,12 +53,15 @@ fun BadgeEarnedScreen(
     viewModel: BadgeEarnedViewModel,
     onSiguienteMision: () -> Unit
 ) {
+    val context = LocalContext.current
     val soundManager = LocalSoundManager.current
+    val haptic = LocalHapticFeedback.current
     val estado by viewModel.estado.collectAsState()
     val mision = estado.mision
 
     LaunchedEffect(Unit) {
         soundManager?.play(SoundEffect.BADGE_EARNED)
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
     }
 
     Scaffold { padding ->
@@ -105,9 +114,39 @@ fun BadgeEarnedScreen(
                     EstadisticaChip("Nv. ${estado.usuario?.nivel ?: 1}", "NIVEL")
                     EstadisticaChip("${estado.totalInsignias}/20", "INSIGNIAS")
                 }
-                Spacer(Modifier.height(32.dp))
+                Spacer(Modifier.height(20.dp))
+
+                if ((estado.usuario?.nivel ?: 1) >= 2) {
+                    Surface(
+                        color = AmberAccent.copy(alpha = 0.25f),
+                        border = BorderStroke(2.dp, AmberAccent),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text("⭐", fontSize = 16.sp)
+                            Text(
+                                "¡NIVEL ${estado.usuario?.nivel} ALCANZADO!",
+                                color = AmberAccent,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(16.dp))
+                } else {
+                    Spacer(Modifier.height(12.dp))
+                }
+
                 Button(
-                    onClick = onSiguienteMision,
+                    onClick = {
+                        soundManager?.play(SoundEffect.CLICK)
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        onSiguienteMision()
+                    },
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                     shape = RoundedCornerShape(4.dp),
                     colors = androidx.compose.material3.ButtonDefaults.buttonColors(
@@ -119,7 +158,17 @@ fun BadgeEarnedScreen(
                 }
                 Spacer(Modifier.height(10.dp))
                 OutlinedButton(
-                    onClick = { /* Compartir: fuera del alcance de esta etapa */ },
+                    onClick = {
+                        soundManager?.play(SoundEffect.CLICK)
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        val mensaje = "🏆 ¡He completado la misión \"${mision?.titulo}\" y ganado la insignia \"${mision?.insigniaNombre}\" ${mision?.insigniaEmoji} en Campus Quest ULEAM! (+${mision?.puntos ?: 0} pts) 🎮🏛️"
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_SUBJECT, "Logro Campus Quest")
+                            putExtra(Intent.EXTRA_TEXT, mensaje)
+                        }
+                        context.startActivity(Intent.createChooser(intent, "Compartir logro"))
+                    },
                     modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = RoundedCornerShape(4.dp),
                     colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(contentColor = Color.White)

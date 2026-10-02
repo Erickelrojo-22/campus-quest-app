@@ -55,7 +55,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -85,6 +87,7 @@ fun ScannerScreen(
 ) {
     val context = LocalContext.current
     val soundManager = LocalSoundManager.current
+    val haptic = LocalHapticFeedback.current
     val uiState by viewModel.uiState.collectAsState()
 
     var permisoConcedido by remember {
@@ -192,8 +195,10 @@ fun ScannerScreen(
                         LaunchedEffect(estado.resultado) {
                             if (estado.resultado is ValidacionQrResult.MisionCompletada) {
                                 soundManager?.play(SoundEffect.SCAN_SUCCESS)
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             } else {
                                 soundManager?.play(SoundEffect.ERROR)
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             }
                         }
                         ResultadoPanel(estado.resultado, onContinuar = {
@@ -206,6 +211,7 @@ fun ScannerScreen(
                     is ScannerUiState.Error -> {
                         LaunchedEffect(estado.mensaje) {
                             soundManager?.play(SoundEffect.ERROR)
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                         }
                         Text(estado.mensaje, color = Color.White)
                         Spacer(Modifier.height(8.dp))

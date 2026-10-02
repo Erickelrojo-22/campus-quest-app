@@ -2,9 +2,11 @@ package com.example.gamequest.ui.home
 
 import android.graphics.BitmapFactory
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
@@ -16,6 +18,8 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,6 +27,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
@@ -107,6 +115,7 @@ fun CampusMapView(
     completados: Set<Int>,
     onPuntoClick: (PuntoInteresEntity) -> Unit,
     modifier: Modifier = Modifier,
+    puntoObjetivo: PuntoInteresEntity? = null,
     primaryColor: AvatarColor = AvatarColor.COBALT_BLUE,
     secondaryColor: AvatarColor = AvatarColor.RUBY_RED,
     characterSpecies: CharacterSpecies = CharacterSpecies.DUDE,
@@ -115,6 +124,7 @@ fun CampusMapView(
     val context = LocalContext.current
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
+    val haptic = LocalHapticFeedback.current
 
     val primary   = MaterialTheme.colorScheme.primary
     val secondary = MaterialTheme.colorScheme.secondary
@@ -343,8 +353,24 @@ fun CampusMapView(
                 puntos.forEach { punto ->
                     val pinPos = Offset(punto.posX * mapW, punto.posY * mapH)
                     val esCompletado = punto.id in completados
+                    val esObjetivo = punto.id == puntoObjetivo?.id
                     val pinColor = if (esCompletado) Color(0xFF2E7D32) else colorPorCategoria(punto.categoria, primary, secondary, tertiary)
                     val elevatedCenter = pinPos - Offset(0f, 18f)
+
+                    if (esObjetivo) {
+                        // Halo de atención animado alrededor del punto objetivo de la misión
+                        drawCircle(
+                            color = AmberAccent.copy(alpha = pulseAlpha),
+                            radius = 24f + (pulseRadius * 0.35f),
+                            center = elevatedCenter,
+                            style = Stroke(width = 3.5f)
+                        )
+                        drawCircle(
+                            color = AmberAccent.copy(alpha = 0.22f),
+                            radius = 24f,
+                            center = elevatedCenter
+                        )
+                    }
 
                     // Sombra ovalada en el suelo
                     drawOval(
@@ -362,7 +388,7 @@ fun CampusMapView(
                     // Cabeza del pin
                     drawCircle(color = Color(0xFF102D2B), radius = 22f, center = elevatedCenter)
                     drawCircle(color = pinColor, radius = 18f, center = elevatedCenter)
-                    drawCircle(color = if (esCompletado) Color.White else AmberAccent, radius = 6f, center = elevatedCenter)
+                    drawCircle(color = if (esCompletado) Color.White else if (esObjetivo) AmberAccent else Color.White, radius = 6f, center = elevatedCenter)
                 }
             }
         }
@@ -418,7 +444,57 @@ fun CampusMapView(
             }
         }
 
-        // 5. Botón flotante para recentrar en el avatar si el usuario arrastró el mapa
+        // 5. Brújula / Indicador hacia el objetivo de la misión activa
+        if (puntoObjetivo != null) {
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(10.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .border(BorderStroke(2.dp, AmberAccent), RoundedCornerShape(20.dp))
+                    .clickable {
+                        soundManager?.play(SoundEffect.CLICK)
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        scope.launch {
+                            playerFlipX = puntoObjetivo.posX < curX
+                            isWalking = true
+                            dragPanX = 0f; dragPanY = 0f
+                            launch { playerX.animateTo(puntoObjetivo.posX, tween(1100, easing = LinearOutSlowInEasing)) }
+                            playerY.animateTo(puntoObjetivo.posY, tween(1100, easing = LinearOutSlowInEasing))
+                            isWalking = false
+                            onPuntoClick(puntoObjetivo)
+                        }
+                    },
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
+                tonalElevation = 6.dp
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("🧭", fontSize = 18.sp)
+                    Column {
+                        Text(
+                            "MISIÓN ACTIVA",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AmberAccent
+                        )
+                        Text(
+                            puntoObjetivo.nombre,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1
+                        )
+                    }
+                }
+            }
+        }
+
+        // 6. Botón flotante para recentrar en el avatar si el usuario arrastró el mapa
         if (isDragged) {
             FloatingActionButton(
                 onClick = {

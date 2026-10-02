@@ -2,9 +2,11 @@ package com.example.gamequest.ui.profile
 
 import android.content.Context
 import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,7 +19,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -32,6 +38,8 @@ import com.example.gamequest.ui.theme.ContainerDark
 import com.example.gamequest.ui.theme.InstitutionalRed
 import com.example.gamequest.util.AvatarColor
 import com.example.gamequest.util.CharacterSpecies
+import com.example.gamequest.util.LocalSoundManager
+import com.example.gamequest.util.SoundEffect
 
 private fun obtenerRangoRpg(nivel: Int): String = when {
     nivel >= 7 -> "🏆 Maestro del Campus"
@@ -74,6 +82,9 @@ fun AdventurerCardDialog(
 ) {
     if (usuario == null) return
     val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
+    val soundManager = LocalSoundManager.current
+    val haptic = LocalHapticFeedback.current
     val rango = obtenerRangoRpg(usuario.nivel)
     val carnetId = "CQ-EST-%04d".format(usuario.id)
 
@@ -169,15 +180,27 @@ fun AdventurerCardDialog(
                             Spacer(Modifier.height(4.dp))
                             Surface(
                                 color = MaterialTheme.colorScheme.surfaceVariant,
-                                shape = RoundedCornerShape(4.dp)
+                                shape = RoundedCornerShape(4.dp),
+                                modifier = Modifier.clickable {
+                                    soundManager?.play(SoundEffect.CLICK)
+                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    clipboardManager.setText(AnnotatedString(carnetId))
+                                    Toast.makeText(context, "ID copiado: $carnetId", Toast.LENGTH_SHORT).show()
+                                }
                             ) {
-                                Text(
-                                    carnetId,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                )
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Text(
+                                        carnetId,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text("📋", fontSize = 10.sp)
+                                }
                             }
                         }
                     }
@@ -241,7 +264,11 @@ fun AdventurerCardDialog(
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         OutlinedButton(
-                            onClick = onDismiss,
+                            onClick = {
+                                soundManager?.play(SoundEffect.CLICK)
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                onDismiss()
+                            },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(8.dp)
                         ) {
@@ -251,7 +278,11 @@ fun AdventurerCardDialog(
                         }
 
                         Button(
-                            onClick = { compartirCarne(context, usuario, rango, totalInsignias) },
+                            onClick = {
+                                soundManager?.play(SoundEffect.CLICK)
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                compartirCarne(context, usuario, rango, totalInsignias)
+                            },
                             modifier = Modifier.weight(1.3f),
                             shape = RoundedCornerShape(8.dp),
                             colors = ButtonDefaults.buttonColors(

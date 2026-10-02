@@ -33,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -44,11 +45,13 @@ import com.example.gamequest.data.repository.MisionConEstado
 import com.example.gamequest.ui.common.CampusBottomBar
 import com.example.gamequest.ui.components.DudeAnimation
 import com.example.gamequest.ui.components.DudeSprite
+import com.example.gamequest.ui.components.OnboardingDialog
 import com.example.gamequest.ui.navigation.Routes
 import com.example.gamequest.ui.theme.AmberAccent
 import com.example.gamequest.ui.theme.AmberAccentDark
 import com.example.gamequest.util.AvatarColor
 import com.example.gamequest.util.CharacterSpecies
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
@@ -166,6 +169,7 @@ fun HomeScreen(
                     CampusMapView(
                         puntos = puntosMapa,
                         completados = completadosMapa,
+                        puntoObjetivo = sugerida?.punto,
                         primaryColor = charPrimary,
                         secondaryColor = charSecondary,
                         characterSpecies = charSpecies,
@@ -183,6 +187,18 @@ fun HomeScreen(
                 }
             }
         }
+    }
+
+    val scope = rememberCoroutineScope()
+    if (prefs != null && !prefs!!.tutorialVisto) {
+        OnboardingDialog(
+            onDismiss = {
+                scope.launch { prefsRepo.setTutorialVisto(true) }
+            },
+            onCompletar = {
+                scope.launch { prefsRepo.setTutorialVisto(true) }
+            }
+        )
     }
 }
 

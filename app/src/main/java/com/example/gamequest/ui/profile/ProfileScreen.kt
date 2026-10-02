@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.ChevronRight
@@ -40,6 +41,7 @@ import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.History
 import com.example.gamequest.data.repository.CampusRepository
 import com.example.gamequest.data.repository.ProgresoDetallado
+import com.example.gamequest.ui.components.OnboardingDialog
 import com.example.gamequest.util.CharacterSpecies
 import kotlinx.coroutines.launch
 
@@ -80,6 +82,9 @@ fun ProfileScreen(
 
     // Controlar visibilidad del carné de aventurero RPG
     var showAdventurerCard by remember { mutableStateOf(false) }
+
+    // Controlar visibilidad del tutorial / guía de inicio RPG
+    var showOnboarding by remember { mutableStateOf(false) }
 
     Scaffold(
         bottomBar = { CampusBottomBar(currentRoute = Routes.PROFILE, onNavigate = onNavigateTab) }
@@ -192,6 +197,17 @@ fun ProfileScreen(
                 onClick   = {
                     soundManager?.play(SoundEffect.CLICK)
                     showAdventurerCard = true
+                },
+            )
+
+            // Guía de inicio / Tutorial RPG
+            OpcionPerfil(
+                icono     = Icons.AutoMirrored.Filled.HelpOutline,
+                titulo    = "Guía de Inicio RPG",
+                subtitulo = "Tutorial de exploración, misiones y rankings",
+                onClick   = {
+                    soundManager?.play(SoundEffect.CLICK)
+                    showOnboarding = true
                 },
             )
 
@@ -393,6 +409,14 @@ fun ProfileScreen(
             secondaryColor = secondaryColor,
             totalInsignias = totalInsignias,
             onDismiss      = { showAdventurerCard = false }
+        )
+    }
+
+    // ── Guía de inicio / Tutorial Onboarding ─────────────────────────────
+    if (showOnboarding) {
+        OnboardingDialog(
+            onDismiss   = { showOnboarding = false },
+            onCompletar = { showOnboarding = false }
         )
     }
 }

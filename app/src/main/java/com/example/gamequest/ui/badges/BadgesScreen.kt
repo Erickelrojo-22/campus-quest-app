@@ -1,6 +1,10 @@
 package com.example.gamequest.ui.badges
 
+import android.content.Intent
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,28 +21,52 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MilitaryTech
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.example.gamequest.data.local.entity.UsuarioEntity
+import com.example.gamequest.data.repository.MisionConEstado
 import com.example.gamequest.ui.common.CampusBottomBar
 import com.example.gamequest.ui.navigation.Routes
 import com.example.gamequest.ui.theme.AmberAccent
+import com.example.gamequest.ui.theme.AmberAccentDark
+import com.example.gamequest.ui.theme.ContainerDark
+import com.example.gamequest.ui.theme.InstitutionalRed
+import com.example.gamequest.util.LocalSoundManager
+import com.example.gamequest.util.SoundEffect
 
 @Composable
 fun BadgesScreen(
@@ -46,7 +74,10 @@ fun BadgesScreen(
     usuarioActualId: Int,
     onNavigateTab: (String) -> Unit
 ) {
+    val soundManager = LocalSoundManager.current
+    val haptic = LocalHapticFeedback.current
     val estado by viewModel.estado.collectAsState()
+    var insigniaSeleccionada by remember { mutableStateOf<MisionConEstado?>(null) }
 
     Scaffold(bottomBar = { CampusBottomBar(currentRoute = Routes.BADGES, onNavigate = onNavigateTab) }) { padding ->
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
@@ -93,17 +124,33 @@ fun BadgesScreen(
             }
 
             item {
-                SeccionTitulo("OBTENIDAS (${estado.obtenidas.size})")
+                SeccionTitulo("OBTENIDAS (${estado.obtenidas.size}) · Toca para inspeccionar")
             }
             item {
-                InsigniasGrid(estado.obtenidas.map { it.mision.insigniaEmoji }, bloqueadas = false)
+                InsigniasGrid(
+                    misiones = estado.obtenidas,
+                    bloqueadas = false,
+                    onInsigniaClick = { item ->
+                        soundManager?.play(SoundEffect.BADGE_EARNED)
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        insigniaSeleccionada = item
+                    }
+                )
             }
 
             item {
-                SeccionTitulo("POR DESBLOQUEAR (${estado.pendientes.size})")
+                SeccionTitulo("POR DESBLOQUEAR (${estado.pendientes.size}) · Pistas secretas")
             }
             item {
-                InsigniasGrid(estado.pendientes.map { it.mision.insigniaEmoji }, bloqueadas = true)
+                InsigniasGrid(
+                    misiones = estado.pendientes,
+                    bloqueadas = true,
+                    onInsigniaClick = { item ->
+                        soundManager?.play(SoundEffect.CLICK)
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        insigniaSeleccionada = item
+                    }
+                )
             }
 
             item {
@@ -114,6 +161,17 @@ fun BadgesScreen(
             }
             item { Spacer(Modifier.height(24.dp)) }
         }
+    }
+
+    // Modal de Vitrina de Insignia
+    insigniaSeleccionada?.let { seleccionada ->
+        InsigniaDetalleDialog(
+            item = seleccionada,
+            onDismiss = {
+                soundManager?.play(SoundEffect.CLICK)
+                insigniaSeleccionada = null
+            }
+        )
     }
 }
 
@@ -129,8 +187,12 @@ private fun SeccionTitulo(texto: String) {
 }
 
 @Composable
-private fun InsigniasGrid(emojis: List<String>, bloqueadas: Boolean) {
-    if (emojis.isEmpty()) {
+private fun InsigniasGrid(
+    misiones: List<MisionConEstado>,
+    bloqueadas: Boolean,
+    onInsigniaClick: (MisionConEstado) -> Unit
+) {
+    if (misiones.isEmpty()) {
         Text(
             if (bloqueadas) "¡Ya desbloqueaste todas las insignias disponibles!" else "Completa tu primera misión para ganar una insignia.",
             style = MaterialTheme.typography.bodySmall,
@@ -145,23 +207,198 @@ private fun InsigniasGrid(emojis: List<String>, bloqueadas: Boolean) {
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        emojis.chunked(4).forEach { filaEmojis ->
+        misiones.chunked(4).forEach { fila ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                filaEmojis.forEach { emoji ->
+                fila.forEach { item ->
                     Surface(
-                        modifier = Modifier.size(64.dp),
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(CircleShape)
+                            .clickable { onInsigniaClick(item) },
                         shape = CircleShape,
-                        color = if (bloqueadas) MaterialTheme.colorScheme.surfaceVariant else AmberAccent.copy(alpha = 0.25f)
+                        color = if (bloqueadas) MaterialTheme.colorScheme.surfaceVariant else AmberAccent.copy(alpha = 0.25f),
+                        border = if (!bloqueadas) BorderStroke(2.dp, AmberAccent) else null
                     ) {
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             if (bloqueadas) {
                                 Icon(Icons.Filled.Lock, contentDescription = "Bloqueada", tint = MaterialTheme.colorScheme.outline)
                             } else {
-                                Text(emoji, style = MaterialTheme.typography.titleLarge)
+                                Text(item.mision.insigniaEmoji, style = MaterialTheme.typography.titleLarge)
                             }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun InsigniaDetalleDialog(
+    item: MisionConEstado,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    val soundManager = LocalSoundManager.current
+    val haptic = LocalHapticFeedback.current
+    val esDesbloqueada = item.completada
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth(0.88f)
+                .clip(RoundedCornerShape(16.dp))
+                .border(BorderStroke(3.dp, if (esDesbloqueada) AmberAccent else MaterialTheme.colorScheme.outlineVariant), RoundedCornerShape(16.dp)),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 8.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Insignia en grande con resplandor
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .background(
+                            brush = if (esDesbloqueada) {
+                                Brush.radialGradient(listOf(AmberAccent, AmberAccentDark))
+                            } else {
+                                Brush.radialGradient(listOf(Color.Gray.copy(alpha = 0.4f), Color.DarkGray.copy(alpha = 0.6f)))
+                            },
+                            shape = CircleShape
+                        )
+                        .border(
+                            BorderStroke(3.dp, if (esDesbloqueada) Color.White.copy(alpha = 0.8f) else Color.Transparent),
+                            CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (esDesbloqueada) {
+                        Text(item.mision.insigniaEmoji, fontSize = 48.sp)
+                    } else {
+                        Icon(Icons.Filled.Lock, contentDescription = null, tint = Color.White, modifier = Modifier.size(44.dp))
+                    }
+                }
+
+                Spacer(Modifier.height(14.dp))
+
+                // Estado de desbloqueo
+                Surface(
+                    color = if (esDesbloqueada) AmberAccent.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Text(
+                        if (esDesbloqueada) "🏅 INSIGNIA DESBLOQUEADA" else "🔒 INSIGNIA BLOQUEADA",
+                        color = if (esDesbloqueada) AmberAccent else MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                // Nombre de la insignia
+                Text(
+                    item.mision.insigniaNombre,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(Modifier.height(4.dp))
+
+                // Misión y lugar asociado
+                Text(
+                    "Misión: ${item.mision.titulo}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    "📍 ${item.punto.nombre} (${item.punto.categoria})",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                // Puntos otorgados
+                Surface(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        "⭐ Recompensa: ${item.mision.puntos} puntos de experiencia",
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
+                }
+
+                Spacer(Modifier.height(12.dp))
+
+                // Pista / Descripción
+                Text(
+                    if (esDesbloqueada) item.mision.descripcionPista else "🔍 Pista para hallarla:\n${item.mision.descripcionPista}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+
+                Spacer(Modifier.height(18.dp))
+
+                // Botones de acción
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Icon(Icons.Filled.Close, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Cerrar")
+                    }
+
+                    if (esDesbloqueada) {
+                        Button(
+                            onClick = {
+                                soundManager?.play(SoundEffect.CLICK)
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                val mensaje = "🏆 ¡He desbloqueado la insignia \"${item.mision.insigniaNombre}\" ${item.mision.insigniaEmoji} en Campus Quest ULEAM! (+${item.mision.puntos} pts) 🏛️🎮"
+                                val intent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_SUBJECT, "Logro Campus Quest")
+                                    putExtra(Intent.EXTRA_TEXT, mensaje)
+                                }
+                                context.startActivity(Intent.createChooser(intent, "Compartir insignia"))
+                            },
+                            modifier = Modifier.weight(1.3f),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = AmberAccent,
+                                contentColor = ContainerDark
+                            )
+                        ) {
+                            Icon(Icons.Filled.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Compartir", fontWeight = FontWeight.Bold)
                         }
                     }
                 }

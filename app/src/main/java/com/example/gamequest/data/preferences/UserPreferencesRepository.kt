@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.map
 
 private val Context.dataStore by preferencesDataStore(name = "campus_quest_preferences")
 
+@Suppress("DEPRECATION")
 data class UserPreferences(
     val temaOscuro: Boolean = true,
     val tamanoTexto: String = "Mediano",
@@ -29,6 +30,7 @@ data class UserPreferences(
     val avatarPrimaryColor: AvatarColor = AvatarColor.COBALT_BLUE,
     /** Color secundario del avatar (pañuelo / rostro / vientre). */
     val avatarSecondaryColor: AvatarColor = AvatarColor.RUBY_RED,
+    val tutorialVisto: Boolean = false,
     // Retrocompatibilidad — se mantiene pero ya no se usa directamente
     @Deprecated("Usar avatarPrimaryColor / avatarSecondaryColor")
     val characterColor: CharacterColor = CharacterColor.BLUE_ORIGINAL,
@@ -55,6 +57,7 @@ class UserPreferencesRepository(private val context: Context) {
         val CHARACTER_SPECIES = stringPreferencesKey("character_species")
         val AVATAR_PRIMARY_COLOR = stringPreferencesKey("avatar_primary_color")
         val AVATAR_SECONDARY_COLOR = stringPreferencesKey("avatar_secondary_color")
+        val TUTORIAL_VISTO = booleanPreferencesKey("tutorial_visto")
     }
 
     val preferencias: Flow<UserPreferences> = context.dataStore.data.map { prefs ->
@@ -88,6 +91,7 @@ class UserPreferencesRepository(private val context: Context) {
                 ?: CharacterSpecies.DUDE,
             avatarPrimaryColor = primaryColor,
             avatarSecondaryColor = secondaryColor,
+            tutorialVisto = prefs[Keys.TUTORIAL_VISTO] ?: false,
             characterColor = legacyColor,
         )
     }
@@ -138,9 +142,14 @@ class UserPreferencesRepository(private val context: Context) {
         context.dataStore.edit { it[Keys.AVATAR_SECONDARY_COLOR] = color.name }
     }
 
+    @Suppress("DEPRECATION")
     @Deprecated("Usar setAvatarPrimaryColor / setAvatarSecondaryColor")
     suspend fun setCharacterColor(color: CharacterColor) {
         context.dataStore.edit { it[Keys.CHARACTER_COLOR] = color.name }
+    }
+
+    suspend fun setTutorialVisto(visto: Boolean) {
+        context.dataStore.edit { it[Keys.TUTORIAL_VISTO] = visto }
     }
 
     suspend fun cerrarSesion() {

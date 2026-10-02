@@ -42,6 +42,20 @@ tenga remoto en GitHub. Formato pensado para migrarse 1 a 1 con
   `BadgesScreen.kt`: eliminado el `LazyVerticalGrid` anidado para evitar problemas de altura fija; `MissionsScreen.kt`: agregadas etiquetas cromáticas para todas las dificultades (Baja, Media, Alta).
 - [x] **Cobertura de pruebas unitarias (Repository y ViewModels).**
   Implementadas suites de tests para `CampusRepositoryTest`, `MissionsViewModelTest` y `HomeViewModelTest` con verificación de filtrado reactivo, búsquedas y progreso.
+- [x] **Buscador reactivo en tiempo real en la pantalla de Misiones.**
+  `MissionsScreen.kt` y `MissionsViewModel.kt`: implementado filtrado reactivo por título, lugar, dificultad y pistas con TextField estilizado retro, botón de borrado rápido y tests unitarios.
+- [x] **Vitrina interactiva de insignias con modal de inspección retro.**
+  `BadgesScreen.kt`: las insignias obtenidas y bloqueadas ahora son interactivas, abriendo un modal detallado con animación de resplandor, puntos, lugar del campus, pistas secretas y opción para compartir logros.
+- [x] **Brújula y radar de navegación hacia la misión activa en el mapa.**
+  `CampusMapView.kt` y `HomeScreen.kt`: indicador flotante tipo brújula 🧭 que orienta hacia el punto objetivo de la misión sugerida, con animación de pulso sobre el pin y caminata/centrado automático suave.
+- [x] **Feedback háptico y pantalla de Nivel Alcanzado (Level Up).**
+  `ScannerScreen.kt` y `BadgeEarnedScreen.kt`: vibración háptica táctil en escaneo exitoso/erróneo, banner dinámico de nuevo nivel y compartir victoria.
+- [x] **Prólogo y tutorial de bienvenida interactivo (Onboarding RPG).**
+  `OnboardingDialog.kt`, `UserPreferencesRepository.kt` y `HomeScreen.kt`: tutorial interactivo en 3 pasos con persistencia DataStore (`tutorialVisto`), accesible también desde el perfil.
+- [x] **Carné de Aventurero RPG con copia rápida de credencial y feedback sensorial.**
+  `AdventurerCardDialog.kt`: credencial oficial con sprite personalizado, copia de ID al portapapeles con confirmación visual (Toast) y sonidos/vibración háptica.
+- [x] **Supresión de advertencias de Gradle en compilación.**
+  `gradle.properties`: añadida propiedad recomendada para suprimir advertencias experimentales de AGP.
 
 ## Pendientes
 
