@@ -40,9 +40,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -77,7 +74,6 @@ fun BadgesScreen(
     val soundManager = LocalSoundManager.current
     val haptic = LocalHapticFeedback.current
     val estado by viewModel.estado.collectAsState()
-    var insigniaSeleccionada by remember { mutableStateOf<MisionConEstado?>(null) }
 
     Scaffold(bottomBar = { CampusBottomBar(currentRoute = Routes.BADGES, onNavigate = onNavigateTab) }) { padding ->
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
@@ -133,7 +129,7 @@ fun BadgesScreen(
                     onInsigniaClick = { item ->
                         soundManager?.play(SoundEffect.BADGE_EARNED)
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        insigniaSeleccionada = item
+                        viewModel.seleccionarInsignia(item)
                     }
                 )
             }
@@ -148,7 +144,7 @@ fun BadgesScreen(
                     onInsigniaClick = { item ->
                         soundManager?.play(SoundEffect.CLICK)
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        insigniaSeleccionada = item
+                        viewModel.seleccionarInsignia(item)
                     }
                 )
             }
@@ -164,12 +160,12 @@ fun BadgesScreen(
     }
 
     // Modal de Vitrina de Insignia
-    insigniaSeleccionada?.let { seleccionada ->
+    estado.insigniaSeleccionada?.let { seleccionada ->
         InsigniaDetalleDialog(
             item = seleccionada,
             onDismiss = {
                 soundManager?.play(SoundEffect.CLICK)
-                insigniaSeleccionada = null
+                viewModel.cerrarDetalleInsignia()
             }
         )
     }

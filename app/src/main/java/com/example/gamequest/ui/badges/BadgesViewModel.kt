@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.gamequest.data.local.entity.UsuarioEntity
 import com.example.gamequest.data.repository.CampusRepository
 import com.example.gamequest.data.repository.MisionConEstado
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -14,7 +15,8 @@ data class BadgesUiState(
     val usuario: UsuarioEntity? = null,
     val obtenidas: List<MisionConEstado> = emptyList(),
     val pendientes: List<MisionConEstado> = emptyList(),
-    val ranking: List<UsuarioEntity> = emptyList()
+    val ranking: List<UsuarioEntity> = emptyList(),
+    val insigniaSeleccionada: MisionConEstado? = null
 )
 
 /** RF-14 insignias y progreso, RF-15 ranking del campus. */
@@ -23,16 +25,28 @@ class BadgesViewModel(
     usuarioId: Int
 ) : ViewModel() {
 
+    private val _insigniaSeleccionada = MutableStateFlow<MisionConEstado?>(null)
+
     val estado: StateFlow<BadgesUiState> = combine(
         campusRepository.observarUsuario(usuarioId),
         campusRepository.observarMisionesConEstado(usuarioId),
-        campusRepository.observarRanking()
-    ) { usuario, misiones, ranking ->
+        campusRepository.observarRanking(),
+        _insigniaSeleccionada
+    ) { usuario, misiones, ranking, insignia ->
         BadgesUiState(
             usuario = usuario,
             obtenidas = misiones.filter { it.completada },
             pendientes = misiones.filter { !it.completada },
-            ranking = ranking.take(10)
+            ranking = ranking.take(10),
+            insigniaSeleccionada = insignia
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BadgesUiState())
+
+    fun seleccionarInsignia(mision: MisionConEstado) {
+        _insigniaSeleccionada.value = mision
+    }
+
+    fun cerrarDetalleInsignia() {
+        _insigniaSeleccionada.value = null
+    }
 }
