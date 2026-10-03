@@ -102,7 +102,7 @@ fun ScannerScreen(
         if (!permisoConcedido) launcherPermiso.launch(Manifest.permission.CAMERA)
     }
 
-    var mostrarDialogoManual by remember { mutableStateOf(false) }
+    val mostrarDialogoManual by viewModel.mostrarDialogoManual.collectAsState()
 
     Scaffold(bottomBar = { CampusBottomBar(currentRoute = Routes.SCANNER, onNavigate = onNavigateTab) }) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
@@ -221,7 +221,7 @@ fun ScannerScreen(
                     }
                     ScannerUiState.Escaneando -> {
                         OutlinedButton(
-                            onClick = { mostrarDialogoManual = true },
+                            onClick = viewModel::abrirDialogoManual,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(4.dp),
                             colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
@@ -237,9 +237,9 @@ fun ScannerScreen(
     }
 
     if (mostrarDialogoManual) {
-        var codigoManual by remember { mutableStateOf("") }
+        val codigoManual by viewModel.codigoManual.collectAsState()
         AlertDialog(
-            onDismissRequest = { mostrarDialogoManual = false },
+            onDismissRequest = viewModel::cerrarDialogoManual,
             title = { Text("Ingresar código manualmente") },
             text = {
                 Column {
@@ -250,20 +250,17 @@ fun ScannerScreen(
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(
                         value = codigoManual,
-                        onValueChange = { codigoManual = it },
+                        onValueChange = viewModel::onCodigoManualChange,
                         placeholder = { Text("CQ-BIB-001") },
                         singleLine = true
                     )
                 }
             },
             confirmButton = {
-                TextButton(onClick = {
-                    mostrarDialogoManual = false
-                    viewModel.validar(codigoManual)
-                }) { Text("Validar") }
+                TextButton(onClick = viewModel::validarCodigoManual) { Text("Validar") }
             },
             dismissButton = {
-                TextButton(onClick = { mostrarDialogoManual = false }) { Text("Cancelar") }
+                TextButton(onClick = viewModel::cerrarDialogoManual) { Text("Cancelar") }
             }
         )
     }

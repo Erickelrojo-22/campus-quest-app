@@ -25,6 +25,30 @@ class ScannerViewModel(
     private val _uiState = MutableStateFlow<ScannerUiState>(ScannerUiState.Escaneando)
     val uiState: StateFlow<ScannerUiState> = _uiState.asStateFlow()
 
+    private val _mostrarDialogoManual = MutableStateFlow(false)
+    val mostrarDialogoManual: StateFlow<Boolean> = _mostrarDialogoManual.asStateFlow()
+
+    private val _codigoManual = MutableStateFlow("")
+    val codigoManual: StateFlow<String> = _codigoManual.asStateFlow()
+
+    fun abrirDialogoManual() {
+        _mostrarDialogoManual.value = true
+    }
+
+    fun cerrarDialogoManual() {
+        _mostrarDialogoManual.value = false
+    }
+
+    fun onCodigoManualChange(codigo: String) {
+        _codigoManual.value = codigo
+    }
+
+    fun validarCodigoManual() {
+        val codigo = _codigoManual.value
+        _mostrarDialogoManual.value = false
+        validar(codigo)
+    }
+
     fun validar(codigo: String) {
         if (_uiState.value !is ScannerUiState.Escaneando) return
         _uiState.value = ScannerUiState.Procesando
