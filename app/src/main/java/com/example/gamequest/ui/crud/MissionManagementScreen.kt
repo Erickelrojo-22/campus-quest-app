@@ -31,9 +31,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -49,7 +46,7 @@ fun MissionManagementScreen(
     onEditarMision: (puntoId: Int) -> Unit
 ) {
     val misiones by viewModel.misiones.collectAsState()
-    var misionAEliminar by remember { mutableStateOf<MisionEntity?>(null) }
+    val misionAEliminar by viewModel.misionAEliminar.collectAsState()
 
     Scaffold(
         topBar = {
@@ -97,7 +94,7 @@ fun MissionManagementScreen(
                             IconButton(onClick = { onEditarMision(punto.id) }) {
                                 Icon(Icons.Filled.Edit, contentDescription = "Editar")
                             }
-                            IconButton(onClick = { misionAEliminar = mision }) {
+                            IconButton(onClick = { viewModel.solicitarEliminacion(mision) }) {
                                 Icon(Icons.Filled.Delete, contentDescription = "Eliminar")
                             }
                         }
@@ -110,17 +107,14 @@ fun MissionManagementScreen(
 
     misionAEliminar?.let { mision ->
         AlertDialog(
-            onDismissRequest = { misionAEliminar = null },
+            onDismissRequest = viewModel::cancelarEliminacion,
             title = { Text("Eliminar misión") },
             text = { Text("¿Seguro que deseas eliminar \"${mision.titulo}\"? Esta acción no se puede deshacer.") },
             confirmButton = {
-                TextButton(onClick = {
-                    viewModel.eliminar(mision)
-                    misionAEliminar = null
-                }) { Text("Eliminar") }
+                TextButton(onClick = viewModel::confirmarEliminacion) { Text("Eliminar") }
             },
             dismissButton = {
-                TextButton(onClick = { misionAEliminar = null }) { Text("Cancelar") }
+                TextButton(onClick = viewModel::cancelarEliminacion) { Text("Cancelar") }
             }
         )
     }

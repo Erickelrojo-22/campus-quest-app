@@ -32,9 +32,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -85,18 +83,26 @@ fun MissionFormScreen(
             Spacer(Modifier.height(14.dp))
 
             Etiqueta("Categoría")
-            var categoriaExpandida by remember { mutableStateOf(false) }
-            ExposedDropdownMenuBox(expanded = categoriaExpandida, onExpandedChange = { categoriaExpandida = it }) {
+            ExposedDropdownMenuBox(
+                expanded = estado.categoriaExpandida,
+                onExpandedChange = viewModel::onCategoriaExpandida
+            ) {
                 OutlinedTextField(
                     value = estado.categoria,
                     onValueChange = {},
                     readOnly = true,
                     modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoriaExpandida) }
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = estado.categoriaExpandida) }
                 )
-                ExposedDropdownMenu(expanded = categoriaExpandida, onDismissRequest = { categoriaExpandida = false }) {
+                ExposedDropdownMenu(
+                    expanded = estado.categoriaExpandida,
+                    onDismissRequest = { viewModel.onCategoriaExpandida(false) }
+                ) {
                     categorias.forEach { opcion ->
-                        DropdownMenuItem(text = { Text(opcion) }, onClick = { viewModel.onCategoria(opcion); categoriaExpandida = false })
+                        DropdownMenuItem(
+                            text = { Text(opcion) },
+                            onClick = { viewModel.onCategoria(opcion) }
+                        )
                     }
                 }
             }

@@ -15,6 +15,7 @@ data class MissionFormState(
     val esEdicion: Boolean = false,
     val nombreLugar: String = "",
     val categoria: String = "Académico",
+    val categoriaExpandida: Boolean = false,
     val horarioAtencion: String = "",
     val tramites: String = "",
     val titulo: String = "",
@@ -72,7 +73,8 @@ class MissionFormViewModel(
     }
 
     fun onNombreLugar(v: String) { _state.value = _state.value.copy(nombreLugar = v) }
-    fun onCategoria(v: String) { _state.value = _state.value.copy(categoria = v) }
+    fun onCategoriaExpandida(expandida: Boolean) { _state.value = _state.value.copy(categoriaExpandida = expandida) }
+    fun onCategoria(v: String) { _state.value = _state.value.copy(categoria = v, categoriaExpandida = false) }
     fun onHorario(v: String) { _state.value = _state.value.copy(horarioAtencion = v) }
     fun onTramites(v: String) { _state.value = _state.value.copy(tramites = v) }
     fun onTitulo(v: String) { _state.value = _state.value.copy(titulo = v) }
