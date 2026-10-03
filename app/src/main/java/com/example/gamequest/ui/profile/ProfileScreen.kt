@@ -3,6 +3,8 @@ package com.example.gamequest.ui.profile
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,80 +13,52 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AdminPanelSettings
+import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.gamequest.data.local.entity.Rol
-import com.example.gamequest.data.preferences.UserPreferencesRepository
 import com.example.gamequest.ui.common.CampusBottomBar
-import com.example.gamequest.ui.common.SessionViewModel
-import com.example.gamequest.util.AvatarColor
-import com.example.gamequest.util.LocalSoundManager
-import com.example.gamequest.util.SoundEffect
-import com.example.gamequest.ui.components.CharacterAnimation
 import com.example.gamequest.ui.components.CharacterSprite
+import com.example.gamequest.ui.components.OnboardingDialog
 import com.example.gamequest.ui.navigation.Routes
 import com.example.gamequest.ui.theme.AmberAccent
 import com.example.gamequest.ui.theme.InstitutionalRed
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.filled.Badge
-import androidx.compose.material.icons.filled.History
-import com.example.gamequest.data.repository.CampusRepository
-import com.example.gamequest.data.repository.ProgresoDetallado
-import com.example.gamequest.ui.components.OnboardingDialog
+import com.example.gamequest.util.AvatarColor
 import com.example.gamequest.util.CharacterSpecies
-import kotlinx.coroutines.launch
+import com.example.gamequest.util.LocalSoundManager
+import com.example.gamequest.util.SoundEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
-    sessionViewModel: SessionViewModel,
-    campusRepository: CampusRepository? = null,
+    viewModel: ProfileViewModel,
     onNavigateTab: (String) -> Unit,
     onSettings: () -> Unit,
     onMissionManagement: () -> Unit,
     onCerrarSesion: () -> Unit,
 ) {
-    val usuario         by sessionViewModel.usuarioActual.collectAsState()
+    val uiState         by viewModel.uiState.collectAsState()
+    val usuario         = uiState.usuario
     val soundManager     = LocalSoundManager.current
-    val context          = LocalContext.current
-    val scope            = rememberCoroutineScope()
-    val prefsRepo        = remember { UserPreferencesRepository(context) }
-    val prefs           by prefsRepo.preferencias.collectAsState(initial = null)
 
-    val selectedSpecies = prefs?.characterSpecies ?: CharacterSpecies.DUDE
-    val primaryColor    = prefs?.avatarPrimaryColor ?: AvatarColor.COBALT_BLUE
-    val secondaryColor  = prefs?.avatarSecondaryColor ?: AvatarColor.RUBY_RED
-
-    val totalInsignias  by remember(usuario?.id, campusRepository) {
-        campusRepository?.observarTotalInsignias(usuario?.id ?: -1)
-            ?: kotlinx.coroutines.flow.flowOf(0)
-    }.collectAsState(initial = 0)
-
-    // Alternar IDLE/WALK al tocar el sprite
-    var spriteAnim by remember { mutableStateOf(CharacterAnimation.IDLE) }
-
-    // Controlar visibilidad del editor de avatar
-    var showEditor by remember { mutableStateOf(false) }
-
-    // Controlar visibilidad del historial / timeline de puntos
-    var showTimeline by remember { mutableStateOf(false) }
-
-    // Controlar visibilidad del carné de aventurero RPG
-    var showAdventurerCard by remember { mutableStateOf(false) }
-
-    // Controlar visibilidad del tutorial / guía de inicio RPG
-    var showOnboarding by remember { mutableStateOf(false) }
+    val selectedSpecies = uiState.selectedSpecies
+    val primaryColor    = uiState.primaryColor
+    val secondaryColor  = uiState.secondaryColor
+    val totalInsignias  = uiState.totalInsignias
+    val spriteAnim      = uiState.spriteAnim
 
     Scaffold(
         bottomBar = { CampusBottomBar(currentRoute = Routes.PROFILE, onNavigate = onNavigateTab) }
@@ -111,8 +85,7 @@ fun ProfileScreen(
                         .background(Color.White.copy(alpha = 0.15f))
                         .clickable {
                             soundManager?.play(SoundEffect.CLICK)
-                            spriteAnim = if (spriteAnim == CharacterAnimation.IDLE)
-                                CharacterAnimation.WALK else CharacterAnimation.IDLE
+                            viewModel.toggleSpriteAnim()
                         },
                     contentAlignment = Alignment.Center,
                 ) {
@@ -174,7 +147,7 @@ fun ProfileScreen(
                 subtitulo = "Especie, colores y estilo",
                 onClick   = {
                     soundManager?.play(SoundEffect.CLICK)
-                    showEditor = true
+                    viewModel.abrirEditor()
                 },
             )
 
@@ -185,7 +158,7 @@ fun ProfileScreen(
                 subtitulo = "Línea de tiempo de misiones completadas",
                 onClick   = {
                     soundManager?.play(SoundEffect.CLICK)
-                    showTimeline = true
+                    viewModel.abrirTimeline()
                 },
             )
 
@@ -196,7 +169,7 @@ fun ProfileScreen(
                 subtitulo = "Credencial institucional RPG y compartir logros",
                 onClick   = {
                     soundManager?.play(SoundEffect.CLICK)
-                    showAdventurerCard = true
+                    viewModel.abrirAdventurerCard()
                 },
             )
 
@@ -207,7 +180,7 @@ fun ProfileScreen(
                 subtitulo = "Tutorial de exploración, misiones y rankings",
                 onClick   = {
                     soundManager?.play(SoundEffect.CLICK)
-                    showOnboarding = true
+                    viewModel.abrirOnboarding()
                 },
             )
 
@@ -235,14 +208,11 @@ fun ProfileScreen(
     }
 
     // ── Modal de historial y timeline de puntos ──────────────────────────
-    if (showTimeline) {
-        val historial by remember(usuario?.id, campusRepository) {
-            campusRepository?.observarHistorialProgreso(usuario?.id ?: -1)
-                ?: kotlinx.coroutines.flow.flowOf(emptyList())
-        }.collectAsState(initial = emptyList())
+    if (uiState.showTimeline) {
+        val historial = uiState.historial
 
         ModalBottomSheet(
-            onDismissRequest = { showTimeline = false },
+            onDismissRequest = viewModel::cerrarTimeline,
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
             Column(
@@ -383,40 +353,40 @@ fun ProfileScreen(
     }
 
     // ── Modal de edición de avatar ───────────────────────────────────────
-    if (showEditor) {
+    if (uiState.showEditor) {
         AvatarEditorSheet(
-            currentSpecies   = selectedSpecies,
-            currentPrimary   = primaryColor,
-            currentSecondary = secondaryColor,
-            onSave = { newSpecies, newPrimary, newSecondary ->
-                scope.launch {
-                    prefsRepo.setCharacterSpecies(newSpecies)
-                    prefsRepo.setAvatarPrimaryColor(newPrimary)
-                    prefsRepo.setAvatarSecondaryColor(newSecondary)
-                }
-                showEditor = false
-            },
-            onDismiss = { showEditor = false },
+            species             = uiState.editorSpecies,
+            primary             = uiState.editorPrimary,
+            secondary           = uiState.editorSecondary,
+            activeZone          = uiState.editorActiveZone,
+            previewAnim         = uiState.editorPreviewAnim,
+            onSpeciesChange     = viewModel::onEditorSpeciesChange,
+            onActiveZoneChange  = viewModel::onEditorActiveZoneChange,
+            onColorSelected     = viewModel::onEditorColorSelected,
+            onTogglePreviewAnim = viewModel::toggleEditorPreviewAnim,
+            onReset             = viewModel::restablecerEditor,
+            onSave              = viewModel::guardarAvatar,
+            onDismiss           = viewModel::cerrarEditor,
         )
     }
 
     // ── Diálogo de Carné de Aventurero RPG ────────────────────────────────
-    if (showAdventurerCard) {
+    if (uiState.showAdventurerCard) {
         AdventurerCardDialog(
             usuario        = usuario,
             species        = selectedSpecies,
             primaryColor   = primaryColor,
             secondaryColor = secondaryColor,
             totalInsignias = totalInsignias,
-            onDismiss      = { showAdventurerCard = false }
+            onDismiss      = viewModel::cerrarAdventurerCard
         )
     }
 
     // ── Guía de inicio / Tutorial Onboarding ─────────────────────────────
-    if (showOnboarding) {
+    if (uiState.showOnboarding) {
         OnboardingDialog(
-            onDismiss   = { showOnboarding = false },
-            onCompletar = { showOnboarding = false }
+            onDismiss   = viewModel::cerrarOnboarding,
+            onCompletar = viewModel::cerrarOnboarding
         )
     }
 }

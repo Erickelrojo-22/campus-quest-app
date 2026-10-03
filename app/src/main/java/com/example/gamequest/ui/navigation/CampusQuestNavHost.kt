@@ -41,6 +41,7 @@ import com.example.gamequest.ui.missions.MissionDetailViewModel
 import com.example.gamequest.ui.missions.MissionsScreen
 import com.example.gamequest.ui.missions.MissionsViewModel
 import com.example.gamequest.ui.profile.ProfileScreen
+import com.example.gamequest.ui.profile.ProfileViewModel
 import com.example.gamequest.ui.scanner.ScannerScreen
 import com.example.gamequest.ui.scanner.ScannerViewModel
 import com.example.gamequest.ui.settings.SettingsScreen
@@ -236,17 +237,31 @@ fun CampusQuestNavHost(container: AppContainer) {
         }
 
         composable(Routes.PROFILE) {
-            ProfileScreen(
-                sessionViewModel = sessionViewModel,
-                campusRepository = container.campusRepository,
-                onNavigateTab = { navController.navegarATab(it) },
-                onSettings = { navController.navigate(Routes.SETTINGS) },
-                onMissionManagement = { navController.navigate(Routes.MISSION_MANAGEMENT) },
-                onCerrarSesion = {
-                    sessionViewModel.cerrarSesion()
-                    navController.navigate(Routes.LOGIN) { popUpTo(0) }
-                }
-            )
+            val usuarioId = usuario?.id
+            if (usuarioId == null) {
+                CargandoPantallaCompleta()
+            } else {
+                val profileViewModel: ProfileViewModel = viewModel(
+                    key = "profile-$usuarioId",
+                    factory = GenericViewModelFactory {
+                        ProfileViewModel(
+                            campusRepository = container.campusRepository,
+                            preferencesRepository = container.preferencesRepository,
+                            usuarioId = usuarioId
+                        )
+                    }
+                )
+                ProfileScreen(
+                    viewModel = profileViewModel,
+                    onNavigateTab = { navController.navegarATab(it) },
+                    onSettings = { navController.navigate(Routes.SETTINGS) },
+                    onMissionManagement = { navController.navigate(Routes.MISSION_MANAGEMENT) },
+                    onCerrarSesion = {
+                        sessionViewModel.cerrarSesion()
+                        navController.navigate(Routes.LOGIN) { popUpTo(0) }
+                    }
+                )
+            }
         }
 
         composable(Routes.SETTINGS) {

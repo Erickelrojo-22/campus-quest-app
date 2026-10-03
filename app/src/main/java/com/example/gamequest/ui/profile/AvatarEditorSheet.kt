@@ -14,7 +14,8 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,36 +31,29 @@ import com.example.gamequest.util.LocalSoundManager
 import com.example.gamequest.util.SoundEffect
 
 /**
- * Pestaña seleccionada dentro del editor: color primario o secundario.
- */
-private enum class ColorZone { PRIMARY, SECONDARY }
-
-/**
  * Bottom sheet modal para editar el avatar del usuario.
  *
  * Permite elegir especie, color primario (cuerpo / capucha / pelaje)
  * y color secundario (pañuelo / rostro / vientre) con vista previa en vivo.
+ * El estado se gestiona de forma centralizada en [ProfileViewModel].
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AvatarEditorSheet(
-    currentSpecies: CharacterSpecies,
-    currentPrimary: AvatarColor,
-    currentSecondary: AvatarColor,
-    onSave: (species: CharacterSpecies, primary: AvatarColor, secondary: AvatarColor) -> Unit,
+    species: CharacterSpecies,
+    primary: AvatarColor,
+    secondary: AvatarColor,
+    activeZone: AvatarColorZone,
+    previewAnim: CharacterAnimation,
+    onSpeciesChange: (CharacterSpecies) -> Unit,
+    onActiveZoneChange: (AvatarColorZone) -> Unit,
+    onColorSelected: (AvatarColor) -> Unit,
+    onTogglePreviewAnim: () -> Unit,
+    onReset: () -> Unit,
+    onSave: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val soundManager = LocalSoundManager.current
-
-    // Estado local temporal (solo se guarda al confirmar)
-    var species by remember { mutableStateOf(currentSpecies) }
-    var primary by remember { mutableStateOf(currentPrimary) }
-    var secondary by remember { mutableStateOf(currentSecondary) }
-    var activeZone by remember { mutableStateOf(ColorZone.PRIMARY) }
-
-    // Alternar animación del preview al tocar
-    var previewAnim by remember { mutableStateOf(CharacterAnimation.IDLE) }
-
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
@@ -100,8 +94,7 @@ fun AvatarEditorSheet(
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .clickable {
                         soundManager?.play(SoundEffect.CLICK)
-                        previewAnim = if (previewAnim == CharacterAnimation.IDLE)
-                            CharacterAnimation.WALK else CharacterAnimation.IDLE
+                        onTogglePreviewAnim()
                     },
                 contentAlignment = Alignment.Center,
             ) {
@@ -142,7 +135,7 @@ fun AvatarEditorSheet(
                             )
                             .clickable {
                                 soundManager?.play(SoundEffect.CLICK)
-                                species = sp
+                                onSpeciesChange(sp)
                             },
                         color = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
                                 else MaterialTheme.colorScheme.surface,
@@ -189,23 +182,23 @@ fun AvatarEditorSheet(
                 ZoneTab(
                     label = species.primaryZoneLabel,
                     subtitle = "Principal",
-                    selected = activeZone == ColorZone.PRIMARY,
+                    selected = activeZone == AvatarColorZone.PRIMARY,
                     color = Color(primary.preview),
                     modifier = Modifier.weight(1f),
                     onClick = {
                         soundManager?.play(SoundEffect.CLICK)
-                        activeZone = ColorZone.PRIMARY
+                        onActiveZoneChange(AvatarColorZone.PRIMARY)
                     },
                 )
                 ZoneTab(
                     label = species.secondaryZoneLabel,
                     subtitle = "Secundario",
-                    selected = activeZone == ColorZone.SECONDARY,
+                    selected = activeZone == AvatarColorZone.SECONDARY,
                     color = Color(secondary.preview),
                     modifier = Modifier.weight(1f),
                     onClick = {
                         soundManager?.play(SoundEffect.CLICK)
-                        activeZone = ColorZone.SECONDARY
+                        onActiveZoneChange(AvatarColorZone.SECONDARY)
                     },
                 )
             }
@@ -213,7 +206,7 @@ fun AvatarEditorSheet(
             Spacer(Modifier.height(16.dp))
 
             // ── Grid de 16 colores (4×4) ────────────────────────────────
-            val activeColor = if (activeZone == ColorZone.PRIMARY) primary else secondary
+            val activeColor = if (activeZone == AvatarColorZone.PRIMARY) primary else secondary
             val allColors = AvatarColor.entries
 
             for (row in 0 until 4) {
@@ -231,7 +224,7 @@ fun AvatarEditorSheet(
                             selected = c == activeColor,
                             onClick = {
                                 soundManager?.play(SoundEffect.CLICK)
-                                if (activeZone == ColorZone.PRIMARY) primary = c else secondary = c
+                                onColorSelected(c)
                             },
                         )
                     }
@@ -250,9 +243,7 @@ fun AvatarEditorSheet(
                 OutlinedButton(
                     onClick = {
                         soundManager?.play(SoundEffect.CLICK)
-                        species   = currentSpecies
-                        primary   = currentPrimary
-                        secondary = currentSecondary
+                        onReset()
                     },
                     modifier = Modifier.weight(1f),
                 ) {
@@ -265,7 +256,7 @@ fun AvatarEditorSheet(
                 Button(
                     onClick = {
                         soundManager?.play(SoundEffect.CLICK)
-                        onSave(species, primary, secondary)
+                        onSave()
                     },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = AmberAccent),
