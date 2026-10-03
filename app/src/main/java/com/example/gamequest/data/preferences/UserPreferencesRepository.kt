@@ -10,6 +10,7 @@ import com.example.gamequest.util.AvatarColor
 import com.example.gamequest.util.CharacterSpecies
 import com.example.gamequest.util.SpriteColorEngine.CharacterColor
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
 private val Context.dataStore by preferencesDataStore(name = "campus_quest_preferences")
@@ -41,7 +42,7 @@ data class UserPreferences(
  * aplicación y la sesión activa del usuario, para que se restauren
  * automáticamente la próxima vez que se abra la aplicación.
  */
-class UserPreferencesRepository(private val context: Context) {
+open class UserPreferencesRepository(private val context: Context? = null) {
 
     private object Keys {
         val TEMA_OSCURO = booleanPreferencesKey("tema_oscuro")
@@ -60,7 +61,7 @@ class UserPreferencesRepository(private val context: Context) {
         val TUTORIAL_VISTO = booleanPreferencesKey("tutorial_visto")
     }
 
-    val preferencias: Flow<UserPreferences> = context.dataStore.data.map { prefs ->
+    open val preferencias: Flow<UserPreferences> = context?.dataStore?.data?.map { prefs ->
         // Migrar del antiguo CharacterColor si no hay AvatarColor guardado aún
         @Suppress("DEPRECATION")
         val legacyColor = prefs[Keys.CHARACTER_COLOR]
@@ -94,65 +95,65 @@ class UserPreferencesRepository(private val context: Context) {
             tutorialVisto = prefs[Keys.TUTORIAL_VISTO] ?: false,
             characterColor = legacyColor,
         )
+    } ?: flowOf(UserPreferences())
+
+    open suspend fun setTemaOscuro(valor: Boolean) {
+        context?.dataStore?.edit { it[Keys.TEMA_OSCURO] = valor }
     }
 
-    suspend fun setTemaOscuro(valor: Boolean) {
-        context.dataStore.edit { it[Keys.TEMA_OSCURO] = valor }
+    open suspend fun setTamanoTexto(valor: String) {
+        context?.dataStore?.edit { it[Keys.TAMANO_TEXTO] = valor }
     }
 
-    suspend fun setTamanoTexto(valor: String) {
-        context.dataStore.edit { it[Keys.TAMANO_TEXTO] = valor }
+    open suspend fun setRecordatoriosMision(valor: Boolean) {
+        context?.dataStore?.edit { it[Keys.RECORDATORIOS_MISION] = valor }
     }
 
-    suspend fun setRecordatoriosMision(valor: Boolean) {
-        context.dataStore.edit { it[Keys.RECORDATORIOS_MISION] = valor }
+    open suspend fun setAvisosCampus(valor: Boolean) {
+        context?.dataStore?.edit { it[Keys.AVISOS_CAMPUS] = valor }
     }
 
-    suspend fun setAvisosCampus(valor: Boolean) {
-        context.dataStore.edit { it[Keys.AVISOS_CAMPUS] = valor }
+    open suspend fun setSonidoVibracion(valor: Boolean) {
+        context?.dataStore?.edit { it[Keys.SONIDO_VIBRACION] = valor }
     }
 
-    suspend fun setSonidoVibracion(valor: Boolean) {
-        context.dataStore.edit { it[Keys.SONIDO_VIBRACION] = valor }
+    open suspend fun setCampusPorDefecto(valor: String) {
+        context?.dataStore?.edit { it[Keys.CAMPUS_DEFECTO] = valor }
     }
 
-    suspend fun setCampusPorDefecto(valor: String) {
-        context.dataStore.edit { it[Keys.CAMPUS_DEFECTO] = valor }
+    open suspend fun setDescargarMapaSinConexion(valor: Boolean) {
+        context?.dataStore?.edit { it[Keys.DESCARGAR_MAPA] = valor }
     }
 
-    suspend fun setDescargarMapaSinConexion(valor: Boolean) {
-        context.dataStore.edit { it[Keys.DESCARGAR_MAPA] = valor }
+    open suspend fun setUsuarioActivoId(id: Int) {
+        context?.dataStore?.edit { it[Keys.USUARIO_ACTIVO_ID] = id }
     }
 
-    suspend fun setUsuarioActivoId(id: Int) {
-        context.dataStore.edit { it[Keys.USUARIO_ACTIVO_ID] = id }
-    }
-
-    suspend fun setCharacterSpecies(species: CharacterSpecies) {
-        context.dataStore.edit { it[Keys.CHARACTER_SPECIES] = species.name }
+    open suspend fun setCharacterSpecies(species: CharacterSpecies) {
+        context?.dataStore?.edit { it[Keys.CHARACTER_SPECIES] = species.name }
     }
 
     /** Guarda el color primario (cuerpo / capucha / pelaje). */
-    suspend fun setAvatarPrimaryColor(color: AvatarColor) {
-        context.dataStore.edit { it[Keys.AVATAR_PRIMARY_COLOR] = color.name }
+    open suspend fun setAvatarPrimaryColor(color: AvatarColor) {
+        context?.dataStore?.edit { it[Keys.AVATAR_PRIMARY_COLOR] = color.name }
     }
 
     /** Guarda el color secundario (pañuelo / rostro / vientre). */
-    suspend fun setAvatarSecondaryColor(color: AvatarColor) {
-        context.dataStore.edit { it[Keys.AVATAR_SECONDARY_COLOR] = color.name }
+    open suspend fun setAvatarSecondaryColor(color: AvatarColor) {
+        context?.dataStore?.edit { it[Keys.AVATAR_SECONDARY_COLOR] = color.name }
     }
 
     @Suppress("DEPRECATION")
     @Deprecated("Usar setAvatarPrimaryColor / setAvatarSecondaryColor")
-    suspend fun setCharacterColor(color: CharacterColor) {
-        context.dataStore.edit { it[Keys.CHARACTER_COLOR] = color.name }
+    open suspend fun setCharacterColor(color: CharacterColor) {
+        context?.dataStore?.edit { it[Keys.CHARACTER_COLOR] = color.name }
     }
 
-    suspend fun setTutorialVisto(visto: Boolean) {
-        context.dataStore.edit { it[Keys.TUTORIAL_VISTO] = visto }
+    open suspend fun setTutorialVisto(visto: Boolean) {
+        context?.dataStore?.edit { it[Keys.TUTORIAL_VISTO] = visto }
     }
 
-    suspend fun cerrarSesion() {
-        context.dataStore.edit { it[Keys.USUARIO_ACTIVO_ID] = -1 }
+    open suspend fun cerrarSesion() {
+        context?.dataStore?.edit { it[Keys.USUARIO_ACTIVO_ID] = -1 }
     }
 }
