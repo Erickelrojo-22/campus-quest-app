@@ -32,9 +32,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -54,11 +52,6 @@ fun LoginScreen(
 ) {
 
     val uiState by viewModel.uiState.collectAsState()
-
-    var modoInstitucional by remember { mutableStateOf(false) }
-    var nombre by remember { mutableStateOf("") }
-    var correo by remember { mutableStateOf("") }
-    var contrasena by remember { mutableStateOf("") }
 
     Scaffold(containerColor = TealPrimaryDark) { padding ->
         Column(
@@ -102,7 +95,7 @@ fun LoginScreen(
                     )
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        if (modoInstitucional) "Acceso con cuenta institucional" else "Escribe tu nombre para empezar tu aventura",
+                        if (uiState.modoInstitucional) "Acceso con cuenta institucional" else "Escribe tu nombre para empezar tu aventura",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.9f)
                     )
@@ -113,25 +106,19 @@ fun LoginScreen(
                         horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceEvenly
                     ) {
                         androidx.compose.material3.FilterChip(
-                            selected = !modoInstitucional,
-                            onClick = {
-                                modoInstitucional = false
-                                viewModel.limpiarError()
-                            },
+                            selected = !uiState.modoInstitucional,
+                            onClick = { viewModel.onModoInstitucionalChange(false) },
                             label = { Text("Acceso rápido") }
                         )
                         androidx.compose.material3.FilterChip(
-                            selected = modoInstitucional,
-                            onClick = {
-                                modoInstitucional = true
-                                viewModel.limpiarError()
-                            },
+                            selected = uiState.modoInstitucional,
+                            onClick = { viewModel.onModoInstitucionalChange(true) },
                             label = { Text("Institucional") }
                         )
                     }
                     Spacer(Modifier.height(16.dp))
 
-                    if (!modoInstitucional) {
+                    if (!uiState.modoInstitucional) {
                         Text(
                             "TU NOMBRE",
                             style = MaterialTheme.typography.labelMedium,
@@ -140,8 +127,8 @@ fun LoginScreen(
                         )
                         Spacer(Modifier.height(6.dp))
                         OutlinedTextField(
-                            value = nombre,
-                            onValueChange = { nombre = it },
+                            value = uiState.nombre,
+                            onValueChange = viewModel::onNombreChange,
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             shape = RoundedCornerShape(2.dp),
@@ -166,8 +153,8 @@ fun LoginScreen(
                         )
                         Spacer(Modifier.height(6.dp))
                         OutlinedTextField(
-                            value = correo,
-                            onValueChange = { correo = it },
+                            value = uiState.correo,
+                            onValueChange = viewModel::onCorreoChange,
                             placeholder = { Text("usuario@live.uleam.edu.ec") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
@@ -192,8 +179,8 @@ fun LoginScreen(
                         )
                         Spacer(Modifier.height(6.dp))
                         OutlinedTextField(
-                            value = contrasena,
-                            onValueChange = { contrasena = it },
+                            value = uiState.contrasena,
+                            onValueChange = viewModel::onContrasenaChange,
                             visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
@@ -221,13 +208,7 @@ fun LoginScreen(
 
                     Spacer(Modifier.height(18.dp))
                     Button(
-                        onClick = {
-                            if (modoInstitucional) {
-                                viewModel.entrarConCredenciales(correo, contrasena, onLoginExitoso)
-                            } else {
-                                viewModel.entrar(nombre, false, onLoginExitoso)
-                            }
-                        },
+                        onClick = { viewModel.iniciarSesion(onLoginExitoso) },
                         enabled = !uiState.cargando,
                         shape = RoundedCornerShape(4.dp),
                         colors = ButtonDefaults.buttonColors(
@@ -244,7 +225,7 @@ fun LoginScreen(
                             )
                         } else {
                             Text(
-                                if (modoInstitucional) "INICIAR SESIÓN" else "ENTRAR",
+                                if (uiState.modoInstitucional) "INICIAR SESIÓN" else "ENTRAR",
                                 style = MaterialTheme.typography.titleMedium
                             )
                         }
