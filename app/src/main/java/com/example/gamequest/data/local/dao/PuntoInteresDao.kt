@@ -1,5 +1,6 @@
 package com.example.gamequest.data.local.dao
 
+import androidx.room.Upsert
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -10,6 +11,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PuntoInteresDao {
+
+    @Upsert
+    suspend fun guardarRemotos(items: List<PuntoInteresEntity>)
+
 
     @Insert
     suspend fun insertar(punto: PuntoInteresEntity): Long

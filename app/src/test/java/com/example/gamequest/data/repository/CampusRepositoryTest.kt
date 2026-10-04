@@ -161,6 +161,13 @@ class CampusRepositoryTest {
     // --- Fake DAOs para pruebas ---
 
     private class FakePuntoInteresDao : PuntoInteresDao {
+        override suspend fun guardarRemotos(items: List<PuntoInteresEntity>) {
+            items.forEach { item ->
+                puntos.removeAll { it.id == item.id }
+                puntos.add(item)
+            }
+        }
+
         val puntos = mutableListOf<PuntoInteresEntity>()
         private var nextId = 1
 
@@ -191,6 +198,18 @@ class CampusRepositoryTest {
     }
 
     private class FakeMisionDao : MisionDao {
+        override suspend fun guardarRemotos(items: List<MisionEntity>) {
+            items.forEach { item ->
+                misiones.removeAll { it.id == item.id }
+                misiones.add(item)
+            }
+        }
+
+        override suspend fun archivarCache() {
+            misiones.replaceAll { it.copy(activa = false) }
+        }
+        override fun observarHistorialCatalogo(): Flow<List<MisionEntity>> = flowOf(misiones)
+
         val misiones = mutableListOf<MisionEntity>()
         private var nextId = 1
 
@@ -220,6 +239,13 @@ class CampusRepositoryTest {
     }
 
     private class FakeProgresoMisionDao : ProgresoMisionDao {
+        override suspend fun guardarRemotos(items: List<ProgresoMisionEntity>) {
+            items.forEach { item ->
+                progresos.removeAll { it.id == item.id }
+                progresos.add(item)
+            }
+        }
+
         val progresos = mutableListOf<ProgresoMisionEntity>()
         private var nextId = 1
 
@@ -249,6 +275,13 @@ class CampusRepositoryTest {
     }
 
     private class FakeUsuarioDao : UsuarioDao {
+        override suspend fun guardarRemotos(items: List<UsuarioEntity>) {
+            items.forEach { item ->
+                usuarios.removeAll { it.id == item.id }
+                usuarios.add(item)
+            }
+        }
+
         val usuarios = mutableListOf<UsuarioEntity>()
         private var nextId = 1
 

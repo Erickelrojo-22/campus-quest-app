@@ -5,40 +5,75 @@ import androidx.lifecycle.viewModelScope
 import com.example.gamequest.AppContainer
 import com.example.gamequest.data.local.entity.UsuarioEntity
 import com.example.gamequest.data.preferences.UserPreferences
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-/**
- * Fuente única de verdad sobre la sesión activa: qué usuario inició sesión y
- * las preferencias persistidas con DataStore (RF-04, RF-18, RF-19).
- * Se crea una sola vez, a nivel de la Activity, y se comparte entre pantallas.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class SessionViewModel(private val container: AppContainer) : ViewModel() {
-
     val preferencias: StateFlow<UserPreferences> = container.preferencesRepository.preferencias
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UserPreferences())
-
+        .stateIn(viewModelScope, SharingStarted.Eagerly, UserPreferences())
     val usuarioActual: StateFlow<UsuarioEntity?> = preferencias
         .flatMapLatest { prefs ->
-            if (prefs.usuarioActivoId <= 0) {
-                flowOf(null)
-            } else {
-                container.campusRepository.observarUsuario(prefs.usuarioActivoId)
+            if (prefs.usuarioActivoId <= 0) flowOf(null)
+            else container.campusRepository.observarUsuario(prefs.usuarioActivoId)
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    val ready = MutableStateFlow(false)
+    val syncError = MutableStateFlow<String?>(null)
+    val syncing = MutableStateFlow(false)
+
+    init {
+        container.api.onUnauthorized = {
+            viewModelScope.launch {
+                container.preferencesRepository.cerrarSesion()
+                syncError.value = "Tu sesión expiró. Inicia sesión nuevamente."
             }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
-
-    fun iniciarSesion(usuarioId: Int) {
-        viewModelScope.launch { container.preferencesRepository.setUsuarioActivoId(usuarioId) }
+        viewModelScope.launch {
+            // A legacy local ID never grants access to a remote account.
+            if (container.api.tokens.token == null) container.preferencesRepository.cerrarSesion()
+            else refresh()
+            ready.value = true
+        }
     }
 
+    suspend fun refresh() {
+        if (container.api.tokens.token == null || syncing.value) return
+        val token = container.api.tokens.token
+        syncing.value = true
+        try {
+            val user = container.campusRepository.refresh()
+            if (container.api.tokens.token == token) {
+                container.preferencesRepository.setUsuarioActivoId(user.id)
+                syncError.value = null
+            }
+        } catch (e: CancellationException) { throw e
+        } catch (e: Exception) { syncError.value = e.message ?: "No se pudo actualizar. Se muestra la última copia descargada."
+        } finally { syncing.value = false }
+    }
+    fun retry() { viewModelScope.launch { refresh() } }
+    fun iniciarSesion(usuarioId: Int) {
+        viewModelScope.launch {
+            container.preferencesRepository.setUsuarioActivoId(usuarioId)
+            refresh()
+        }
+    }
     fun cerrarSesion() {
-        viewModelScope.launch { container.preferencesRepository.cerrarSesion() }
+        val token = container.api.tokens.token
+        container.api.tokens.clear()
+        viewModelScope.launch {
+            container.preferencesRepository.cerrarSesion()
+            syncError.value = null
+            if (token != null) {
+                try { container.api.logout(token)
+                } catch (e: CancellationException) { throw e
+                } catch (_: Exception) { syncError.value = "Sesión cerrada en este dispositivo. El servidor no confirmó la revocación." }
+            }
+        }
+    }
+    override fun onCleared() {
+        container.api.onUnauthorized = {}
+        super.onCleared()
     }
 }

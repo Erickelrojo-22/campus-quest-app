@@ -122,6 +122,13 @@ class AuthRepositoryTest {
     }
 
     private class FakeUsuarioDao : UsuarioDao {
+        override suspend fun guardarRemotos(items: List<UsuarioEntity>) {
+            items.forEach { item ->
+                usuarios.removeAll { it.id == item.id }
+                usuarios.add(item)
+            }
+        }
+
         private val usuarios = mutableListOf<UsuarioEntity>()
         private var nextId = 1
 

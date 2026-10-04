@@ -95,7 +95,7 @@ fun LoginScreen(
                     )
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        if (uiState.modoInstitucional) "Acceso con cuenta institucional" else "Escribe tu nombre para empezar tu aventura",
+                        if (uiState.modoInstitucional) "Acceso con cuenta institucional" else "Crea una sesión de visitante. Se conserva en este dispositivo hasta cerrar sesión.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.9f)
                     )
@@ -108,7 +108,7 @@ fun LoginScreen(
                         androidx.compose.material3.FilterChip(
                             selected = !uiState.modoInstitucional,
                             onClick = { viewModel.onModoInstitucionalChange(false) },
-                            label = { Text("Acceso rápido") }
+                            label = { Text("Visitante") }
                         )
                         androidx.compose.material3.FilterChip(
                             selected = uiState.modoInstitucional,

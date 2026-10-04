@@ -124,7 +124,7 @@ open class CampusRepository(
     /** RF-15 / Timeline: Historial de actividades y puntos ganados por el usuario en orden cronológico. */
     open fun observarHistorialProgreso(usuarioId: Int): Flow<List<ProgresoDetallado>> {
         val progresoFlow = progresoDao?.observarPorUsuario(usuarioId) ?: flowOf(emptyList())
-        val misionesFlow = misionDao?.observarTodas() ?: flowOf(emptyList())
+        val misionesFlow = misionDao?.observarHistorialCatalogo() ?: flowOf(emptyList())
         val puntosFlow = puntoDao?.observarTodos() ?: flowOf(emptyList())
 
         return combine(progresoFlow, misionesFlow, puntosFlow) { progresos, misiones, puntos ->

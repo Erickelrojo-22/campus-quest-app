@@ -1,6 +1,14 @@
 package com.example.gamequest.ui.navigation
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.compose.currentBackStackEntryAsState
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
@@ -64,13 +72,34 @@ fun CampusQuestNavHost(container: AppContainer) {
     )
     val usuario by sessionViewModel.usuarioActual.collectAsState()
 
-    NavHost(navController = navController, startDestination = Routes.SPLASH) {
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val syncError by sessionViewModel.syncError.collectAsState()
+    val prefs by sessionViewModel.preferencias.collectAsState()
+    val ready by sessionViewModel.ready.collectAsState()
+    val entry by navController.currentBackStackEntryAsState()
+    LaunchedEffect(lifecycle) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            sessionViewModel.ready.first { it }
+            while (true) { sessionViewModel.refresh(); delay(30_000) }
+        }
+    }
+    LaunchedEffect(ready, prefs.usuarioActivoId, entry?.destination?.route) {
+        if (ready && prefs.usuarioActivoId <= 0 && entry?.destination?.route !in listOf(null, Routes.SPLASH, Routes.LOGIN, Routes.REGISTER)) {
+            navController.navigate(Routes.LOGIN) { popUpTo(0) }
+        }
+    }
+    Column(Modifier.fillMaxSize()) {
+        syncError?.let { message -> TextButton(onClick = sessionViewModel::retry) { Text("$message · Reintentar") } }
+        NavHost(navController = navController, startDestination = Routes.SPLASH, modifier = Modifier.weight(1f)) {
 
         composable(Routes.SPLASH) {
-            SplashScreen(onTimeout = {
+            LaunchedEffect(Unit) {
+                sessionViewModel.ready.first { it }
+                delay(1100)
                 val destino = if (sessionViewModel.preferencias.value.usuarioActivoId > 0) Routes.HOME else Routes.LOGIN
                 navController.navigate(destino) { popUpTo(Routes.SPLASH) { inclusive = true } }
-            })
+            }
+            SplashScreen(onTimeout = {})
         }
 
         composable(Routes.LOGIN) {
@@ -312,6 +341,7 @@ fun CampusQuestNavHost(container: AppContainer) {
             } else {
                 AccesoNoAutorizado { navController.popBackStack() }
             }
+        }
         }
     }
 }
