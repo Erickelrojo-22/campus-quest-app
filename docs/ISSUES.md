@@ -61,13 +61,16 @@ tenga remoto en GitHub. Formato pensado para migrarse 1 a 1 con
 
 - [ ] **Crash al abrir la sección de Misiones.** Revisados
   `MissionsScreen.kt`, `MissionsViewModel.kt`, `CampusRepository`,
-  los 3 DAOs y el `NavHost` — compila limpio y suite de tests pasa al 100%. **Bloqueado**: falta el logcat
-  (`FATAL EXCEPTION`/`AndroidRuntime`) o un dispositivo/emulador para
-  reproducirlo en caso de que aún persista.
+  los 3 DAOs y el `NavHost`. Auditoría del 2026-10-04: compilación,
+  56 pruebas unitarias y 4 instrumentadas pasan en Android 16/API 36.
+  No reproducido con catálogo vacío, activo/completado y entrada desde
+  insignia en un host de navegación de prueba. Falta comprobar la app
+  completa con sesión real, datos previos, API 29 y dispositivo físico.
+  Evidencia y límites en [`ISSUES-1-3-AUDIT.md`](ISSUES-1-3-AUDIT.md).
 - [ ] **Mapa en alta definición / estilo Google Maps 3D.** Propuesta
   en `ROADMAP.md`, pendiente de evaluar costos (API key, facturación)
   e integración (conexión a internet rompe el offline-first actual).
-- [ ] **Servicio backend dedicado / BaaS (Railway / Supabase / PocketBase / PaaS).** [Issue #1 en GitHub](https://github.com/Erickelrojo-22/campus-quest-app/issues/1). Propuesta detallada en `BACKEND.md` (entidades, endpoints, autenticación institucional y sincronización con Room). Nada implementado todavía.
+- [ ] **Servicio backend dedicado / BaaS (Railway / Supabase / PocketBase / PaaS).** [Issue #1 en GitHub](https://github.com/Erickelrojo-22/campus-quest-app/issues/1). API desplegada en Render e integrada en Android con caché Room y sesión cifrada. Salud HTTP 200 y controles sin sesión HTTP 401 verificados; falta validación autenticada de registro, roles, QR/progreso y funcionamiento sin red. Ver [`ISSUES-1-3-AUDIT.md`](ISSUES-1-3-AUDIT.md).
 - [ ] **Modelo de roles `estudiante`/`visitante` en la app + rol
   `admin` en panel web separado (mismo backend).** Decisión tomada
   (ver `BACKEND.md`), falta implementar: retirar `Rol.TUTOR` del
