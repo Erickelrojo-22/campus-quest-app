@@ -84,7 +84,7 @@ fun CampusQuestNavHost(container: AppContainer) {
         }
     }
     LaunchedEffect(ready, prefs.usuarioActivoId, entry?.destination?.route) {
-        if (ready && prefs.usuarioActivoId <= 0 && entry?.destination?.route !in listOf(null, Routes.SPLASH, Routes.LOGIN, Routes.REGISTER)) {
+        if (ready && prefs.usuarioActivoId <= 0 && container.api.tokens.token == null && entry?.destination?.route !in listOf(null, Routes.SPLASH, Routes.LOGIN, Routes.REGISTER)) {
             navController.navigate(Routes.LOGIN) { popUpTo(0) }
         }
     }
