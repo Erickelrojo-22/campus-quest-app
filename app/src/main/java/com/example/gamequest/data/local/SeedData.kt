@@ -15,6 +15,7 @@ object SeedData {
     data class PuntoSemilla(
         val punto: PuntoInteresEntity,
         val mision: MisionEntity
+
     )
 
     fun puntosConMisiones(): List<PuntoSemilla> = listOf(
@@ -192,6 +193,28 @@ object SeedData {
                 puntoInteresId = 0,
                 insigniaNombre = "Conectado",
                 insigniaEmoji = "🖥️"
+            )
+        ),
+        PuntoSemilla(
+            punto = PuntoInteresEntity(
+                nombre = "Parqueadero de Informática",
+                categoria = "Servicios",
+                descripcion = "Parqueadero junto a la Facultad de Informática.",
+                horarioAtencion = "Por confirmar",
+                tramites = "Estacionamiento",
+                posX = 0.775f,
+                posY = 0.540f,
+                codigoQr = "CQ-PINF-009"
+            ),
+            mision = MisionEntity(
+                titulo = "Encuentra el parqueadero de Informática",
+                descripcionPista = "Busca el parqueadero junto a la Facultad de Informática, cerca del camino al este de la pista atlética. Escanea el QR del lugar.",
+                puntos = 20,
+                tiempoEstimadoMin = 8,
+                dificultad = Dificultad.BAJA,
+                puntoInteresId = 0,
+                insigniaNombre = "Llegada a Informática",
+                insigniaEmoji = "🅿️"
             )
         )
     )
