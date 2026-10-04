@@ -216,6 +216,28 @@ object SeedData {
                 insigniaNombre = "Llegada a Informática",
                 insigniaEmoji = "🅿️"
             )
+        ),
+        PuntoSemilla(
+            punto = PuntoInteresEntity(
+                nombre = "Facultad de Informática",
+                categoria = "Académico",
+                descripcion = "Edificio de Informática al este de la pista atlética, entre Inglés y el parqueadero.",
+                horarioAtencion = "Por confirmar",
+                tramites = "Información académica de Informática",
+                posX = 0.630f,
+                posY = 0.445f,
+                codigoQr = "CQ-INF-010"
+            ),
+            mision = MisionEntity(
+                titulo = "Encuentra la Facultad de Informática",
+                descripcionPista = "Desde el parqueadero, sigue el camino hacia el edificio intermedio al este de la pista atlética. Encuentra Informática y escanea su QR.",
+                puntos = 30,
+                tiempoEstimadoMin = 10,
+                dificultad = Dificultad.BAJA,
+                puntoInteresId = 0,
+                insigniaNombre = "Explorador de Informática",
+                insigniaEmoji = "💻"
+            )
         )
     )
 }
