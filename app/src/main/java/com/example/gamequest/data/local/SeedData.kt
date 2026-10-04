@@ -238,6 +238,28 @@ object SeedData {
                 insigniaNombre = "Explorador de Informática",
                 insigniaEmoji = "💻"
             )
+        ),
+        PuntoSemilla(
+            punto = PuntoInteresEntity(
+                nombre = "Edificio de Inglés",
+                categoria = "Académico",
+                descripcion = "Edificio de Inglés al norte de Informática, junto al camino al este de la pista atlética.",
+                horarioAtencion = "Por confirmar",
+                tramites = "Información de clases de Inglés",
+                posX = 0.615f,
+                posY = 0.400f,
+                codigoQr = "CQ-ING-011"
+            ),
+            mision = MisionEntity(
+                titulo = "Encuentra el edificio de Inglés",
+                descripcionPista = "Desde Informática, continúa hacia el norte por el camino junto a la pista atlética. Busca el edificio de Inglés y escanea su QR.",
+                puntos = 30,
+                tiempoEstimadoMin = 10,
+                dificultad = Dificultad.BAJA,
+                puntoInteresId = 0,
+                insigniaNombre = "Explorador de Inglés",
+                insigniaEmoji = "🇬🇧"
+            )
         )
     )
 }
