@@ -65,9 +65,14 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import com.example.gamequest.data.repository.ValidacionQrResult
-import com.example.gamequest.ui.common.CampusBottomBar
-import com.example.gamequest.ui.navigation.Routes
 import com.example.gamequest.ui.theme.AmberAccent
 import com.example.gamequest.ui.theme.AmberAccentDark
 import com.example.gamequest.ui.theme.PixelCream
@@ -81,9 +86,10 @@ import java.util.concurrent.Executors
 @Composable
 fun ScannerScreen(
     viewModel: ScannerViewModel,
-    onNavigateTab: (String) -> Unit,
     onMisionCompletada: (misionId: Int) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    /** `true` solo cuando esta pestaña ya está asentada en pantalla (enciende cámara y pide permiso). */
+    activa: Boolean = true
 ) {
     val context = LocalContext.current
     val soundManager = LocalSoundManager.current
@@ -98,32 +104,45 @@ fun ScannerScreen(
     val launcherPermiso = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { concedido ->
         permisoConcedido = concedido
     }
-    LaunchedEffect(Unit) {
-        if (!permisoConcedido) launcherPermiso.launch(Manifest.permission.CAMERA)
+    // Pide el permiso solo cuando el usuario llega de verdad a esta pestaña; con el
+    // carrusel, la página también se compone un instante al deslizar por encima.
+    LaunchedEffect(activa) {
+        if (activa && !permisoConcedido) launcherPermiso.launch(Manifest.permission.CAMERA)
     }
 
     val mostrarDialogoManual by viewModel.mostrarDialogoManual.collectAsState()
 
-    Scaffold(bottomBar = { CampusBottomBar(currentRoute = Routes.SCANNER, onNavigate = onNavigateTab) }) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
+    Scaffold { padding ->
+        BoxWithConstraints(Modifier.fillMaxSize().padding(padding)) {
+            // Marco proporcional a la altura disponible: en horizontal no choca con los paneles.
+            val ladoMarco = minOf(230.dp, maxHeight * 0.45f)
             if (permisoConcedido) {
-                CamaraPreview(
-                    activo = uiState is ScannerUiState.Escaneando,
-                    onQrDetectado = { codigo -> viewModel.validar(codigo) }
-                )
-                // Marco de encuadre
-                Box(
-                    Modifier
-                        .align(Alignment.Center)
-                        .size(230.dp)
-                        .background(Color.Transparent)
-                ) {
-                    Surface(
-                        color = Color.Transparent,
-                        modifier = Modifier.fillMaxSize(),
-                        border = androidx.compose.foundation.BorderStroke(4.dp, AmberAccent),
-                        shape = RoundedCornerShape(4.dp)
-                    ) {}
+                if (activa) {
+                    CamaraPreview(
+                        activo = uiState is ScannerUiState.Escaneando,
+                        onQrDetectado = { codigo -> viewModel.validar(codigo) }
+                    )
+                    // Marco de encuadre
+                    Box(
+                        Modifier
+                            .align(Alignment.Center)
+                            .size(ladoMarco)
+                            .background(Color.Transparent)
+                            .semantics {
+                                contentDescription = "Visor de cámara. Apunta al código QR del punto de " +
+                                    "interés, o usa el botón para ingresar el código manualmente."
+                            }
+                    ) {
+                        Surface(
+                            color = Color.Transparent,
+                            modifier = Modifier.fillMaxSize(),
+                            border = androidx.compose.foundation.BorderStroke(4.dp, AmberAccent),
+                            shape = RoundedCornerShape(4.dp)
+                        ) {}
+                    }
+                } else {
+                    // Pestaña fuera de foco: sin cámara encendida.
+                    Box(Modifier.fillMaxSize().background(Color.Black))
                 }
             } else {
                 Column(
@@ -213,7 +232,11 @@ fun ScannerScreen(
                             soundManager?.play(SoundEffect.ERROR)
                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                         }
-                        Text(estado.mensaje, color = Color.White)
+                        Text(
+                            estado.mensaje,
+                            color = Color.White,
+                            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive }
+                        )
                         Spacer(Modifier.height(8.dp))
                         OutlinedButton(onClick = viewModel::reiniciar) {
                             Text("REINTENTAR")
@@ -290,7 +313,13 @@ private fun ResultadoPanel(resultado: ValidacionQrResult, onContinuar: () -> Uni
             "Este punto de interés no tiene una misión activa."
         )
     }
-    Surface(color = PixelCream, shape = RoundedCornerShape(4.dp), modifier = Modifier.fillMaxWidth()) {
+    Surface(
+        color = PixelCream,
+        shape = RoundedCornerShape(4.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Assertive }
+    ) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(icono, contentDescription = null, tint = color)
@@ -345,7 +374,20 @@ private fun CamaraPreview(activo: Boolean, onQrDetectado: (String) -> Unit) {
             .build()
     }
 
-    AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
+    AndroidView(
+        factory = { previewView },
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                // Toca para reenfocar manualmente. Solo reacciona a toques: los arrastres
+                // quedan libres para que el carrusel cambie de pestaña.
+                detectTapGestures { offset ->
+                    val point = previewView.meteringPointFactory.createPoint(offset.x, offset.y)
+                    val action = androidx.camera.core.FocusMeteringAction.Builder(point).build()
+                    camera?.cameraControl?.startFocusAndMetering(action)
+                }
+            }
+    )
 
     // Une la cámara al ciclo de vida UNA sola vez. Antes se desligaba y
     // volvía a ligar en cada cambio de estado (Escaneando/Procesando/...),
@@ -381,16 +423,9 @@ private fun CamaraPreview(activo: Boolean, onQrDetectado: (String) -> Unit) {
             }
         }, ContextCompat.getMainExecutor(context))
 
-        // Toca para reenfocar manualmente.
-        previewView.setOnTouchListener { view, event ->
-            if (event.action == android.view.MotionEvent.ACTION_UP) {
-                val point = previewView.meteringPointFactory.createPoint(event.x, event.y)
-                val action = androidx.camera.core.FocusMeteringAction.Builder(point).build()
-                camera?.cameraControl?.startFocusAndMetering(action)
-                view.performClick()
-            }
-            true
-        }
+        // El reenfoque al tocar se maneja en Compose (detectTapGestures sobre AndroidView):
+        // un OnTouchListener que devolvía `true` consumía también los arrastres
+        // horizontales y bloqueaba el deslizamiento entre pestañas.
 
         onDispose {
             runCatching { ProcessCameraProvider.getInstance(context).get().unbindAll() }

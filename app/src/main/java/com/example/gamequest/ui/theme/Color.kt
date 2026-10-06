@@ -32,3 +32,9 @@ val PixelSuccessDark = Color(0xFF276B32)
 
 // Bordes / sombra "pixel" (contorno grueso tipo sprite)
 val PixelBorder = Color(0xFF04161A)
+
+// Colores de error con contraste AA (>= 4.5:1) sobre los fondos donde se usan:
+// InstitutionalRed sobre el verde de las tarjetas solo da ~1.6:1.
+val ErrorOnDark = Color(0xFFFFD2CC)   // sobre ContainerDark / TealPrimary (>= 5:1)
+val ErrorOnCream = Color(0xFF9B1C2E)  // sobre PixelCream (>= 6:1)
+

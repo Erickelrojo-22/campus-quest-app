@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 data class AuthUiState(
-    val modoInstitucional: Boolean = false,
+    val modoInstitucional: Boolean = true,
     val nombre: String = "",
     val correo: String = "",
     val contrasena: String = "",
@@ -34,6 +34,10 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
 
     fun onNombreChange(valor: String) {
         _uiState.value = _uiState.value.copy(nombre = valor, error = null)
+    }
+
+    fun onSeleccionarUsuarioPrueba(nombrePrueba: String) {
+        _uiState.value = _uiState.value.copy(nombre = nombrePrueba, error = null)
     }
 
     fun onCorreoChange(valor: String) {
@@ -84,6 +88,8 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
 
     fun iniciarSesion(onExito: (UsuarioEntity) -> Unit) {
         val estadoActual = _uiState.value
+        // Evita envíos duplicados (tecla "Done" del teclado + botón).
+        if (estadoActual.cargando) return
         if (estadoActual.modoInstitucional) {
             entrarConCredenciales(estadoActual.correo, estadoActual.contrasena, onExito)
         } else {

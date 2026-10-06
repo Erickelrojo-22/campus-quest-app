@@ -1,14 +1,6 @@
 package com.example.gamequest.ui.navigation
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.compose.currentBackStackEntryAsState
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
@@ -38,6 +30,8 @@ import com.example.gamequest.ui.badges.BadgesScreen
 import com.example.gamequest.ui.badges.BadgesViewModel
 import com.example.gamequest.ui.common.GenericViewModelFactory
 import com.example.gamequest.ui.common.SessionViewModel
+import com.example.gamequest.ui.common.bottomTabs
+import com.example.gamequest.ui.common.indiceDeTab
 import com.example.gamequest.ui.crud.MissionFormScreen
 import com.example.gamequest.ui.crud.MissionFormViewModel
 import com.example.gamequest.ui.crud.MissionManagementScreen
@@ -56,12 +50,19 @@ import com.example.gamequest.ui.settings.SettingsScreen
 import com.example.gamequest.ui.settings.SettingsViewModel
 import com.example.gamequest.ui.splash.SplashScreen
 
-private fun NavHostController.navegarATab(route: String) {
-    navigate(route) {
-        popUpTo(Routes.HOME) { saveState = true }
-        launchSingleTop = true
-        restoreState = true
+/**
+ * Vuelve al contenedor de pestañas ([Routes.MAIN]) mostrando la pestaña [route]
+ * (una de [Routes.HOME], [Routes.MISSIONS], [Routes.SCANNER], ...). La petición viaja
+ * en el `savedStateHandle` de la entrada MAIN y [MainTabsScreen] la atiende.
+ */
+private fun NavHostController.mostrarTab(route: String) {
+    val indice = indiceDeTab(route)
+    if (indice >= 0) {
+        runCatching {
+            getBackStackEntry(Routes.MAIN).savedStateHandle[Routes.KEY_TAB_SOLICITADA] = indice
+        }
     }
+    popBackStack(Routes.MAIN, inclusive = false)
 }
 
 @Composable
@@ -72,34 +73,13 @@ fun CampusQuestNavHost(container: AppContainer) {
     )
     val usuario by sessionViewModel.usuarioActual.collectAsState()
 
-    val lifecycle = LocalLifecycleOwner.current.lifecycle
-    val syncError by sessionViewModel.syncError.collectAsState()
-    val prefs by sessionViewModel.preferencias.collectAsState()
-    val ready by sessionViewModel.ready.collectAsState()
-    val entry by navController.currentBackStackEntryAsState()
-    LaunchedEffect(lifecycle) {
-        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            sessionViewModel.ready.first { it }
-            while (true) { sessionViewModel.refresh(); delay(30_000) }
-        }
-    }
-    LaunchedEffect(ready, prefs.usuarioActivoId, entry?.destination?.route) {
-        if (ready && prefs.usuarioActivoId <= 0 && container.api.tokens.token == null && entry?.destination?.route !in listOf(null, Routes.SPLASH, Routes.LOGIN, Routes.REGISTER)) {
-            navController.navigate(Routes.LOGIN) { popUpTo(0) }
-        }
-    }
-    Column(Modifier.fillMaxSize()) {
-        syncError?.let { message -> TextButton(onClick = sessionViewModel::retry) { Text("$message · Reintentar") } }
-        NavHost(navController = navController, startDestination = Routes.SPLASH, modifier = Modifier.weight(1f)) {
+    NavHost(navController = navController, startDestination = Routes.SPLASH) {
 
         composable(Routes.SPLASH) {
-            LaunchedEffect(Unit) {
-                sessionViewModel.ready.first { it }
-                delay(1100)
-                val destino = if (sessionViewModel.preferencias.value.usuarioActivoId > 0) Routes.HOME else Routes.LOGIN
+            SplashScreen(onTimeout = {
+                val destino = if (sessionViewModel.preferencias.value.usuarioActivoId > 0) Routes.MAIN else Routes.LOGIN
                 navController.navigate(destino) { popUpTo(Routes.SPLASH) { inclusive = true } }
-            }
-            SplashScreen(onTimeout = {})
+            })
         }
 
         composable(Routes.LOGIN) {
@@ -108,7 +88,7 @@ fun CampusQuestNavHost(container: AppContainer) {
                 viewModel = authViewModel,
                 onLoginExitoso = { usuarioLogueado ->
                     sessionViewModel.iniciarSesion(usuarioLogueado.id)
-                    navController.navigate(Routes.HOME) { popUpTo(0) }
+                    navController.navigate(Routes.MAIN) { popUpTo(0) }
                 },
                 onIrARegistro = {
                     navController.navigate(Routes.REGISTER)
@@ -122,7 +102,7 @@ fun CampusQuestNavHost(container: AppContainer) {
                 viewModel = registerViewModel,
                 onRegistroExitoso = { usuarioRegistrado ->
                     sessionViewModel.iniciarSesion(usuarioRegistrado.id)
-                    navController.navigate(Routes.HOME) { popUpTo(0) }
+                    navController.navigate(Routes.MAIN) { popUpTo(0) }
                 },
                 onVolverALogin = {
                     navController.popBackStack()
@@ -130,44 +110,104 @@ fun CampusQuestNavHost(container: AppContainer) {
             )
         }
 
-
-        composable(Routes.HOME) {
+        // Las 5 pestañas viven en un carrusel (deslizable) dentro de una sola ruta.
+        // Cada ViewModel se crea al mostrar su página por primera vez (carga perezosa)
+        // y queda asociado a esta entrada, así que sobrevive al cambiar de pestaña.
+        composable(Routes.MAIN) { entrada ->
             val usuarioId = usuario?.id
             if (usuarioId == null) {
                 CargandoPantallaCompleta()
             } else {
-                val homeViewModel: HomeViewModel = viewModel(
-                    key = "home-$usuarioId",
-                    factory = GenericViewModelFactory { HomeViewModel(container.campusRepository, usuarioId) }
-                )
-                HomeScreen(
-                    viewModel = homeViewModel,
-                    onMisionClick = { misionId ->
-                        container.soundEffectManager.play(com.example.gamequest.util.SoundEffect.CLICK)
-                        navController.navigate(Routes.missionDetail(misionId))
-                    },
-                    onNavigateTab = { navController.navegarATab(it) }
-                )
-            }
-        }
+                val tabSolicitada by entrada.savedStateHandle
+                    .getStateFlow(Routes.KEY_TAB_SOLICITADA, -1)
+                    .collectAsState()
 
-        composable(Routes.MISSIONS) {
-            val usuarioId = usuario?.id
-            if (usuarioId == null) {
-                CargandoPantallaCompleta()
-            } else {
-                val missionsViewModel: MissionsViewModel = viewModel(
-                    key = "missions-$usuarioId",
-                    factory = GenericViewModelFactory { MissionsViewModel(container.campusRepository, usuarioId) }
-                )
-                MissionsScreen(
-                    viewModel = missionsViewModel,
-                    onMisionClick = { misionId ->
-                        container.soundEffectManager.play(com.example.gamequest.util.SoundEffect.CLICK)
-                        navController.navigate(Routes.missionDetail(misionId))
-                    },
-                    onNavigateTab = { navController.navegarATab(it) }
-                )
+                MainTabsScreen(
+                    tabSolicitada = tabSolicitada,
+                    onTabSolicitadaAtendida = {
+                        entrada.savedStateHandle[Routes.KEY_TAB_SOLICITADA] = -1
+                    }
+                ) { tab, activa ->
+                    when (bottomTabs[tab].route) {
+                        Routes.HOME -> {
+                            val homeViewModel: HomeViewModel = viewModel(
+                                key = "home-$usuarioId",
+                                factory = GenericViewModelFactory { HomeViewModel(container.campusRepository, usuarioId) }
+                            )
+                            HomeScreen(
+                                viewModel = homeViewModel,
+                                onMisionClick = { misionId ->
+                                    container.soundEffectManager.play(com.example.gamequest.util.SoundEffect.CLICK)
+                                    navController.navigate(Routes.missionDetail(misionId))
+                                }
+                            )
+                        }
+
+                        Routes.MISSIONS -> {
+                            val missionsViewModel: MissionsViewModel = viewModel(
+                                key = "missions-$usuarioId",
+                                factory = GenericViewModelFactory { MissionsViewModel(container.campusRepository, usuarioId) }
+                            )
+                            MissionsScreen(
+                                viewModel = missionsViewModel,
+                                onMisionClick = { misionId ->
+                                    container.soundEffectManager.play(com.example.gamequest.util.SoundEffect.CLICK)
+                                    navController.navigate(Routes.missionDetail(misionId))
+                                }
+                            )
+                        }
+
+                        Routes.SCANNER -> {
+                            val scannerViewModel: ScannerViewModel = viewModel(
+                                key = "scanner-$usuarioId",
+                                factory = GenericViewModelFactory { ScannerViewModel(container.campusRepository, usuarioId) }
+                            )
+                            ScannerScreen(
+                                viewModel = scannerViewModel,
+                                activa = activa,
+                                onBack = { navController.mostrarTab(Routes.HOME) },
+                                onMisionCompletada = { misionId ->
+                                    // Deja el escáner listo: al volver atrás no debe mostrar el resultado anterior.
+                                    scannerViewModel.reiniciar()
+                                    navController.navigate(Routes.badgeEarned(misionId))
+                                }
+                            )
+                        }
+
+                        Routes.BADGES -> {
+                            val badgesViewModel: BadgesViewModel = viewModel(
+                                key = "badges-$usuarioId",
+                                factory = GenericViewModelFactory { BadgesViewModel(container.campusRepository, usuarioId) }
+                            )
+                            BadgesScreen(
+                                viewModel = badgesViewModel,
+                                usuarioActualId = usuarioId
+                            )
+                        }
+
+                        else -> {
+                            val profileViewModel: ProfileViewModel = viewModel(
+                                key = "profile-$usuarioId",
+                                factory = GenericViewModelFactory {
+                                    ProfileViewModel(
+                                        campusRepository = container.campusRepository,
+                                        preferencesRepository = container.preferencesRepository,
+                                        usuarioId = usuarioId
+                                    )
+                                }
+                            )
+                            ProfileScreen(
+                                viewModel = profileViewModel,
+                                onSettings = { navController.navigate(Routes.SETTINGS) },
+                                onMissionManagement = { navController.navigate(Routes.MISSION_MANAGEMENT) },
+                                onCerrarSesion = {
+                                    sessionViewModel.cerrarSesion()
+                                    navController.navigate(Routes.LOGIN) { popUpTo(0) }
+                                }
+                            )
+                        }
+                    }
+                }
             }
         }
 
@@ -192,35 +232,11 @@ fun CampusQuestNavHost(container: AppContainer) {
                     },
                     onEscanear = {
                         container.soundEffectManager.play(com.example.gamequest.util.SoundEffect.CLICK)
-                        navController.navigate(Routes.SCANNER)
+                        navController.mostrarTab(Routes.SCANNER)
                     },
                     onVerRuta = {
                         container.soundEffectManager.play(com.example.gamequest.util.SoundEffect.CLICK)
-                        navController.navigate(Routes.HOME) { popUpTo(Routes.HOME) }
-                    }
-                )
-            }
-        }
-
-        composable(Routes.SCANNER) {
-            val usuarioId = usuario?.id
-            if (usuarioId == null) {
-                CargandoPantallaCompleta()
-            } else {
-                val scannerViewModel: ScannerViewModel = viewModel(
-                    key = "scanner-$usuarioId",
-                    factory = GenericViewModelFactory { ScannerViewModel(container.campusRepository, usuarioId) }
-                )
-                ScannerScreen(
-                    viewModel = scannerViewModel,
-                    onNavigateTab = { navController.navegarATab(it) },
-                    onBack = {
-                        if (!navController.popBackStack()) navController.navegarATab(Routes.HOME)
-                    },
-                    onMisionCompletada = { misionId ->
-                        navController.navigate(Routes.badgeEarned(misionId)) {
-                            popUpTo(Routes.SCANNER) { inclusive = true }
-                        }
+                        navController.mostrarTab(Routes.HOME)
                     }
                 )
             }
@@ -242,52 +258,7 @@ fun CampusQuestNavHost(container: AppContainer) {
                 BadgeEarnedScreen(
                     viewModel = badgeViewModel,
                     onSiguienteMision = {
-                        navController.navigate(Routes.MISSIONS) { popUpTo(Routes.HOME) }
-                    }
-                )
-            }
-        }
-
-        composable(Routes.BADGES) {
-            val usuarioId = usuario?.id
-            if (usuarioId == null) {
-                CargandoPantallaCompleta()
-            } else {
-                val badgesViewModel: BadgesViewModel = viewModel(
-                    key = "badges-$usuarioId",
-                    factory = GenericViewModelFactory { BadgesViewModel(container.campusRepository, usuarioId) }
-                )
-                BadgesScreen(
-                    viewModel = badgesViewModel,
-                    usuarioActualId = usuarioId,
-                    onNavigateTab = { navController.navegarATab(it) }
-                )
-            }
-        }
-
-        composable(Routes.PROFILE) {
-            val usuarioId = usuario?.id
-            if (usuarioId == null) {
-                CargandoPantallaCompleta()
-            } else {
-                val profileViewModel: ProfileViewModel = viewModel(
-                    key = "profile-$usuarioId",
-                    factory = GenericViewModelFactory {
-                        ProfileViewModel(
-                            campusRepository = container.campusRepository,
-                            preferencesRepository = container.preferencesRepository,
-                            usuarioId = usuarioId
-                        )
-                    }
-                )
-                ProfileScreen(
-                    viewModel = profileViewModel,
-                    onNavigateTab = { navController.navegarATab(it) },
-                    onSettings = { navController.navigate(Routes.SETTINGS) },
-                    onMissionManagement = { navController.navigate(Routes.MISSION_MANAGEMENT) },
-                    onCerrarSesion = {
-                        sessionViewModel.cerrarSesion()
-                        navController.navigate(Routes.LOGIN) { popUpTo(0) }
+                        navController.mostrarTab(Routes.MISSIONS)
                     }
                 )
             }
@@ -341,7 +312,6 @@ fun CampusQuestNavHost(container: AppContainer) {
             } else {
                 AccesoNoAutorizado { navController.popBackStack() }
             }
-        }
         }
     }
 }
