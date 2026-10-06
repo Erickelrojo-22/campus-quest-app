@@ -52,20 +52,39 @@ fun CharacterSprite(
     val frameDurationMs = (1000f / animation.fps).toInt()
 
     var frames by remember(species, animation, primaryColor, secondaryColor) {
-        mutableStateOf<List<ImageBitmap>>(emptyList())
+        val cached = SpriteColorEngine.getCachedFrames(species, animation.filename, primaryColor, secondaryColor)
+        mutableStateOf(cached ?: emptyList())
     }
+
     LaunchedEffect(species, animation, primaryColor, secondaryColor) {
-        frames = withContext(Dispatchers.Default) {
-            (0 until animation.frameCount).map { i ->
-                SpriteColorEngine.getFrame(
-                    context, species, animation.filename,
-                    primaryColor, secondaryColor, i
+        if (frames.isEmpty()) {
+            frames = withContext(Dispatchers.Default) {
+                SpriteColorEngine.getFrames(
+                    context, species, animation.filename, animation.frameCount,
+                    primaryColor, secondaryColor
                 )
             }
         }
     }
 
-    if (frames.isEmpty()) return
+    // Pre-cargar IDLE y WALK para que la transición entre quieto y caminar sea instantánea
+    LaunchedEffect(species, primaryColor, secondaryColor) {
+        withContext(Dispatchers.Default) {
+            SpriteColorEngine.getFrames(context, species, CharacterAnimation.IDLE.filename, CharacterAnimation.IDLE.frameCount, primaryColor, secondaryColor)
+            SpriteColorEngine.getFrames(context, species, CharacterAnimation.WALK.filename, CharacterAnimation.WALK.frameCount, primaryColor, secondaryColor)
+        }
+    }
+
+    // Mantener los últimos frames válidos para que el personaje NUNCA desaparezca de la pantalla
+    var lastValidFrames by remember { mutableStateOf<List<ImageBitmap>>(emptyList()) }
+    val displayFrames = if (frames.isNotEmpty()) {
+        lastValidFrames = frames
+        frames
+    } else {
+        lastValidFrames
+    }
+
+    if (displayFrames.isEmpty()) return
 
     val frameIndex: Int = if (loop) {
         val transition = rememberInfiniteTransition(label = "char_anim_${species.name}_${animation.name}")
@@ -92,7 +111,7 @@ fun CharacterSprite(
     }
 
     Image(
-        bitmap             = frames[frameIndex],
+        bitmap             = displayFrames[frameIndex.coerceIn(0, displayFrames.size - 1)],
         contentDescription = "avatar_${species.name}",
         filterQuality      = FilterQuality.None,
         contentScale       = ContentScale.FillBounds,
