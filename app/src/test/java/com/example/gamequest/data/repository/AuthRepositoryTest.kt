@@ -121,6 +121,41 @@ class AuthRepositoryTest {
         assertEquals("Contraseña incorrecta.", (login as AuthResult.Error).mensaje)
     }
 
+    @Test
+    fun iniciarSesionConCredenciales_rechazaCorreoFueraDelDominio() = runBlocking {
+        val login = repository.iniciarSesionConCredenciales("alguien@gmail.com", "clave12345")
+        assertTrue(login is AuthResult.Error)
+        assertTrue((login as AuthResult.Error).mensaje.contains("correo institucional válido"))
+    }
+
+    @Test
+    fun entrarConNombre_creaYReutilizaPerfilDePrueba() = runBlocking {
+        val primero = repository.entrarConNombre("Tester Estudiante", false)
+        val segundo = repository.entrarConNombre("Tester Estudiante", false)
+
+        assertTrue(primero is AuthResult.Exito)
+        assertTrue(segundo is AuthResult.Exito)
+        assertEquals(
+            (primero as AuthResult.Exito).usuario.id,
+            (segundo as AuthResult.Exito).usuario.id
+        )
+    }
+
+    @Test
+    fun entrarConNombre_noAbreCuentaEstudiantilRegistradaSinContrasena() = runBlocking {
+        repository.registrar(
+            nombres = "Erick Moreira",
+            correo = "e1351519127@live.uleam.edu.ec",
+            carrera = "Software",
+            contrasena = "claveSegura2026"
+        )
+
+        val intento = repository.entrarConNombre("Erick Moreira", false)
+
+        assertTrue(intento is AuthResult.Error)
+        assertTrue((intento as AuthResult.Error).mensaje.contains("cuenta estudiantil"))
+    }
+
     private class FakeUsuarioDao : UsuarioDao {
         private val usuarios = mutableListOf<UsuarioEntity>()
         private var nextId = 1

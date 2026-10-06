@@ -71,6 +71,9 @@ class AuthRepository(private val usuarioDao: UsuarioDao) {
         val pass = contrasena.trim()
 
         if (mail.isBlank()) return AuthResult.Error("Ingresa tu correo institucional.")
+        if (!validarCorreoInstitucional(mail)) {
+            return AuthResult.Error("Debe ingresar un correo institucional válido ($DOMINIO_INSTITUCIONAL).")
+        }
         if (pass.isBlank()) return AuthResult.Error("Ingresa tu contraseña.")
 
         val usuario = usuarioDao.buscarPorCorreo(mail)
@@ -99,6 +102,13 @@ class AuthRepository(private val usuarioDao: UsuarioDao) {
         usuarioDao.buscarPorNombre(nombreNormalizado)?.let {
             if (it.rol == Rol.TUTOR) {
                 return AuthResult.Error("Las cuentas tutor deben entrar con correo y contraseña.")
+            }
+            // Una cuenta con contraseña (registro institucional) nunca debe abrirse solo con el
+            // nombre: el modo de prueba solo reutiliza perfiles de prueba (sin credenciales).
+            if (it.contrasenaHash.isNotBlank() || it.correoInstitucional.isNotBlank()) {
+                return AuthResult.Error(
+                    "Ese nombre pertenece a una cuenta estudiantil. Inicia sesión desde la pestaña Estudiantil."
+                )
             }
             return AuthResult.Exito(it)
         }
