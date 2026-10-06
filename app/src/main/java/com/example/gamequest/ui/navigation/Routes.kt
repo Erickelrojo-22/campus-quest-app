@@ -6,6 +6,11 @@ object Routes {
     const val REGISTER = "register"
 
 
+    // Contenedor único de las 5 pestañas (carrusel deslizable). Las constantes
+    // HOME/MISSIONS/SCANNER/BADGES/PROFILE identifican cada pestaña dentro de él.
+    const val MAIN = "main"
+    const val KEY_TAB_SOLICITADA = "tab_solicitada"
+
     const val HOME = "home"
     const val MISSIONS = "missions"
     const val SCANNER = "scanner"
