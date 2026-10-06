@@ -311,7 +311,45 @@ object SpriteColorEngine {
             .asImageBitmap()
     }
 
-    fun clearCache() = cache.clear()
+    // Cache de listas de frames ya cortados como ImageBitmap para evitar reconstrucción
+    private val frameListCache = java.util.concurrent.ConcurrentHashMap<String, List<ImageBitmap>>()
+
+    fun getCachedFrames(
+        species: CharacterSpecies,
+        filename: String,
+        primaryColor: AvatarColor,
+        secondaryColor: AvatarColor,
+    ): List<ImageBitmap>? {
+        val key = "${species.folder}/$filename/${primaryColor.name}/${secondaryColor.name}"
+        return frameListCache[key]
+    }
+
+    fun getFrames(
+        context: Context,
+        species: CharacterSpecies,
+        filename: String,
+        frameCount: Int,
+        primaryColor: AvatarColor,
+        secondaryColor: AvatarColor,
+        frameW: Int = 32,
+    ): List<ImageBitmap> {
+        val key = "${species.folder}/$filename/${primaryColor.name}/${secondaryColor.name}"
+        frameListCache[key]?.let { return it }
+
+        val sheet = getBitmap(context, species, filename, primaryColor, secondaryColor)
+        val list = (0 until frameCount).map { i ->
+            val x = i * frameW
+            Bitmap.createBitmap(sheet, x.coerceAtMost(sheet.width - frameW), 0, frameW, sheet.height)
+                .asImageBitmap()
+        }
+        frameListCache[key] = list
+        return list
+    }
+
+    fun clearCache() {
+        cache.clear()
+        frameListCache.clear()
+    }
 
     // ── Motor interno de Palette Swap dual ─────────────────────────────────
     private fun applyDualPaletteSwap(
