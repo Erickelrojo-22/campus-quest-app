@@ -27,15 +27,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.gamequest.data.local.entity.Rol
-import com.example.gamequest.ui.common.CampusBottomBar
+import com.example.gamequest.ui.common.ContenidoAdaptable
+import com.example.gamequest.ui.common.encabezado
 import com.example.gamequest.ui.components.CharacterSprite
 import com.example.gamequest.ui.components.OnboardingDialog
-import com.example.gamequest.ui.navigation.Routes
 import com.example.gamequest.ui.theme.AmberAccent
-import com.example.gamequest.ui.theme.InstitutionalRed
 import com.example.gamequest.util.AvatarColor
 import com.example.gamequest.util.CharacterSpecies
 import com.example.gamequest.util.LocalSoundManager
@@ -45,7 +49,6 @@ import com.example.gamequest.util.SoundEffect
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel,
-    onNavigateTab: (String) -> Unit,
     onSettings: () -> Unit,
     onMissionManagement: () -> Unit,
     onCerrarSesion: () -> Unit,
@@ -60,13 +63,10 @@ fun ProfileScreen(
     val totalInsignias  = uiState.totalInsignias
     val spriteAnim      = uiState.spriteAnim
 
-    Scaffold(
-        bottomBar = { CampusBottomBar(currentRoute = Routes.PROFILE, onNavigate = onNavigateTab) }
-    ) { padding ->
+    ContenidoAdaptable(modifier = Modifier.fillMaxSize()) {
         Column(
             Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .verticalScroll(rememberScrollState())
         ) {
             // ── Header con sprite ────────────────────────────────────────
@@ -83,9 +83,12 @@ fun ProfileScreen(
                         .size(96.dp)
                         .clip(CircleShape)
                         .background(Color.White.copy(alpha = 0.15f))
-                        .clickable {
+                        .clickable(role = Role.Button) {
                             soundManager?.play(SoundEffect.CLICK)
                             viewModel.toggleSpriteAnim()
+                        }
+                        .semantics {
+                            contentDescription = "Avatar de ${usuario?.nombres ?: "usuario"}. Toca para animar el personaje."
                         },
                     contentAlignment = Alignment.Center,
                 ) {
@@ -104,6 +107,7 @@ fun ProfileScreen(
                     color      = Color.White,
                     fontWeight = FontWeight.Bold,
                     style      = MaterialTheme.typography.titleLarge,
+                    modifier   = Modifier.encabezado(),
                 )
                 if (!usuario?.correoInstitucional.isNullOrBlank()) {
                     Text(usuario?.correoInstitucional ?: "", color = AmberAccent, style = MaterialTheme.typography.bodySmall)
@@ -200,7 +204,7 @@ fun ProfileScreen(
                 "Cerrar sesión",
                 "Tu progreso se mantiene guardado",
                 onCerrarSesion,
-                colorTexto = InstitutionalRed,
+                colorTexto = MaterialTheme.colorScheme.error,
             )
 
             Spacer(Modifier.height(16.dp))
@@ -401,7 +405,13 @@ private fun OpcionPerfil(
 ) {
     Card(
         onClick    = onClick,
-        modifier   = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
+        modifier   = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .clearAndSetSemantics {
+                contentDescription = "$titulo, $subtitulo"
+                role = Role.Button
+            },
     ) {
         Row(
             modifier          = Modifier.padding(16.dp).fillMaxWidth(),
