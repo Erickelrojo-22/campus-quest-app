@@ -46,6 +46,7 @@ import com.example.gamequest.ui.components.CharacterSprite
 import com.example.gamequest.ui.theme.AmberAccent
 import com.example.gamequest.util.AvatarColor
 import com.example.gamequest.util.CharacterSpecies
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.math.hypot
 import kotlin.math.roundToInt
@@ -179,12 +180,14 @@ fun CampusMapView(
                     val newX = (npc.x.value + Random.nextFloat() * 0.2f - 0.1f).coerceIn(0.1f, 0.9f)
                     val newY = (npc.y.value + Random.nextFloat() * 0.2f - 0.1f).coerceIn(0.1f, 0.9f)
                     val dist = hypot((newX - npc.x.value).toDouble(), (newY - npc.y.value).toDouble()).toFloat()
-                    val duration = (dist * 3500).roundToInt().coerceIn(800, 3000)
+                    val duration = (dist * 4500).roundToInt().coerceIn(1000, 3500)
 
                     npc.flipX = newX < npc.x.value
                     npc.isWalking = true
-                    launch { npc.x.animateTo(newX, tween(duration, easing = LinearOutSlowInEasing)) }
-                    npc.y.animateTo(newY, tween(duration, easing = LinearOutSlowInEasing))
+                    val xAnim = launch { npc.x.animateTo(newX, tween(duration, easing = LinearEasing)) }
+                    val yAnim = launch { npc.y.animateTo(newY, tween(duration, easing = LinearEasing)) }
+                    xAnim.join()
+                    yAnim.join()
                     npc.isWalking = false
                 }
             }
@@ -216,9 +219,12 @@ fun CampusMapView(
     )
 
     // Desplazamiento manual temporal del usuario (drag para mirar alrededor)
-    var dragPanX by remember { mutableFloatStateOf(0f) }
-    var dragPanY by remember { mutableFloatStateOf(0f) }
-    val isDragged = remember(dragPanX, dragPanY) { dragPanX != 0f || dragPanY != 0f }
+    val dragPanX = remember { Animatable(0f) }
+    val dragPanY = remember { Animatable(0f) }
+    val isDragged by remember { derivedStateOf { dragPanX.value != 0f || dragPanY.value != 0f } }
+
+    var walkJob by remember { mutableStateOf<Job?>(null) }
+    var targetMarkerPos by remember { mutableStateOf<Offset?>(null) }
 
     BoxWithConstraints(
         modifier = modifier
@@ -244,77 +250,116 @@ fun CampusMapView(
         val worldPlayerY = curY * mapH
 
         // Cámara para centrar al jugador en el viewport + offset manual de arrastre
-        val rawCamX = (viewW / 2f) - worldPlayerX + dragPanX
-        val rawCamY = (viewH / 2f) - worldPlayerY + dragPanY
+        val rawCamX = (viewW / 2f) - worldPlayerX + dragPanX.value
+        val rawCamY = (viewH / 2f) - worldPlayerY + dragPanY.value
 
         // Restringir la cámara para que no muestre vacío fuera del mapa
         val camX = rawCamX.coerceIn(viewW - mapW, 0f)
         val camY = rawCamY.coerceIn(viewH - mapH, 0f)
 
-        // Posición real del avatar en pantalla (píxeles de pantalla)
-        val screenPlayerX = worldPlayerX + camX
-        val screenPlayerY = worldPlayerY + camY
+        val currentCamX by rememberUpdatedState(camX)
+        val currentCamY by rememberUpdatedState(camY)
+        val currentMapW by rememberUpdatedState(mapW)
+        val currentMapH by rememberUpdatedState(mapH)
+        val currentPuntos by rememberUpdatedState(puntos)
+
+        // Velocidad constante y natural de caminata (~150 dp/segundo)
+        val walkSpeedPxPerSec = with(density) { 150.dp.toPx() }.coerceAtLeast(130f)
+
+        val startWalkingTo: (targetNormX: Float, targetNormY: Float, onArrived: (() -> Unit)?) -> Unit = { targetNormX, targetNormY, onArrived ->
+            val currentTargetX = targetNormX.coerceIn(0.04f, 0.96f)
+            val currentTargetY = targetNormY.coerceIn(0.04f, 0.96f)
+
+            targetMarkerPos = Offset(currentTargetX * mapW, currentTargetY * mapH)
+
+            walkJob?.cancel()
+            walkJob = scope.launch {
+                try {
+                    isWalking = true
+                    // Re-centrar suavemente el desplazamiento manual de la cámara si estaba desplazada
+                    if (dragPanX.value != 0f || dragPanY.value != 0f) {
+                        launch { dragPanX.animateTo(0f, tween(350, easing = FastOutSlowInEasing)) }
+                        launch { dragPanY.animateTo(0f, tween(350, easing = FastOutSlowInEasing)) }
+                    }
+
+                    val startX = playerX.value
+                    val startY = playerY.value
+                    val dxPx = (currentTargetX - startX) * mapW
+                    val dyPx = (currentTargetY - startY) * mapH
+                    val distPx = hypot(dxPx.toDouble(), dyPx.toDouble()).toFloat()
+
+                    // Orientar sprite hacia la dirección en la que camina
+                    if (dxPx > 1.5f) {
+                        playerFlipX = false
+                    } else if (dxPx < -1.5f) {
+                        playerFlipX = true
+                    }
+
+                    if (distPx > 3f) {
+                        val durationMs = ((distPx / walkSpeedPxPerSec) * 1000).roundToInt().coerceAtLeast(120)
+                        val xJob = launch {
+                            playerX.animateTo(currentTargetX, tween(durationMs, easing = LinearEasing))
+                        }
+                        val yJob = launch {
+                            playerY.animateTo(currentTargetY, tween(durationMs, easing = LinearEasing))
+                        }
+                        xJob.join()
+                        yJob.join()
+                    }
+                } finally {
+                    isWalking = false
+                    targetMarkerPos = null
+                }
+                onArrived?.invoke()
+            }
+        }
 
         // Canvas: Dibuja mapa, caminos, radar y pines
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
                 .pointerInput(Unit) {
-                    // Arrastrar con el dedo para explorar el mapa
-                    detectDragGestures { _, dragAmount ->
-                        dragPanX += dragAmount.x
-                        dragPanY += dragAmount.y
-                    }
-                }
-                .pointerInput(puntos, camX, camY) {
-                    // Tocar para caminar o interactuar
                     detectTapGestures { tapOffset ->
-                        val tapWorldX = tapOffset.x - camX
-                        val tapWorldY = tapOffset.y - camY
-                        
+                        val tapWorldX = tapOffset.x - currentCamX
+                        val tapWorldY = tapOffset.y - currentCamY
+
                         soundManager?.play(SoundEffect.CLICK)
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
 
                         // 1. Verificar si tocó cerca de un Punto de Interés
                         val radioPin = 60f
-                        val clickedPunto = puntos.minByOrNull { punto ->
-                            val px = punto.posX * mapW
-                            val py = punto.posY * mapH
+                        val clickedPunto = currentPuntos.minByOrNull { punto ->
+                            val px = punto.posX * currentMapW
+                            val py = punto.posY * currentMapH
                             hypot((px - tapWorldX).toDouble(), (py - tapWorldY).toDouble())
                         }
 
                         if (clickedPunto != null) {
-                            val px = clickedPunto.posX * mapW
-                            val py = clickedPunto.posY * mapH
+                            val px = clickedPunto.posX * currentMapW
+                            val py = clickedPunto.posY * currentMapH
                             val dist = hypot((px - tapWorldX).toDouble(), (py - tapWorldY).toDouble())
                             if (dist <= radioPin) {
-                                // Caminar hacia el punto y abrir misión
-                                scope.launch {
-                                    playerFlipX = clickedPunto.posX < curX
-                                    isWalking = true
-                                    dragPanX = 0f; dragPanY = 0f
-                                    launch { playerX.animateTo(clickedPunto.posX, tween(1100, easing = LinearOutSlowInEasing)) }
-                                    playerY.animateTo(clickedPunto.posY, tween(1100, easing = LinearOutSlowInEasing))
-                                    isWalking = false
+                                // Caminar naturalmente hacia el punto y abrir la misión al llegar
+                                startWalkingTo(clickedPunto.posX, clickedPunto.posY) {
+                                    soundManager?.play(SoundEffect.CLICK)
                                     onPuntoClick(clickedPunto)
                                 }
                                 return@detectTapGestures
                             }
                         }
 
-                        // 2. Tocar en el suelo del mapa: el avatar camina hacia allá
-                        val targetNormX = (tapWorldX / mapW).coerceIn(0.05f, 0.95f)
-                        val targetNormY = (tapWorldY / mapH).coerceIn(0.05f, 0.95f)
-
-                        val distNorm = hypot((targetNormX - curX).toDouble(), (targetNormY - curY).toDouble()).toFloat()
-                        val duration = (distNorm * 3500).roundToInt().coerceIn(600, 2200)
-
+                        // 2. Tocar en el suelo del mapa: el avatar camina naturalmente a velocidad constante
+                        val targetNormX = tapWorldX / currentMapW
+                        val targetNormY = tapWorldY / currentMapH
+                        startWalkingTo(targetNormX, targetNormY, null)
+                    }
+                }
+                .pointerInput(Unit) {
+                    detectDragGestures { change, dragAmount ->
+                        change.consume()
                         scope.launch {
-                            playerFlipX = targetNormX < curX
-                            isWalking = true
-                            dragPanX = 0f; dragPanY = 0f
-                            launch { playerX.animateTo(targetNormX, tween(duration, easing = LinearOutSlowInEasing)) }
-                            playerY.animateTo(targetNormY, tween(duration, easing = LinearOutSlowInEasing))
-                            isWalking = false
+                            dragPanX.snapTo((dragPanX.value + dragAmount.x).coerceIn(-currentMapW * 0.45f, currentMapW * 0.45f))
+                            dragPanY.snapTo((dragPanY.value + dragAmount.y).coerceIn(-currentMapH * 0.45f, currentMapH * 0.45f))
                         }
                     }
                 }
@@ -348,6 +393,21 @@ fun CampusMapView(
                     radius = 28f,
                     center = Offset(worldPlayerX, worldPlayerY),
                 )
+
+                // 2.1 Indicador visual de destino al que camina el avatar
+                targetMarkerPos?.let { target ->
+                    drawCircle(
+                        color = AmberAccent.copy(alpha = 0.75f),
+                        radius = 14f + (pulseRadius * 0.12f),
+                        center = target,
+                        style = Stroke(width = 2.5f)
+                    )
+                    drawCircle(
+                        color = AmberAccent.copy(alpha = 0.4f),
+                        radius = 5f,
+                        center = target
+                    )
+                }
 
                 // 3. Marcadores elevados para los puntos de interés
                 puntos.forEach { punto ->
@@ -455,13 +515,8 @@ fun CampusMapView(
                     .clickable {
                         soundManager?.play(SoundEffect.CLICK)
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        scope.launch {
-                            playerFlipX = puntoObjetivo.posX < curX
-                            isWalking = true
-                            dragPanX = 0f; dragPanY = 0f
-                            launch { playerX.animateTo(puntoObjetivo.posX, tween(1100, easing = LinearOutSlowInEasing)) }
-                            playerY.animateTo(puntoObjetivo.posY, tween(1100, easing = LinearOutSlowInEasing))
-                            isWalking = false
+                        startWalkingTo(puntoObjetivo.posX, puntoObjetivo.posY) {
+                            soundManager?.play(SoundEffect.CLICK)
                             onPuntoClick(puntoObjetivo)
                         }
                     },
@@ -498,8 +553,11 @@ fun CampusMapView(
         if (isDragged) {
             FloatingActionButton(
                 onClick = {
-                    dragPanX = 0f
-                    dragPanY = 0f
+                    soundManager?.play(SoundEffect.CLICK)
+                    scope.launch {
+                        launch { dragPanX.animateTo(0f, tween(350, easing = FastOutSlowInEasing)) }
+                        launch { dragPanY.animateTo(0f, tween(350, easing = FastOutSlowInEasing)) }
+                    }
                 },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
