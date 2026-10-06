@@ -4,6 +4,9 @@ import com.example.gamequest.data.local.dao.UsuarioDao
 import com.example.gamequest.data.local.entity.Rol
 import com.example.gamequest.data.local.entity.UsuarioEntity
 import com.example.gamequest.util.PasswordHasher
+import com.example.gamequest.data.remote.CampusApi
+import kotlinx.coroutines.CancellationException
+import org.json.JSONObject
 
 
 sealed class AuthResult {
@@ -15,7 +18,16 @@ sealed class AuthResult {
  * Acceso simplificado: el usuario solo escribe su nombre para entrar.
  * Si el nombre ya existe se reutiliza la cuenta (con su progreso); si no, se crea una nueva.
  */
-class AuthRepository(private val usuarioDao: UsuarioDao) {
+class AuthRepository(private val usuarioDao: UsuarioDao, private val api: CampusApi? = null) {
+
+    val minimumPasswordLength: Int get() = if (api != null) 8 else MIN_CONTRASENA_LENGTH
+
+    private suspend fun remote(path: String, body: JSONObject): AuthResult = try {
+        val user = api!!.authenticate(path, body)
+        usuarioDao.guardarRemotos(listOf(user))
+        AuthResult.Exito(user)
+    } catch (e: CancellationException) { throw e
+    } catch (e: Exception) { AuthResult.Error(e.message ?: "No se pudo conectar con el servidor.") }
 
     companion object {
         const val DOMINIO_INSTITUCIONAL = "@live.uleam.edu.ec"
@@ -34,6 +46,8 @@ class AuthRepository(private val usuarioDao: UsuarioDao) {
         contrasena: String,
         esTutor: Boolean = false
     ): AuthResult {
+        if (api != null) return remote("register", JSONObject().put("nombres", nombres.trim())
+            .put("correo", correo.trim().lowercase()).put("carrera", carrera.trim()).put("contrasena", contrasena))
         val nom = nombres.trim()
         val mail = correo.trim().lowercase()
         val carr = carrera.trim()
@@ -67,6 +81,7 @@ class AuthRepository(private val usuarioDao: UsuarioDao) {
     }
 
     suspend fun iniciarSesionConCredenciales(correo: String, contrasena: String): AuthResult {
+        if (api != null) return remote("login", JSONObject().put("correo", correo.trim().lowercase()).put("contrasena", contrasena))
         val mail = correo.trim().lowercase()
         val pass = contrasena.trim()
 
@@ -96,6 +111,7 @@ class AuthRepository(private val usuarioDao: UsuarioDao) {
 
 
     suspend fun entrarConNombre(nombre: String, esTutor: Boolean): AuthResult {
+        if (api != null) return remote("visitor", JSONObject().put("nombres", nombre.trim()))
         val nombreNormalizado = nombre.trim()
         if (nombreNormalizado.isBlank()) return AuthResult.Error("Escribe tu nombre para continuar.")
 

@@ -38,6 +38,14 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
+        @Volatile private var REMOTE_INSTANCE: AppDatabase? = null
+
+        /** Keep legacy accounts and their progress intact in campus_quest.db. */
+        fun getRemoteInstance(context: Context): AppDatabase = REMOTE_INSTANCE ?: synchronized(this) {
+            REMOTE_INSTANCE ?: Room.databaseBuilder(context.applicationContext, AppDatabase::class.java,
+                "campus_quest_remote.db").addMigrations(MIGRATION_1_2).build().also { REMOTE_INSTANCE = it }
+        }
+
         fun getInstance(context: Context, scope: CoroutineScope): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(

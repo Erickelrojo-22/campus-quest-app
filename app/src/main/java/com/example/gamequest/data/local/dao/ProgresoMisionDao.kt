@@ -1,5 +1,6 @@
 package com.example.gamequest.data.local.dao
 
+import androidx.room.Upsert
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
@@ -8,6 +9,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ProgresoMisionDao {
+
+    @Upsert
+    suspend fun guardarRemotos(items: List<ProgresoMisionEntity>)
+
 
     @Insert
     suspend fun insertar(progreso: ProgresoMisionEntity): Long

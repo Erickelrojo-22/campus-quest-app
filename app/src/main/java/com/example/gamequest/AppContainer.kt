@@ -4,7 +4,9 @@ import android.content.Context
 import com.example.gamequest.data.local.AppDatabase
 import com.example.gamequest.data.preferences.UserPreferencesRepository
 import com.example.gamequest.data.repository.AuthRepository
-import com.example.gamequest.data.repository.CampusRepository
+import com.example.gamequest.data.remote.CampusApi
+import com.example.gamequest.data.remote.SessionTokenStore
+import com.example.gamequest.data.remote.RemoteCampusRepository
 import com.example.gamequest.util.SoundEffectManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -18,19 +20,15 @@ class AppContainer(context: Context) {
 
     private val applicationScope = CoroutineScope(SupervisorJob())
 
-    private val database = AppDatabase.getInstance(context, applicationScope)
+    private val database = AppDatabase.getRemoteInstance(context)
+
+    val api = CampusApi(SessionTokenStore(context))
 
     val preferencesRepository = UserPreferencesRepository(context)
 
     val soundEffectManager = SoundEffectManager(context, preferencesRepository, applicationScope)
 
-    val authRepository = AuthRepository(database.usuarioDao())
+    val authRepository = AuthRepository(database.usuarioDao(), api)
 
-    val campusRepository = CampusRepository(
-        database = database,
-        puntoDao = database.puntoInteresDao(),
-        misionDao = database.misionDao(),
-        progresoDao = database.progresoMisionDao(),
-        usuarioDao = database.usuarioDao()
-    )
+    val campusRepository = RemoteCampusRepository(database, api)
 }

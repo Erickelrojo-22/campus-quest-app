@@ -69,8 +69,8 @@ class RegisterViewModel(private val authRepository: AuthRepository) : ViewModel(
             _uiState.update { it.copy(error = "Selecciona o ingresa tu carrera.") }
             return
         }
-        if (actual.contrasena.length < AuthRepository.MIN_CONTRASENA_LENGTH) {
-            _uiState.update { it.copy(error = "La contraseña debe tener al menos ${AuthRepository.MIN_CONTRASENA_LENGTH} caracteres.") }
+        if (actual.contrasena.length < authRepository.minimumPasswordLength) {
+            _uiState.update { it.copy(error = "La contraseña debe tener al menos ${authRepository.minimumPasswordLength} caracteres.") }
             return
         }
         if (actual.contrasena != actual.confirmarContrasena) {
