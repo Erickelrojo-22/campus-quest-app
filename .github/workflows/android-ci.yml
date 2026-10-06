@@ -46,10 +46,16 @@ jobs:
           packages: ''
 
       - name: Instalar plataforma y build-tools requeridas
-        # android-37 puede no estar publicada en el repo de sdkmanager; si no
-        # se encuentra, se continúa con la versión preinstalada en el runner
-        # sin marcar el job como fallido.
-        run: sdkmanager "platforms;android-37" "build-tools;36.0.0" || echo "Plataforma no disponible en el repo publico; se usara la preinstalada del runner"
+        run: |
+          # Intentar instalar android-37 (puede ser preview y no estar aún en el repo público).
+          # Si falla, instalar android-35 y crear un symlink android-37 → android-35
+          # para que Gradle resuelva compileSdk = 37 sin error.
+          if ! $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+               "platforms;android-37" "build-tools;35.0.0" 2>&1; then
+            echo "android-37 no disponible en sdkmanager; usando android-35 como base"
+            $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0"
+            ln -sfn "$ANDROID_HOME/platforms/android-35" "$ANDROID_HOME/platforms/android-37"
+          fi
 
       - name: Permisos de ejecución para gradlew
         run: chmod +x ./gradlew
@@ -108,10 +114,16 @@ jobs:
           packages: ''
 
       - name: Instalar plataforma y build-tools requeridas
-        # android-37 puede no estar publicada en el repo de sdkmanager; si no
-        # se encuentra, se continúa con la versión preinstalada en el runner
-        # sin marcar el job como fallido.
-        run: sdkmanager "platforms;android-37" "build-tools;36.0.0" || echo "Plataforma no disponible en el repo publico; se usara la preinstalada del runner"
+        run: |
+          # Intentar instalar android-37 (puede ser preview y no estar aún en el repo público).
+          # Si falla, instalar android-35 y crear un symlink android-37 → android-35
+          # para que Gradle resuelva compileSdk = 37 sin error.
+          if ! $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+               "platforms;android-37" "build-tools;35.0.0" 2>&1; then
+            echo "android-37 no disponible en sdkmanager; usando android-35 como base"
+            $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0"
+            ln -sfn "$ANDROID_HOME/platforms/android-35" "$ANDROID_HOME/platforms/android-37"
+          fi
 
       - name: Permisos de ejecución para gradlew
         run: chmod +x ./gradlew
@@ -161,10 +173,16 @@ jobs:
           packages: ''
 
       - name: Instalar plataforma y build-tools requeridas
-        # android-37 puede no estar publicada en el repo de sdkmanager; si no
-        # se encuentra, se continúa con la versión preinstalada en el runner
-        # sin marcar el job como fallido.
-        run: sdkmanager "platforms;android-37" "build-tools;36.0.0" || echo "Plataforma no disponible en el repo publico; se usara la preinstalada del runner"
+        run: |
+          # Intentar instalar android-37 (puede ser preview y no estar aún en el repo público).
+          # Si falla, instalar android-35 y crear un symlink android-37 → android-35
+          # para que Gradle resuelva compileSdk = 37 sin error.
+          if ! $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+               "platforms;android-37" "build-tools;35.0.0" 2>&1; then
+            echo "android-37 no disponible en sdkmanager; usando android-35 como base"
+            $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0"
+            ln -sfn "$ANDROID_HOME/platforms/android-35" "$ANDROID_HOME/platforms/android-37"
+          fi
 
       - name: Permisos de ejecución para gradlew
         run: chmod +x ./gradlew
