@@ -111,9 +111,17 @@ class AuthRepository(private val usuarioDao: UsuarioDao, private val api: Campus
 
 
     suspend fun entrarConNombre(nombre: String, esTutor: Boolean): AuthResult {
-        if (api != null) return remote("visitor", JSONObject().put("nombres", nombre.trim()))
         val nombreNormalizado = nombre.trim()
         if (nombreNormalizado.isBlank()) return AuthResult.Error("Escribe tu nombre para continuar.")
+
+        if (api != null) {
+            val remoteResult = remote("visitor", JSONObject().put("nombres", nombreNormalizado))
+            if (remoteResult is AuthResult.Exito) {
+                return remoteResult
+            }
+            // Si la conexión remota falla (timeout, sin internet, error de servidor),
+            // continuamos con el fallback seguro a Room local para garantizar el funcionamiento offline (RF-20).
+        }
 
         usuarioDao.buscarPorNombre(nombreNormalizado)?.let {
             if (it.rol == Rol.TUTOR) {
@@ -126,6 +134,7 @@ class AuthRepository(private val usuarioDao: UsuarioDao, private val api: Campus
                     "Ese nombre pertenece a una cuenta estudiantil. Inicia sesión desde la pestaña Estudiantil."
                 )
             }
+            api?.tokens?.save("offline-visitor-${it.id}")
             return AuthResult.Exito(it)
         }
 
@@ -137,6 +146,7 @@ class AuthRepository(private val usuarioDao: UsuarioDao, private val api: Campus
             rol = Rol.ESTUDIANTE
         )
         val id = usuarioDao.insertar(nuevo)
+        api?.tokens?.save("offline-visitor-$id")
         return AuthResult.Exito(nuevo.copy(id = id.toInt()))
     }
 }
