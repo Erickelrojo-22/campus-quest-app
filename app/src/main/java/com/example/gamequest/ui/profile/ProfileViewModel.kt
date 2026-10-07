@@ -29,6 +29,8 @@ data class ProfileUiState(
     val showTimeline: Boolean = false,
     val showAdventurerCard: Boolean = false,
     val showOnboarding: Boolean = false,
+    val showRanking: Boolean = false,
+    val ranking: List<UsuarioEntity> = emptyList(),
     val historial: List<ProgresoDetallado> = emptyList(),
     // Estado del editor de avatar
     val editorSpecies: CharacterSpecies = CharacterSpecies.DUDE,
@@ -53,6 +55,7 @@ class ProfileViewModel(
     private val _showTimeline = MutableStateFlow(false)
     private val _showAdventurerCard = MutableStateFlow(false)
     private val _showOnboarding = MutableStateFlow(false)
+    private val _showRanking = MutableStateFlow(false)
 
     // Estado del editor de avatar
     private val _editorSpecies = MutableStateFlow(CharacterSpecies.DUDE)
@@ -78,7 +81,9 @@ class ProfileViewModel(
         _showAdventurerCard,
         _showOnboarding
     ) { anim, editor, timeline, card, onboarding ->
-        DialogStates(anim, editor, timeline, card, onboarding)
+        DialogStates(anim, editor, timeline, card, onboarding, _showRanking.value)
+    }.combine(_showRanking) { states, rankingOpen ->
+        states.copy(showRanking = rankingOpen)
     }
 
     private val uiControlFlow = combine(
@@ -88,20 +93,34 @@ class ProfileViewModel(
         Pair(dialogs, editor)
     }
 
-    val uiState: StateFlow<ProfileUiState> = combine(
+    private data class UserData(
+        val usuario: UsuarioEntity?,
+        val totalInsignias: Int,
+        val historial: List<ProgresoDetallado>,
+        val ranking: List<UsuarioEntity>
+    )
+
+    private val userDataFlow = combine(
         campusRepository.observarUsuario(usuarioId),
         campusRepository.observarTotalInsignias(usuarioId),
         campusRepository.observarHistorialProgreso(usuarioId),
+        campusRepository.observarRanking()
+    ) { usuario, totalInsignias, historial, rankingList ->
+        UserData(usuario, totalInsignias, historial, rankingList)
+    }
+
+    val uiState: StateFlow<ProfileUiState> = combine(
+        userDataFlow,
         preferencesRepository.preferencias,
         uiControlFlow
-    ) { usuario, totalInsignias, historial, prefs, (dialogs, editor) ->
+    ) { userData, prefs, (dialogs, editor) ->
         val userSpecies = prefs?.characterSpecies ?: CharacterSpecies.DUDE
         val userPrimary = prefs?.avatarPrimaryColor ?: AvatarColor.COBALT_BLUE
         val userSecondary = prefs?.avatarSecondaryColor ?: AvatarColor.RUBY_RED
 
         ProfileUiState(
-            usuario = usuario,
-            totalInsignias = totalInsignias,
+            usuario = userData.usuario,
+            totalInsignias = userData.totalInsignias,
             selectedSpecies = userSpecies,
             primaryColor = userPrimary,
             secondaryColor = userSecondary,
@@ -110,7 +129,9 @@ class ProfileViewModel(
             showTimeline = dialogs.showTimeline,
             showAdventurerCard = dialogs.showAdventurerCard,
             showOnboarding = dialogs.showOnboarding,
-            historial = historial,
+            showRanking = dialogs.showRanking,
+            ranking = userData.ranking,
+            historial = userData.historial,
             editorSpecies = editor.species,
             editorPrimary = editor.primary,
             editorSecondary = editor.secondary,
@@ -124,7 +145,8 @@ class ProfileViewModel(
         val showEditor: Boolean,
         val showTimeline: Boolean,
         val showAdventurerCard: Boolean,
-        val showOnboarding: Boolean
+        val showOnboarding: Boolean,
+        val showRanking: Boolean = false
     )
 
     private data class EditorState(
@@ -222,5 +244,13 @@ class ProfileViewModel(
 
     fun cerrarOnboarding() {
         _showOnboarding.value = false
+    }
+
+    fun abrirRanking() {
+        _showRanking.value = true
+    }
+
+    fun cerrarRanking() {
+        _showRanking.value = false
     }
 }

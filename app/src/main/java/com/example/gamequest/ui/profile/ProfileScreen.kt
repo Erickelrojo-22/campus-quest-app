@@ -15,6 +15,7 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Settings
@@ -174,6 +175,17 @@ fun ProfileScreen(
                 onClick   = {
                     soundManager?.play(SoundEffect.CLICK)
                     viewModel.abrirAdventurerCard()
+                },
+            )
+
+            // RF-18: Tabla de Clasificación / Ranking de Aventureros
+            OpcionPerfil(
+                icono     = Icons.Filled.EmojiEvents,
+                titulo    = "Tabla de Clasificación",
+                subtitulo = "Ranking de exploradores y podio del campus",
+                onClick   = {
+                    soundManager?.play(SoundEffect.CLICK)
+                    viewModel.abrirRanking()
                 },
             )
 
@@ -391,6 +403,15 @@ fun ProfileScreen(
         OnboardingDialog(
             onDismiss   = viewModel::cerrarOnboarding,
             onCompletar = viewModel::cerrarOnboarding
+        )
+    }
+
+    // ── Tabla de Clasificación / Ranking RPG ─────────────────────────────
+    if (uiState.showRanking) {
+        LeaderboardDialog(
+            ranking         = uiState.ranking,
+            usuarioActualId = usuario?.id ?: 0,
+            onDismiss       = viewModel::cerrarRanking
         )
     }
 }

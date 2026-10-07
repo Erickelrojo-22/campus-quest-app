@@ -235,6 +235,24 @@ class ProfileViewModelTest {
         assertFalse(viewModel.uiState.value.showOnboarding)
     }
 
+    @Test
+    fun rankingDialog_abreYCierraCorrectamente() = runTest {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
+        }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.showRanking)
+
+        viewModel.abrirRanking()
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.showRanking)
+
+        viewModel.cerrarRanking()
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.showRanking)
+    }
+
     private class FakeCampusRepository(
         private val usuario: UsuarioEntity,
         private val totalInsignias: Int
