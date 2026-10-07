@@ -37,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -69,7 +70,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
-    onMisionClick: (Int) -> Unit
+    onMisionClick: (Int) -> Unit,
+    puntoDestinoId: Int? = null,
+    onPuntoDestinoAtendido: () -> Unit = {}
 ) {
     val usuario by viewModel.usuario.collectAsState()
     val misiones by viewModel.misiones.collectAsState()
@@ -132,13 +135,28 @@ fun HomeScreen(
                         misiones.firstOrNull { it.punto.id == punto.id }?.let { onMisionClick(it.mision.id) }
                     }
 
+                    val puntoObjetivoFinal = remember(puntoDestinoId, misiones, sugerida) {
+                        if (puntoDestinoId != null) {
+                            misiones.firstOrNull { it.punto.id == puntoDestinoId }?.punto
+                                ?: sugerida?.punto
+                        } else {
+                            sugerida?.punto
+                        }
+                    }
+
+                    LaunchedEffect(puntoDestinoId) {
+                        if (puntoDestinoId != null) {
+                            onPuntoDestinoAtendido()
+                        }
+                    }
+
                     if (horizontal) {
                         Row(Modifier.weight(1f).fillMaxWidth()) {
                             Box(Modifier.weight(1f).fillMaxHeight()) {
                                 MapaCampus(
                                     puntos = puntosMapa,
                                     completados = completadosMapa,
-                                    puntoObjetivo = sugerida?.punto,
+                                    puntoObjetivo = puntoObjetivoFinal,
                                     primaryColor = charPrimary,
                                     secondaryColor = charSecondary,
                                     species = charSpecies,
@@ -159,7 +177,7 @@ fun HomeScreen(
                             MapaCampus(
                                 puntos = puntosMapa,
                                 completados = completadosMapa,
-                                puntoObjetivo = sugerida?.punto,
+                                puntoObjetivo = puntoObjetivoFinal,
                                 primaryColor = charPrimary,
                                 secondaryColor = charSecondary,
                                 species = charSpecies,

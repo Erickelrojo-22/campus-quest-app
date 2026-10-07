@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.FloatingActionButton
@@ -31,11 +32,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
@@ -171,6 +177,8 @@ fun CampusMapView(
     val tertiary  = MaterialTheme.colorScheme.tertiary
 
     val soundManager = LocalSoundManager.current
+    val textMeasurer = rememberTextMeasurer()
+    var soloPendientes by remember { mutableStateOf(false) }
 
     // Cargar mapa en memoria desde assets
     val mapImage = remember(mapAssetPath) {
@@ -412,7 +420,19 @@ fun CampusMapView(
                     isWalking = false
                     targetMarkerPos = null
                 }
+                soundManager?.play(SoundEffect.CLICK)
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 onArrived?.invoke()
+            }
+        }
+
+        // Caminar automáticamente hacia el objetivo si cambia (p. ej. desde "Ver ruta en el mapa")
+        var autoWalkedTargetId by remember { mutableStateOf<Int?>(null) }
+        LaunchedEffect(puntoObjetivo?.id) {
+            val target = puntoObjetivo
+            if (target != null && autoWalkedTargetId != target.id) {
+                autoWalkedTargetId = target.id
+                startWalkingTo(target.posX, target.posY, null)
             }
         }
 
@@ -545,8 +565,10 @@ fun CampusMapView(
 
                 // 3. Marcadores elevados para los puntos de interés (tamaño constante en pantalla)
                 puntos.forEach { punto ->
-                    val pinPos = Offset(punto.posX * mapW, punto.posY * mapH)
                     val esCompletado = punto.id in completados
+                    if (soloPendientes && esCompletado) return@forEach
+
+                    val pinPos = Offset(punto.posX * mapW, punto.posY * mapH)
                     val esObjetivo = punto.id == puntoObjetivo?.id
                     val pinColor = if (esCompletado) Color(0xFF2E7D32) else colorPorCategoria(punto.categoria, primary, secondary, tertiary)
                     val elevatedCenter = pinPos - Offset(0f, pinElevationPx)
@@ -583,6 +605,44 @@ fun CampusMapView(
                     drawCircle(color = Color(0xFF102D2B), radius = pinOuterRadiusPx, center = elevatedCenter)
                     drawCircle(color = pinColor, radius = pinInnerRadiusPx, center = elevatedCenter)
                     drawCircle(color = if (esCompletado) Color.White else if (esObjetivo) AmberAccent else Color.White, radius = pinDotRadiusPx, center = elevatedCenter)
+
+                    // 3.1 Etiqueta retro con el nombre del Punto de Interés
+                    if (esObjetivo || mapScale >= 1.7f) {
+                        val textStyle = TextStyle(
+                            color = if (esObjetivo) AmberAccent else Color.White,
+                            fontSize = if (esObjetivo) 11.sp else 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        val textLayout = textMeasurer.measure(
+                            text = AnnotatedString(punto.nombre),
+                            style = textStyle
+                        )
+                        val padH = 6f * dpToPx
+                        val padV = 3f * dpToPx
+                        val boxW = textLayout.size.width + padH * 2
+                        val boxH = textLayout.size.height + padV * 2
+                        val badgeTopLeft = Offset(
+                            elevatedCenter.x - boxW / 2f,
+                            elevatedCenter.y - pinOuterRadiusPx - boxH - 3f * dpToPx
+                        )
+                        drawRoundRect(
+                            color = Color(0xFF102D2B).copy(alpha = 0.92f),
+                            topLeft = badgeTopLeft,
+                            size = Size(boxW, boxH),
+                            cornerRadius = CornerRadius(4f * dpToPx, 4f * dpToPx)
+                        )
+                        drawRoundRect(
+                            color = if (esObjetivo) AmberAccent else pinColor.copy(alpha = 0.85f),
+                            topLeft = badgeTopLeft,
+                            size = Size(boxW, boxH),
+                            cornerRadius = CornerRadius(4f * dpToPx, 4f * dpToPx),
+                            style = Stroke(width = if (esObjetivo) 1.5f * dpToPx else 1f * dpToPx)
+                        )
+                        drawText(
+                            textLayoutResult = textLayout,
+                            topLeft = Offset(badgeTopLeft.x + padH, badgeTopLeft.y + padV)
+                        )
+                    }
                 }
             }
         }
@@ -682,6 +742,42 @@ fun CampusMapView(
                         )
                     }
                 }
+            }
+        }
+
+        // 5.1 Selector rápido de filtro en el mapa: Solo Pendientes vs Todos
+        Surface(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(10.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .border(BorderStroke(1.5.dp, if (soloPendientes) AmberAccent else Color(0xFF3B6B58)), RoundedCornerShape(20.dp))
+                .clickable {
+                    soundManager?.play(SoundEffect.CLICK)
+                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    soloPendientes = !soloPendientes
+                },
+            color = Color(0xFF142E24).copy(alpha = 0.94f),
+            tonalElevation = 6.dp
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.FilterList,
+                    contentDescription = null,
+                    tint = if (soloPendientes) AmberAccent else Color.White,
+                    modifier = Modifier.size(16.dp)
+                )
+                Text(
+                    text = if (soloPendientes) "Solo Pendientes" else "Todos",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (soloPendientes) AmberAccent else Color.White
+                )
             }
         }
 

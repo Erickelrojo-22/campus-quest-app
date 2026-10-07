@@ -55,11 +55,15 @@ import com.example.gamequest.ui.splash.SplashScreen
  * (una de [Routes.HOME], [Routes.MISSIONS], [Routes.SCANNER], ...). La petición viaja
  * en el `savedStateHandle` de la entrada MAIN y [MainTabsScreen] la atiende.
  */
-private fun NavHostController.mostrarTab(route: String) {
+private fun NavHostController.mostrarTab(route: String, puntoDestinoId: Int? = null) {
     val indice = indiceDeTab(route)
     if (indice >= 0) {
         runCatching {
-            getBackStackEntry(Routes.MAIN).savedStateHandle[Routes.KEY_TAB_SOLICITADA] = indice
+            val handle = getBackStackEntry(Routes.MAIN).savedStateHandle
+            handle[Routes.KEY_TAB_SOLICITADA] = indice
+            if (puntoDestinoId != null) {
+                handle[Routes.KEY_PUNTO_DESTINO] = puntoDestinoId
+            }
         }
     }
     popBackStack(Routes.MAIN, inclusive = false)
@@ -121,6 +125,9 @@ fun CampusQuestNavHost(container: AppContainer) {
                 val tabSolicitada by entrada.savedStateHandle
                     .getStateFlow(Routes.KEY_TAB_SOLICITADA, -1)
                     .collectAsState()
+                val puntoDestinoId by entrada.savedStateHandle
+                    .getStateFlow<Int?>(Routes.KEY_PUNTO_DESTINO, null)
+                    .collectAsState()
 
                 MainTabsScreen(
                     tabSolicitada = tabSolicitada,
@@ -136,6 +143,10 @@ fun CampusQuestNavHost(container: AppContainer) {
                             )
                             HomeScreen(
                                 viewModel = homeViewModel,
+                                puntoDestinoId = puntoDestinoId,
+                                onPuntoDestinoAtendido = {
+                                    entrada.savedStateHandle[Routes.KEY_PUNTO_DESTINO] = null
+                                },
                                 onMisionClick = { misionId ->
                                     container.soundEffectManager.play(com.example.gamequest.util.SoundEffect.CLICK)
                                     navController.navigate(Routes.missionDetail(misionId))
@@ -236,7 +247,8 @@ fun CampusQuestNavHost(container: AppContainer) {
                     },
                     onVerRuta = {
                         container.soundEffectManager.play(com.example.gamequest.util.SoundEffect.CLICK)
-                        navController.mostrarTab(Routes.HOME)
+                        val targetPuntoId = detailViewModel.estado.value.punto?.id
+                        navController.mostrarTab(Routes.HOME, puntoDestinoId = targetPuntoId)
                     }
                 )
             }

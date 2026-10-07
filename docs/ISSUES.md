@@ -56,6 +56,14 @@ tenga remoto en GitHub. Formato pensado para migrarse 1 a 1 con
   `AdventurerCardDialog.kt`: credencial oficial con sprite personalizado, copia de ID al portapapeles con confirmación visual (Toast) y sonidos/vibración háptica.
 - [x] **Supresión de advertencias de Gradle en compilación.**
   `gradle.properties`: añadida propiedad recomendada para suprimir advertencias experimentales de AGP.
+- [x] **Resiliencia offline en Modo Prueba y validación QR (RF-20).**
+  `AuthRepository.kt` y `RemoteCampusRepository.kt`: implementado fallback automático a Room local si Render está en reposo o no hay internet; generación de tokens locales offline y sincronización transparente.
+- [x] **Tabla de Clasificación y Ranking de Exploradores RPG (RF-18).**
+  `LeaderboardDialog.kt`, `ProfileViewModel.kt` y `ProfileScreen.kt`: modal interactivo con podio Top 3 (🥇, 🥈, 🥉), lista completa de aventureros con niveles y puntos, posición destacada del usuario actual y tests unitarios.
+- [x] **Etiquetas de Puntos de Interés y filtro de misiones en el Mapa.**
+  `CampusMapView.kt`: placas retro con nombres de edificios en cada pin (`drawText`), filtro flotante para ver "Solo pendientes" vs "Todos los lugares", feedback de sonido y vibración háptica al llegar a destino.
+- [x] **Navegación "Ver ruta en el mapa" con auto-enfoque y caminata guiada.**
+  `CampusQuestNavHost.kt` y `HomeScreen.kt`: al pulsar "Ver ruta en el mapa" desde el detalle de misión, la app regresa al mapa, enfoca el punto objetivo e inicia la caminata guiada del avatar.
 
 ## Pendientes
 

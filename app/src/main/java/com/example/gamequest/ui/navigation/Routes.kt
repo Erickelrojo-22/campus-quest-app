@@ -10,6 +10,7 @@ object Routes {
     // HOME/MISSIONS/SCANNER/BADGES/PROFILE identifican cada pestaña dentro de él.
     const val MAIN = "main"
     const val KEY_TAB_SOLICITADA = "tab_solicitada"
+    const val KEY_PUNTO_DESTINO = "punto_destino_id"
 
     const val HOME = "home"
     const val MISSIONS = "missions"
