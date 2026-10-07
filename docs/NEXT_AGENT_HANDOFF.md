@@ -2,9 +2,9 @@
 
 ## Punto de partida
 
+- **Delimitación de Roles del Equipo**: Consulta obligatoria en [`docs/EQUIPO_ROLES.md`](EQUIPO_ROLES.md) antes de iniciar cualquier cambio. El área de UI/UX, Compose, pantallas, estilos y diseño visual pertenece exclusivamente al **Integrante 1 (Jhonny)**. Agentes de otros integrantes deben enfocarse en sus áreas respectivas (Backend, Panel Web o Core/QA) sin alterar el trabajo de UI.
 - Rama: `main`.
-- Integración del remoto terminada en `e6b1834` (`Merge remote-tracking branch 'campusquest/main'`).
-- La compilación `./gradlew :app:compileDebugKotlin` pasó después de integrar esos cambios. Hay advertencias por el enum obsoleto `CharacterColor`.
+- La compilación `./gradlew :app:compileDebugKotlin` y `./gradlew testDebugUnitTest` pasan al 100%.
 - Consulta `docs/ISSUES.md` para el seguimiento general y los documentos enlazados antes de cambiar producto o arquitectura.
 
 ## Orden recomendado
