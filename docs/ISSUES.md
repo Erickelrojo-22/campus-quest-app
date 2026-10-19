@@ -1,8 +1,9 @@
-# Issues y decisiones técnicas
+# Issues y seguimiento de QA — Campus Quest
 
-Seguimiento técnico complementario a los issues de GitHub. Los incidentes que
-requieran coordinación del equipo deben conservar un issue remoto enlazado;
-este archivo documenta evidencia reproducible y decisiones del cliente Android.
+Registro técnico complementario a los issues de GitHub para incidencias,
+comprobaciones y decisiones pendientes. Cada tarea debe incluir su estado,
+entorno y evidencia; los asuntos que requieran coordinación del equipo deben
+conservar un issue remoto enlazado.
 
 ## Resueltos
 
@@ -104,3 +105,52 @@ este archivo documenta evidencia reproducible y decisiones del cliente Android.
   QR pendientes, enviarlos con `WorkManager` e idempotencia cuando vuelva la red,
   y reemplazar snapshots remotos sin conservar filas obsoletas. También falta
   definir la migración desde `campus_quest.db` a `campus_quest_remote.db`.
+
+## Tarea asignada a Jork Lucas — QA del MVP
+
+**Responsable:** Lucas Garcia Jork Davis.
+
+**Objetivo:** verificar los pendientes de QA de la aplicación móvil y dejar
+resultados reproducibles para que el equipo pueda corregir o cerrar cada issue
+con evidencia.
+
+### 1. Comprobar el posible cierre de Misiones
+
+- Probar la aplicación completa con una sesión real y catálogo vacío, activo y
+  completado; entrar a Misiones desde la navegación principal y desde la
+  recompensa de una misión.
+- Verificar en API 36 y, si el entorno lo permite, API 29 y un dispositivo
+  físico. Registrar modelo, versión de Android, API, versión/commit de la app,
+  datos previos, pasos y resultado.
+- Si ocurre el cierre, adjuntar el bloque completo `FATAL EXCEPTION` /
+  `AndroidRuntime` y los errores inmediatamente anteriores. Corregirlo dentro
+  del área Core/QA y añadir una prueba que cubra la causa cuando sea viable.
+- Si no se reproduce, registrar exactamente qué se probó y dejar la incidencia
+  abierta hasta completar la matriz de verificación.
+
+### 2. Completar la validación autenticada del backend (#1)
+
+- Usar únicamente cuentas de prueba y credenciales autorizadas; no modificar
+  catálogo, cuentas reales ni datos de producción.
+- Verificar registro e inicio de sesión, roles y restricciones entre usuarios,
+  lectura autenticada del catálogo, validación QR, actualización de puntaje,
+  rechazo de códigos duplicados, restauración de sesión y lectura de caché sin
+  conexión.
+- Registrar para cada flujo el resultado, la cuenta de prueba usada (sin
+  publicar contraseñas o tokens), la respuesta observada y cualquier bloqueo.
+- Mantener #1 abierta mientras falte una comprobación autenticada. El servicio
+  ya está desplegado e integrado; la tarea pendiente es completar su prueba de
+  extremo a extremo.
+
+### Límites y criterio de entrega
+
+- No cerrar #1 ni el posible cierre de Misiones basándose solo en compilación o
+  en el NavHost aislado de las pruebas anteriores. La auditoría y sus límites
+  están en [`ISSUES-1-3-AUDIT.md`](ISSUES-1-3-AUDIT.md).
+- Respetar la propiedad de UI/UX de Jhonny indicada en
+  [`EQUIPO_ROLES.md`](EQUIPO_ROLES.md); coordinar antes de modificar pantallas.
+  No incluir en esta tarea decisiones aún abiertas sobre premios o mapa 3D.
+- Entregar un resumen en este archivo con: **entorno**, **pasos**, **resultado**,
+  **evidencia/logs**, **cambio realizado** (si hubo corrección) y **pendientes**.
+  Marcar una incidencia resuelta solo cuando el comportamiento esté verificado
+  en el flujo afectado.
