@@ -51,12 +51,17 @@ class ScannerViewModel(
     }
 
     fun validar(codigo: String) {
+        val codigoNormalizado = codigo.trim()
+        if (codigoNormalizado.isEmpty()) {
+            _uiState.value = ScannerUiState.Error("Ingresa un código QR antes de validar.")
+            return
+        }
         if (_uiState.value !is ScannerUiState.Escaneando) return
         _uiState.value = ScannerUiState.Procesando
         viewModelScope.launch {
             try {
                 _uiState.value = ScannerUiState.Resultado(
-                    campusRepository.validarCodigo(codigo, usuarioId)
+                    campusRepository.validarCodigo(codigoNormalizado, usuarioId)
                 )
             } catch (e: CancellationException) {
                 throw e
