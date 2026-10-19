@@ -17,6 +17,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 
@@ -138,6 +139,18 @@ class CampusRepositoryTest {
     fun validarCodigo_retornaCodigoNoReconocidoParaQrInexistente() = runBlocking {
         val resultado = repository.validarCodigo("CQ-QR-INEXISTENTE", usuarioId = 1)
         assertTrue(resultado is ValidacionQrResult.CodigoNoReconocido)
+    }
+
+    @Test
+    fun validarCodigo_usuarioInexistente_noRegistraProgresoNiPuntos() = runBlocking {
+        try {
+            repository.validarCodigo("CQ-BIB-001", usuarioId = 999)
+            fail("Se esperaba rechazar una sesión sin usuario local.")
+        } catch (error: IllegalStateException) {
+            assertEquals("La sesión local no corresponde a un usuario válido.", error.message)
+        }
+
+        assertEquals(0, fakeProgresoDao.contarCompletadas(usuarioId = 999))
     }
 
     @Test
