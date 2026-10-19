@@ -1,8 +1,8 @@
-# Issues locales
+# Issues y decisiones técnicas
 
-Seguimiento local de QA/decisiones de producto, hasta que el repo
-tenga remoto en GitHub. Formato pensado para migrarse 1 a 1 con
-`gh issue create --title "..." --body "..."` cuando exista el fetch.
+Seguimiento técnico complementario a los issues de GitHub. Los incidentes que
+requieran coordinación del equipo deben conservar un issue remoto enlazado;
+este archivo documenta evidencia reproducible y decisiones del cliente Android.
 
 ## Resueltos
 
@@ -64,6 +64,18 @@ tenga remoto en GitHub. Formato pensado para migrarse 1 a 1 con
   `CampusMapView.kt`: placas retro con nombres de edificios en cada pin (`drawText`), filtro flotante para ver "Solo pendientes" vs "Todos los lugares", feedback de sonido y vibración háptica al llegar a destino.
 - [x] **Navegación "Ver ruta en el mapa" con auto-enfoque y caminata guiada.**
   `CampusQuestNavHost.kt` y `HomeScreen.kt`: al pulsar "Ver ruta en el mapa" desde el detalle de misión, la app regresa al mapa, enfoca el punto objetivo e inicia la caminata guiada del avatar.
+- [x] **Compilación de pruebas de navegación tras el refactor de pestañas.**
+  `MissionsNavigationTest.kt` fue adaptado a `CampusBottomBar(selectedIndex,
+  onSelect)` y a la firma actual de `MissionsScreen`. El workflow compila
+  `androidTest` también en pull requests para detectar futuros cambios de API.
+- [x] **Rechazos HTTP respetados durante la validación QR.**
+  `RemoteCampusRepository` solo permite fallback local ante errores reales de
+  transporte. Respuestas 401/409/422 y errores de datos ya no se convierten en
+  puntos locales; la política cuenta con pruebas unitarias.
+- [x] **Validaciones defensivas del escáner y progreso local.**
+  El escáner rechaza códigos vacíos sin consultar el repositorio, conserva la
+  cancelación de corrutinas y muestra errores recuperables. El repositorio no
+  registra progreso si la sesión apunta a un usuario local inexistente.
 
 ## Pendientes
 
@@ -87,3 +99,7 @@ tenga remoto en GitHub. Formato pensado para migrarse 1 a 1 con
 - [ ] **Sistema de premios ("asignar premio").** Sin definir si es
   insignia digital (ya existe), premio canjeable con puntos (requiere
   tabla nueva), o ambos. No implementar hasta confirmarlo.
+- [ ] **Outbox de progreso offline y reconciliación de caché.** Persistir eventos
+  QR pendientes, enviarlos con `WorkManager` e idempotencia cuando vuelva la red,
+  y reemplazar snapshots remotos sin conservar filas obsoletas. También falta
+  definir la migración desde `campus_quest.db` a `campus_quest_remote.db`.
