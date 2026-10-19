@@ -63,6 +63,31 @@ class AppDatabaseIntegrityTest {
         assertEquals(1, database.progresoMisionDao().contarCompletadas(1))
     }
 
+    @Test
+    fun missionWithoutExistingPointIsRejected() = runBlocking {
+        assertThrows(SQLiteConstraintException::class.java) {
+            runBlocking {
+                database.misionDao().insertar(mission(id = 1, pointId = 404))
+            }
+        }
+        assertEquals(0, database.misionDao().contar())
+    }
+
+    @Test
+    fun deletingPointCascadesToMissionAndProgress() = runBlocking {
+        val point = point(id = 1, qr = "QR-CASCADA")
+        database.usuarioDao().insertar(user(id = 1))
+        database.puntoInteresDao().insertar(point)
+        database.misionDao().insertar(mission(id = 1, pointId = point.id))
+        database.progresoMisionDao().insertar(progress(id = 1, userId = 1, missionId = 1))
+
+        database.puntoInteresDao().eliminar(point)
+
+        assertEquals(0, database.puntoInteresDao().contar())
+        assertEquals(0, database.misionDao().contar())
+        assertEquals(0, database.progresoMisionDao().contarCompletadas(1))
+    }
+
     private fun point(id: Int, qr: String) = PuntoInteresEntity(
         id = id,
         nombre = "Punto $id",
