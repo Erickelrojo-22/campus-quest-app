@@ -78,3 +78,24 @@ https://github.com/Erickelrojo-22/campus-quest-app/actions/runs/37080493301
 No cerrar #1 ni #3 con esta evidencia parcial. La #1 ya tiene backend funcional
 integrado, pendiente de validación autenticada; la #3 tiene cobertura de pantalla
 que antes no existía, pendiente de la matriz de ejecución completa.
+
+## Revalidación — 2026-10-18
+
+Después del refactor al contenedor de pestañas, `MissionsNavigationTest` conservaba
+las firmas antiguas de `CampusBottomBar` y `MissionsScreen`. Esto hacía fallar el
+job instrumentado de GitHub Actions durante la compilación, aunque la aplicación y
+las pruebas unitarias sí compilaban.
+
+Se adaptó el host de prueba a `selectedIndex`/`onSelect`, se eliminó el callback de
+navegación que ya no pertenece a `MissionsScreen` y se usa la descripción accesible
+del icono para abrir Misiones. Resultado local:
+
+- `testDebugUnitTest`: 66 pruebas, 0 fallos.
+- `compileDebugAndroidTestKotlin`: correcto.
+- `connectedDebugAndroidTest`: 4 pruebas, 0 fallos, emulador API 35.
+- `assembleDebug`, `lintDebug` y `assembleRelease`: correctos; lint sin errores.
+
+El workflow ahora compila `androidTest` en todos los pull requests, mientras la
+ejecución completa con emulador permanece en push/manual. La issue #3 debe seguir
+abierta hasta ejecutar la app completa en API 29 y dispositivo físico con una
+sesión real y datos previos.

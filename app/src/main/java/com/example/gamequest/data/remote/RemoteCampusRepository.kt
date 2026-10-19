@@ -5,10 +5,19 @@ import com.example.gamequest.data.local.AppDatabase
 import com.example.gamequest.data.local.entity.*
 import com.example.gamequest.data.repository.CampusRepository
 import com.example.gamequest.data.repository.ValidacionQrResult
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.io.IOException
+
+/**
+ * Solo una interrupción real de transporte permite continuar con la copia local.
+ * Los HTTP 4xx/5xx representan una decisión del servidor y nunca deben convertirse
+ * en puntos locales, especialmente en validaciones QR rechazadas o sesiones vencidas.
+ */
+internal fun Throwable.permiteFallbackOffline(): Boolean = this is IOException && this !is ApiException
 
 /** Room is a cache; only the API awards points or changes the shared catalog. */
 class RemoteCampusRepository(private val db: AppDatabase, private val api: CampusApi) : CampusRepository(
@@ -60,8 +69,11 @@ class RemoteCampusRepository(private val db: AppDatabase, private val api: Campu
         }
         val user = try {
             synchronize()
-        } catch (_: Exception) {
-            return super.validarCodigo(codigo, usuarioId)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            if (e.permiteFallbackOffline()) return super.validarCodigo(codigo, usuarioId)
+            throw e
         }
         check(user.id == usuarioId) { "Inicia sesión con tu propia cuenta." }
         val point = db.puntoInteresDao().buscarPorCodigoQr(codigo.trim().uppercase())
@@ -79,8 +91,10 @@ class RemoteCampusRepository(private val db: AppDatabase, private val api: Campu
             }
             ValidacionQrResult.MisionCompletada(mission, point, event.puntosObtenidos,
                 updated.puntajeAcumulado, updated.nivel, db.progresoMisionDao().contarCompletadas(user.id))
-        } catch (_: Exception) {
-            super.validarCodigo(codigo, usuarioId)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            if (e.permiteFallbackOffline()) super.validarCodigo(codigo, usuarioId) else throw e
         }
     }
 

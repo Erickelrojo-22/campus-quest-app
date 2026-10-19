@@ -1,15 +1,15 @@
-# Backend para Gamequest — propuesta
+# Backend para Gamequest — estado actual y evolución
 
 ## Contexto
 
-Hoy la app es 100% local: no hay ninguna dependencia de red (no hay
-Retrofit/OkHttp/Ktor en `app/build.gradle.kts`), todo vive en Room
-(`AppDatabase`, ver `AppContainer.kt`). Este documento propone un
-servicio backend que la app consumiría por HTTP, dejando Room como
-caché local (offline-first) en vez de única fuente de verdad.
+La app ya consume la API REST desplegada en Render mediante `CampusApi`
+(`HttpURLConnection`) y utiliza `campus_quest_remote.db` como caché Room.
+`RemoteCampusRepository` sincroniza usuario, puntos, misiones, progreso y
+ranking; `SessionTokenStore` cifra el token con Android Keystore.
 
-**Esto es una propuesta para revisar, no algo ya decidido ni
-implementado.**
+La integración existe, pero todavía no constituye un offline-first completo:
+falta una cola persistente para enviar progreso creado sin red, reconciliación
+explícita de conflictos y una validación E2E autenticada de todos los roles.
 
 ## Entidades actuales (Room) que el backend debería exponer
 
@@ -49,46 +49,46 @@ Mapeando directo de `app/src/main/java/com/example/gamequest/data/local/entity/`
   Confirmado por el usuario que aún puede ser cualquiera de las dos, o
   ambas: no implementar hasta definirlo.
 
-## Endpoints propuestos (REST, v1)
+## Endpoints REST v1
 
-| Método | Ruta | Descripción | Reemplaza |
+| Método | Ruta | Descripción | Estado Android |
 |---|---|---|---|
-| POST | `/auth/login` | Entrar con nombre (o credenciales reales si se agregan) | `AuthRepository.entrarConNombre` |
-| GET | `/puntos` | Listar puntos de interés | `PuntoInteresDao.observarTodos` |
-| GET | `/misiones` | Listar misiones | `MisionDao.observarTodas` |
-| GET | `/usuarios/{id}/progreso` | Historial de misiones completadas (timeline) | `ProgresoMisionDao.observarPorUsuario` |
-| POST | `/usuarios/{id}/progreso` | Validar código QR y registrar misión completada | `CampusRepository.validarCodigo` |
-| GET | `/premios` | Catálogo de premios disponibles | — (nuevo) |
-| POST | `/usuarios/{id}/premios/{premioId}/canjear` | Canjear un premio con los puntos acumulados | — (nuevo) |
-| POST/PUT/DELETE | `/misiones` (admin) | CRUD de misiones/puntos | `MissionManagementViewModel`, `MissionFormViewModel` |
+| POST | `/auth/register` | Registrar cuenta institucional | Integrado |
+| POST | `/auth/login` | Iniciar sesión con correo y contraseña | Integrado |
+| POST | `/auth/visitor` | Crear o recuperar visitante de prueba | Integrado con fallback local |
+| GET | `/auth/me` | Restaurar y validar la sesión | Integrado |
+| GET | `/puntos` | Descargar puntos de interés | Integrado y cacheado |
+| GET | `/catalogo` | Descargar misiones activas | Integrado y cacheado |
+| GET | `/ranking` | Descargar clasificación | Integrado |
+| GET | `/usuarios/{id}/progreso` | Descargar historial del usuario | Integrado y cacheado |
+| POST | `/usuarios/{id}/progreso` | Validar QR y otorgar puntos | Integrado; falta outbox offline |
+| GET/POST | `/premios` y canjes | Catálogo de premios canjeables | Pendiente de definición |
+| POST/PUT/DELETE | `/misiones` (admin) | CRUD desde panel administrativo | Pendiente en panel web |
 
 El último bloque (CRUD) solo debería quedar disponible para el rol con
 permiso de gestión — sea cual sea el nombre final de ese rol.
 
 ## Integración en la app Android
 
-1. Agregar Retrofit + OkHttp (o Ktor client) al `app/build.gradle.kts`.
-2. Nueva capa `data/remote/` con los DTOs y el `ApiService`.
-3. Los repositorios actuales (`CampusRepository`, `AuthRepository`)
-   pasarían a coordinar red + Room: piden a la API, guardan en Room, y
-   la UI sigue leyendo de Room (Flow) como hoy — así se conserva el
-   RF-20 (funcionamiento offline) mostrando el último dato cacheado
-   cuando no hay conexión.
-4. `AppContainer.kt` agregaría el cliente HTTP y lo inyectaría a los
-   repositorios.
+1. `AppContainer` construye `CampusApi`, `AuthRepository` y
+   `RemoteCampusRepository` sobre una única base de caché.
+2. `CampusApi` ejecuta HTTPS fuera del hilo principal y adjunta el token.
+3. `RemoteCampusRepository` actualiza Room dentro de una transacción y la UI
+   continúa observando `Flow`, sin depender directamente de la red.
+4. Ante una interrupción real de transporte, la validación puede utilizar la
+   copia local. Un rechazo HTTP del servidor no debe otorgar puntos locales.
+5. Al recuperar conexión todavía falta enviar automáticamente los eventos
+   pendientes mediante una outbox persistente y `WorkManager`.
 
 ## Pendiente de evaluar
 
-- **Costos**: hosting del backend (y si se reutiliza algún proveedor
-  ya usado en otros proyectos), base de datos administrada, dominio.
-- **Autenticación real**: hoy el login es solo con nombre, sin
-  contraseña real (`contrasenaHash` existe en el modelo pero no se usa
-  para validar). Si hay backend, probablemente haga falta login real.
+- **Disponibilidad/costos**: el backend está en Render y puede presentar
+  arranque en frío; falta acordar el nivel de servicio esperado.
+- **Autenticación federada**: correo/contraseña ya funciona; Google OIDC
+  permanece abierto en el issue #2.
 - **Modelo de roles**: ver pregunta abierta sobre `estudiante` /
   `visitante` y quién gestiona misiones y premios.
-- **Sincronización offline**: qué pasa si un `visitante`/`estudiante`
-  completa una misión sin conexión — cola de reintento al recuperar
-  señal.
-
-Nada de esto está implementado; este documento es el punto de partida
-para decidir alcance antes de escribir código del backend.
+- **Sincronización offline**: cola de reintento, idempotencia, estado visible
+  de sincronización y política de conflictos.
+- **Migración local**: definir cómo trasladar cuentas y progreso de
+  `campus_quest.db` a la caché remota sin perder datos.

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gamequest.data.repository.CampusRepository
 import com.example.gamequest.data.repository.ValidacionQrResult
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -50,12 +51,25 @@ class ScannerViewModel(
     }
 
     fun validar(codigo: String) {
+        val codigoNormalizado = codigo.trim()
+        if (codigoNormalizado.isEmpty()) {
+            _uiState.value = ScannerUiState.Error("Ingresa un código QR antes de validar.")
+            return
+        }
         if (_uiState.value !is ScannerUiState.Escaneando) return
         _uiState.value = ScannerUiState.Procesando
         viewModelScope.launch {
-            runCatching { campusRepository.validarCodigo(codigo, usuarioId) }
-                .onSuccess { _uiState.value = ScannerUiState.Resultado(it) }
-                .onFailure { _uiState.value = ScannerUiState.Error(it.message ?: "No se pudo validar el código.") }
+            try {
+                _uiState.value = ScannerUiState.Resultado(
+                    campusRepository.validarCodigo(codigoNormalizado, usuarioId)
+                )
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _uiState.value = ScannerUiState.Error(
+                    e.message ?: "No se pudo validar el código."
+                )
+            }
         }
     }
 

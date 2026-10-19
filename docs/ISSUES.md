@@ -1,8 +1,9 @@
 # Issues y seguimiento de QA — Campus Quest
 
-Registro del equipo para incidencias, comprobaciones y decisiones pendientes.
-Cada tarea debe incluir su estado, entorno y evidencia; los pendientes pueden
-convertirse en issues de GitHub cuando corresponda.
+Registro técnico complementario a los issues de GitHub para incidencias,
+comprobaciones y decisiones pendientes. Cada tarea debe incluir su estado,
+entorno y evidencia; los asuntos que requieran coordinación del equipo deben
+conservar un issue remoto enlazado.
 
 ## Resueltos
 
@@ -64,13 +65,26 @@ convertirse en issues de GitHub cuando corresponda.
   `CampusMapView.kt`: placas retro con nombres de edificios en cada pin (`drawText`), filtro flotante para ver "Solo pendientes" vs "Todos los lugares", feedback de sonido y vibración háptica al llegar a destino.
 - [x] **Navegación "Ver ruta en el mapa" con auto-enfoque y caminata guiada.**
   `CampusQuestNavHost.kt` y `HomeScreen.kt`: al pulsar "Ver ruta en el mapa" desde el detalle de misión, la app regresa al mapa, enfoca el punto objetivo e inicia la caminata guiada del avatar.
+- [x] **Compilación de pruebas de navegación tras el refactor de pestañas.**
+  `MissionsNavigationTest.kt` fue adaptado a `CampusBottomBar(selectedIndex,
+  onSelect)` y a la firma actual de `MissionsScreen`. El workflow compila
+  `androidTest` también en pull requests para detectar futuros cambios de API.
+- [x] **Rechazos HTTP respetados durante la validación QR.**
+  `RemoteCampusRepository` solo permite fallback local ante errores reales de
+  transporte. Respuestas 401/409/422 y errores de datos ya no se convierten en
+  puntos locales; la política cuenta con pruebas unitarias.
+- [x] **Validaciones defensivas del escáner y progreso local.**
+  El escáner rechaza códigos vacíos sin consultar el repositorio, conserva la
+  cancelación de corrutinas y muestra errores recuperables. El repositorio no
+  registra progreso si la sesión apunta a un usuario local inexistente.
 
 ## Pendientes
 
 - [ ] **Crash al abrir la sección de Misiones.** Revisados
   `MissionsScreen.kt`, `MissionsViewModel.kt`, `CampusRepository`,
-  los 3 DAOs y el `NavHost`. Auditoría del 2026-10-04: compilación,
-  56 pruebas unitarias y 4 instrumentadas pasan en Android 16/API 36.
+  los 3 DAOs y el `NavHost`. Revalidación del 2026-10-18: compilación,
+  66 pruebas unitarias y 4 instrumentadas pasan en emulador API 35;
+  también se reparó la compilación del test tras el refactor de pestañas.
   No reproducido con catálogo vacío, activo/completado y entrada desde
   insignia en un host de navegación de prueba. Falta comprobar la app
   completa con sesión real, datos previos, API 29 y dispositivo físico.
@@ -87,6 +101,10 @@ convertirse en issues de GitHub cuando corresponda.
 - [ ] **Sistema de premios ("asignar premio").** Sin definir si es
   insignia digital (ya existe), premio canjeable con puntos (requiere
   tabla nueva), o ambos. No implementar hasta confirmarlo.
+- [ ] **Outbox de progreso offline y reconciliación de caché.** Persistir eventos
+  QR pendientes, enviarlos con `WorkManager` e idempotencia cuando vuelva la red,
+  y reemplazar snapshots remotos sin conservar filas obsoletas. También falta
+  definir la migración desde `campus_quest.db` a `campus_quest_remote.db`.
 
 ## Tarea asignada a Jork Lucas — QA del MVP
 

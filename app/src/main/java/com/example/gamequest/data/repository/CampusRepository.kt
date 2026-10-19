@@ -171,6 +171,9 @@ open class CampusRepository(
             return if (yaHayMision) ValidacionQrResult.YaCompletada else ValidacionQrResult.SinMisionAsociada
         }
 
+        val usuario = usuarioDao?.buscarPorId(usuarioId)
+            ?: error("La sesión local no corresponde a un usuario válido.")
+
         progresoDao?.insertar(
             ProgresoMisionEntity(
                 usuarioId = usuarioId,
@@ -181,8 +184,7 @@ open class CampusRepository(
             )
         )
 
-        val usuario = usuarioDao?.buscarPorId(usuarioId)
-        val nuevoPuntaje = (usuario?.puntajeAcumulado ?: 0) + mision.puntos
+        val nuevoPuntaje = usuario.puntajeAcumulado + mision.puntos
         val nuevoNivel = 1 + (nuevoPuntaje / 100)
         usuarioDao?.sumarPuntos(usuarioId, mision.puntos, nuevoNivel)
 

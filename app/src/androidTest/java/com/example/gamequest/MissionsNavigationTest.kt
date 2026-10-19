@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.navigation.compose.NavHost
@@ -20,6 +21,7 @@ import com.example.gamequest.data.repository.MisionConEstado
 import com.example.gamequest.ui.badges.BadgeEarnedScreen
 import com.example.gamequest.ui.badges.BadgeEarnedViewModel
 import com.example.gamequest.ui.common.CampusBottomBar
+import com.example.gamequest.ui.common.bottomTabs
 import com.example.gamequest.ui.missions.MissionsScreen
 import com.example.gamequest.ui.missions.MissionsViewModel
 import com.example.gamequest.ui.navigation.Routes
@@ -58,8 +60,8 @@ class MissionsNavigationTest {
                 NavHost(nav, startDestination = if (fromBadge) "earned" else Routes.HOME) {
                     composable(Routes.HOME) {
                         Scaffold(bottomBar = {
-                            CampusBottomBar(currentRoute = Routes.HOME, onNavigate = {
-                                nav.navigate(it) {
+                            CampusBottomBar(selectedIndex = 0, onSelect = { index ->
+                                nav.navigate(bottomTabs[index].route) {
                                     popUpTo(Routes.HOME) { saveState = true }
                                     launchSingleTop = true
                                     restoreState = true
@@ -73,9 +75,7 @@ class MissionsNavigationTest {
                         })
                     }
                     composable(Routes.MISSIONS) {
-                        MissionsScreen(missionsViewModel, onMisionClick = {}, onNavigateTab = {
-                            nav.navigate(it) { launchSingleTop = true }
-                        })
+                        MissionsScreen(missionsViewModel, onMisionClick = {})
                     }
                 }
             }
@@ -83,7 +83,7 @@ class MissionsNavigationTest {
         if (fromBadge) {
             compose.onNodeWithText("SIGUIENTE MISIÓN").performClick()
         } else {
-            compose.onNodeWithText("Misiones").performClick()
+            compose.onNodeWithContentDescription("Misiones").performClick()
         }
         compose.onNodeWithText("Mis misiones").assertIsDisplayed()
     }

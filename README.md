@@ -44,9 +44,13 @@ Campus Quest convierte el recorrido por la universidad en una experiencia de jue
 | 👤 **Perfil y ajustes** | Datos del usuario, tema claro/oscuro y cierre de sesión. |
 | 🛠️ **Gestión de misiones (CRUD)** | Rol *tutor*: crear, editar y eliminar misiones y puntos de interés. |
 
-### 🔌 Funciona sin conexión
+### 🔌 Arquitectura híbrida y caché local
 
-Toda la información (usuarios, puntos, misiones y progreso) se sirve desde **Room**. El escaneo de QR usa **ZXing en local** (sin ML Kit ni descarga de modelos), por lo que la app funciona **100 % offline**.
+La app sincroniza usuarios, catálogo, progreso y ranking con la API de Campus Quest,
+y conserva la última copia descargada en **Room**. El modo de prueba y la lectura de
+QR con **ZXing** pueden funcionar sin red. Las operaciones compartidas se validan en
+el servidor cuando hay una sesión remota; la cola de sincronización de progreso
+creado sin conexión continúa como trabajo pendiente.
 
 ---
 
@@ -73,6 +77,9 @@ Splash ──▶ Login ──▶ Home (mapa) ──▶ Detalle de misión ──
 | **Navegación** | Navigation Compose |
 | **Persistencia** | Room (SQLite) + esquema exportado |
 | **Preferencias** | DataStore Preferences |
+| **Backend** | API REST desplegada en Render + caché Room |
+| **Red** | `HttpURLConnection` sobre HTTPS |
+| **Sesión** | Token cifrado con Android Keystore |
 | **Cámara** | CameraX (core, camera2, lifecycle, view) |
 | **Lectura de QR** | ZXing (core) |
 | **Asincronía** | Kotlin Coroutines + Flow |
@@ -86,14 +93,18 @@ Splash ──▶ Login ──▶ Home (mapa) ──▶ Detalle de misión ──
 Patrón **MVVM** con separación por capas y un contenedor de dependencias manual (`AppContainer`):
 
 ```
-UI (Compose)  ──▶  ViewModel (StateFlow)  ──▶  Repository  ──▶  DAO (Room) / DataStore
-   Screens            lógica de estado          reglas de negocio      fuentes de datos
+UI (Compose)  ──▶  ViewModel (StateFlow)  ──▶  Repository  ──▶  API REST
+   Screens            lógica de estado          reglas de negocio       │
+                                                   │                     ▼
+                                                   └──────────────▶ Room / DataStore
 ```
 
 - **UI:** pantallas `@Composable` sin estado propio; observan `StateFlow` del ViewModel.
 - **ViewModel:** expone el estado con `stateIn` / `StateFlow` y sobrevive a rotaciones.
-- **Repository:** `CampusRepository` y `AuthRepository` combinan y transforman los datos.
-- **Data:** entidades, DAOs y `AppDatabase` (Room) + `UserPreferencesRepository` (DataStore).
+- **Repository:** `RemoteCampusRepository`, `CampusRepository` y `AuthRepository`
+  coordinan la API, la caché y las reglas de negocio.
+- **Data:** entidades, DAOs y `AppDatabase` (Room), `CampusApi`, sesión cifrada y
+  `UserPreferencesRepository` (DataStore).
 
 ### 📂 Estructura del proyecto
 
@@ -103,7 +114,8 @@ app/src/main/java/com/example/gamequest/
 ├── data/
 │   ├── local/            # Room: entidades, DAOs, AppDatabase, SeedData
 │   ├── preferences/      # DataStore (tema, sesión)
-│   └── repository/       # CampusRepository, AuthRepository
+│   ├── remote/           # API REST, repositorio remoto y token cifrado
+│   └── repository/       # reglas compartidas y fallback local
 ├── ui/
 │   ├── navigation/       # Routes + NavHost
 │   ├── theme/            # Color, Type (pixel art), Theme
@@ -142,9 +154,10 @@ Las claves foráneas usan `ON DELETE CASCADE` e índices en las columnas de rela
 
 ### Requisitos
 - Android Studio (versión reciente con soporte para AGP 9)
-- JDK 11+
+- JDK 21 (toolchain utilizada por Gradle y CI)
 - Un dispositivo o emulador con **Android 10 (API 29)** o superior
 - Cámara (para el escáner QR; la app degrada de forma segura si no hay)
+- Conexión a internet para autenticación y sincronización remota
 
 ### Pasos
 
@@ -190,8 +203,10 @@ El proyecto incluye un paso de análisis y optimización de rendimiento:
 En la carpeta [`docs/`](docs/) encontrarás:
 
 - [`ROADMAP.md`](docs/ROADMAP.md) — plan de evolución del proyecto.
-- [`BACKEND.md`](docs/BACKEND.md) — propuesta de backend para una futura sincronización en la nube.
+- [`BACKEND.md`](docs/BACKEND.md) — arquitectura e integración actual del backend.
 - [`ISSUES.md`](docs/ISSUES.md) — incidencias de QA registradas.
+- [`ISSUES-1-3-AUDIT.md`](docs/ISSUES-1-3-AUDIT.md) — evidencia de backend y Misiones.
+- [`EQUIPO_ROLES.md`](docs/EQUIPO_ROLES.md) — propiedad de áreas y flujo de trabajo del equipo.
 
 ---
 

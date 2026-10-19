@@ -103,6 +103,29 @@ class ScannerViewModelTest {
     }
 
     @Test
+    fun validar_errorDelRepositorio_exponeMensajeRecuperable() = runTest {
+        fakeRepository.errorAEntregar = IllegalStateException("El servidor rechazó el código.")
+
+        viewModel.validar("CQ-LAB-001")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val estado = viewModel.uiState.value
+        assertTrue(estado is ScannerUiState.Error)
+        assertEquals("El servidor rechazó el código.", (estado as ScannerUiState.Error).mensaje)
+    }
+
+    @Test
+    fun validar_codigoVacio_noConsultaRepositorio() = runTest {
+        viewModel.validar("   ")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val estado = viewModel.uiState.value
+        assertTrue(estado is ScannerUiState.Error)
+        assertEquals("Ingresa un código QR antes de validar.", (estado as ScannerUiState.Error).mensaje)
+        assertEquals(0, fakeRepository.totalValidaciones)
+    }
+
+    @Test
     fun reiniciar_restableceEstadoAEscaneando() {
         viewModel.validar("CQ-LAB-001")
         viewModel.reiniciar()
@@ -111,8 +134,12 @@ class ScannerViewModelTest {
 
     private class FakeCampusRepository : CampusRepository() {
         var resultadoAEntregar: ValidacionQrResult = ValidacionQrResult.CodigoNoReconocido
+        var errorAEntregar: Exception? = null
+        var totalValidaciones: Int = 0
 
         override suspend fun validarCodigo(codigo: String, usuarioId: Int): ValidacionQrResult {
+            totalValidaciones += 1
+            errorAEntregar?.let { throw it }
             return resultadoAEntregar
         }
     }

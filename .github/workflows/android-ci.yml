@@ -66,6 +66,11 @@ jobs:
       - name: Pruebas unitarias
         run: ./gradlew testDebugUnitTest --stacktrace
 
+      # El job con emulador solo se ejecuta en push/manual. Compilar aquí los
+      # androidTest evita que un PR rompa sus firmas de Compose sin detectarlo.
+      - name: Compilar pruebas instrumentadas
+        run: ./gradlew compileDebugAndroidTestKotlin --stacktrace
+
       - name: Ensamblar APK de debug
         run: ./gradlew assembleDebug --stacktrace
 
