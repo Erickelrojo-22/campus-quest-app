@@ -81,8 +81,9 @@ este archivo documenta evidencia reproducible y decisiones del cliente Android.
 
 - [ ] **Crash al abrir la sección de Misiones.** Revisados
   `MissionsScreen.kt`, `MissionsViewModel.kt`, `CampusRepository`,
-  los 3 DAOs y el `NavHost`. Auditoría del 2026-10-04: compilación,
-  56 pruebas unitarias y 4 instrumentadas pasan en Android 16/API 36.
+  los 3 DAOs y el `NavHost`. Revalidación del 2026-10-18: compilación,
+  66 pruebas unitarias y 4 instrumentadas pasan en emulador API 35;
+  también se reparó la compilación del test tras el refactor de pestañas.
   No reproducido con catálogo vacío, activo/completado y entrada desde
   insignia en un host de navegación de prueba. Falta comprobar la app
   completa con sesión real, datos previos, API 29 y dispositivo físico.
