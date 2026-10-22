@@ -46,7 +46,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -94,7 +94,7 @@ fun ScannerScreen(
     val context = LocalContext.current
     val soundManager = LocalSoundManager.current
     val haptic = LocalHapticFeedback.current
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     var permisoConcedido by remember {
         mutableStateOf(
@@ -110,7 +110,7 @@ fun ScannerScreen(
         if (activa && !permisoConcedido) launcherPermiso.launch(Manifest.permission.CAMERA)
     }
 
-    val mostrarDialogoManual by viewModel.mostrarDialogoManual.collectAsState()
+    val mostrarDialogoManual by viewModel.mostrarDialogoManual.collectAsStateWithLifecycle()
 
     Scaffold { padding ->
         BoxWithConstraints(Modifier.fillMaxSize().padding(padding)) {
@@ -260,7 +260,7 @@ fun ScannerScreen(
     }
 
     if (mostrarDialogoManual) {
-        val codigoManual by viewModel.codigoManual.collectAsState()
+        val codigoManual by viewModel.codigoManual.collectAsStateWithLifecycle()
         AlertDialog(
             onDismissRequest = viewModel::cerrarDialogoManual,
             title = { Text("Ingresar código manualmente") },

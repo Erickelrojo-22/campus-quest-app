@@ -29,7 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,8 +45,8 @@ fun MissionManagementScreen(
     onNuevaMision: () -> Unit,
     onEditarMision: (puntoId: Int) -> Unit
 ) {
-    val misiones by viewModel.misiones.collectAsState()
-    val misionAEliminar by viewModel.misionAEliminar.collectAsState()
+    val misiones by viewModel.misiones.collectAsStateWithLifecycle()
+    val misionAEliminar by viewModel.misionAEliminar.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {

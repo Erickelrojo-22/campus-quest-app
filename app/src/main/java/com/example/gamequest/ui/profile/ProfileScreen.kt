@@ -21,7 +21,7 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -54,7 +54,7 @@ fun ProfileScreen(
     onMissionManagement: () -> Unit,
     onCerrarSesion: () -> Unit,
 ) {
-    val uiState         by viewModel.uiState.collectAsState()
+    val uiState         by viewModel.uiState.collectAsStateWithLifecycle()
     val usuario         = uiState.usuario
     val soundManager     = LocalSoundManager.current
 
