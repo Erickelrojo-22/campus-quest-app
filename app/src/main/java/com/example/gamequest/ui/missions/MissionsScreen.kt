@@ -39,7 +39,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,11 +64,12 @@ fun MissionsScreen(
     onMisionClick: (Int) -> Unit
 ) {
     val soundManager = LocalSoundManager.current
-    val filtro by viewModel.filtro.collectAsState()
-    val busqueda by viewModel.busqueda.collectAsState()
-    val misiones by viewModel.misionesFiltradas.collectAsState()
-    val activas by viewModel.contadorActivas.collectAsState()
-    val completadas by viewModel.contadorCompletadas.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val filtro = uiState.filtro
+    val busqueda = uiState.busqueda
+    val misiones = uiState.misiones
+    val activas = uiState.activas
+    val completadas = uiState.completadas
 
     Scaffold(
         topBar = {

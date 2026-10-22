@@ -13,6 +13,14 @@ import kotlinx.coroutines.flow.stateIn
 
 enum class FiltroMisiones { ACTIVAS, COMPLETADAS, TODAS }
 
+data class MissionsUiState(
+    val filtro: FiltroMisiones = FiltroMisiones.ACTIVAS,
+    val busqueda: String = "",
+    val misiones: List<MisionConEstado> = emptyList(),
+    val activas: Int = 0,
+    val completadas: Int = 0
+)
+
 /** RF-08 Listar misiones (activas, completadas, todas). */
 class MissionsViewModel(
     campusRepository: CampusRepository,
@@ -57,6 +65,12 @@ class MissionsViewModel(
     val contadorCompletadas: StateFlow<Int> = todasLasMisiones
         .map { lista -> lista.count { it.completada } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
+    val uiState: StateFlow<MissionsUiState> = combine(
+        _filtro, _busqueda, misionesFiltradas, contadorActivas, contadorCompletadas
+    ) { filtro, busqueda, misiones, activas, completadas ->
+        MissionsUiState(filtro, busqueda, misiones, activas, completadas)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), MissionsUiState())
 
     fun onFiltroChange(nuevo: FiltroMisiones) {
         _filtro.value = nuevo
