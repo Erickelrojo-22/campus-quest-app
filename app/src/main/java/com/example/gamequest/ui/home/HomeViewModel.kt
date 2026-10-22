@@ -53,7 +53,11 @@ class HomeViewModel(
     // Depende solo de la lista de misiones; antes recombinaba con el texto de
     // búsqueda (que ignora), recalculándose en cada pulsación del teclado.
     val misionSugerida: StateFlow<MisionConEstado?> = misiones
-        .map { lista -> lista.firstOrNull { !it.completada } }
+        .map { lista ->
+            lista.firstOrNull {
+                !it.completada && it.punto.nombre.contains("cafetería", ignoreCase = true)
+            } ?: lista.firstOrNull { !it.completada }
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     val uiState: StateFlow<HomeUiState> = combine(usuario, misiones, _busqueda) { user, missionList, query ->

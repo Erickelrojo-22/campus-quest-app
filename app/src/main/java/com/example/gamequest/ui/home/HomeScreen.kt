@@ -121,7 +121,9 @@ fun HomeScreen(
                     // Se recalculan solo cuando cambia la lista de misiones, no en
                     // cada recomposición (p. ej. al teclear en el buscador o al
                     // actualizarse el usuario/puntaje).
-                    val puntosMapa = remember(misiones) { misiones.map { it.punto }.distinctBy { it.id } }
+                    val puntosMapa = remember(misiones) {
+                        misiones.map { it.punto.ajustarPosicionMapa() }.distinctBy { it.id }
+                    }
                     val completadosMapa = remember(misiones) {
                         misiones.filter { it.completada }.map { it.punto.id }.toSet()
                     }
@@ -131,10 +133,10 @@ fun HomeScreen(
 
                     val puntoObjetivoFinal = remember(puntoDestinoId, misiones, sugerida) {
                         if (puntoDestinoId != null) {
-                            misiones.firstOrNull { it.punto.id == puntoDestinoId }?.punto
-                                ?: sugerida?.punto
+                            misiones.firstOrNull { it.punto.id == puntoDestinoId }?.punto?.ajustarPosicionMapa()
+                                ?: sugerida?.punto?.ajustarPosicionMapa()
                         } else {
-                            sugerida?.punto
+                            sugerida?.punto?.ajustarPosicionMapa()
                         }
                     }
 
@@ -198,6 +200,10 @@ fun HomeScreen(
         )
     }
 }
+
+/** Corrige la ubicación del marcador de Biblioteca central sobre el área del campus. */
+private fun PuntoInteresEntity.ajustarPosicionMapa(): PuntoInteresEntity =
+    if (nombre.contains("biblioteca", ignoreCase = true)) copy(posX = 0.40f, posY = 0.19f) else this
 
 @Composable
 private fun EncabezadoInicio(

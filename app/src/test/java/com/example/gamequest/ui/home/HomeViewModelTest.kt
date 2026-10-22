@@ -96,7 +96,7 @@ class HomeViewModelTest {
             insigniaEmoji = "☕"
         ),
         punto = puntoCafeteria,
-        completada = true
+        completada = false
     )
 
     @Before
@@ -155,7 +155,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun misionSugerida_retornaPrimeraMisionIncompleta() = runTest {
+    fun misionSugerida_priorizaCafeteriaPendiente() = runTest {
         backgroundScope.launch(kotlinx.coroutines.test.UnconfinedTestDispatcher(testScheduler)) {
             viewModel.misionSugerida.collect()
         }
@@ -163,7 +163,7 @@ class HomeViewModelTest {
 
         val sugerida = viewModel.misionSugerida.value
         assertNotNull(sugerida)
-        assertEquals(101, sugerida?.mision?.id)
+        assertEquals(102, sugerida?.mision?.id)
         assertTrue(sugerida?.completada == false)
     }
 

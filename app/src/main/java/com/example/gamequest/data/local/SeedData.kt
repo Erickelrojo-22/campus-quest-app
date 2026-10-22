@@ -26,8 +26,8 @@ object SeedData {
                 descripcion = "Sala de lectura, préstamo de libros y salas de estudio grupal.",
                 horarioAtencion = "Lunes a viernes, 07:30 a 19:00",
                 tramites = "Préstamo y devolución de libros, carné de biblioteca, salas de estudio",
-                posX = 0.22f,
-                posY = 0.30f,
+                posX = 0.40f,
+                posY = 0.19f,
                 codigoQr = "CQ-BIB-001"
             ),
             mision = MisionEntity(
