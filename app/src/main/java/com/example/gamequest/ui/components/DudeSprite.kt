@@ -77,12 +77,10 @@ fun CharacterSprite(
 
     // Mantener los últimos frames válidos para que el personaje NUNCA desaparezca de la pantalla
     var lastValidFrames by remember { mutableStateOf<List<ImageBitmap>>(emptyList()) }
-    val displayFrames = if (frames.isNotEmpty()) {
-        lastValidFrames = frames
-        frames
-    } else {
-        lastValidFrames
+    LaunchedEffect(frames) {
+        if (frames.isNotEmpty()) lastValidFrames = frames
     }
+    val displayFrames = frames.ifEmpty { lastValidFrames }
 
     if (displayFrames.isEmpty()) return
 
