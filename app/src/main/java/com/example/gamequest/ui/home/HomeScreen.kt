@@ -38,14 +38,12 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -53,7 +51,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.gamequest.data.local.entity.PuntoInteresEntity
-import com.example.gamequest.data.preferences.UserPreferencesRepository
 import com.example.gamequest.data.repository.MisionConEstado
 import com.example.gamequest.ui.common.encabezado
 import com.example.gamequest.ui.components.DudeAnimation
@@ -65,7 +62,6 @@ import com.example.gamequest.util.AvatarColor
 import com.example.gamequest.util.CharacterSpecies
 import com.example.gamequest.util.LocalSoundManager
 import com.example.gamequest.util.SoundEffect
-import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
@@ -74,15 +70,13 @@ fun HomeScreen(
     puntoDestinoId: Int? = null,
     onPuntoDestinoAtendido: () -> Unit = {}
 ) {
-    val usuario by viewModel.usuario.collectAsState()
-    val misiones by viewModel.misiones.collectAsState()
-    val busqueda by viewModel.busqueda.collectAsState()
-    val resultados by viewModel.resultadosBusqueda.collectAsState()
-    val sugerida by viewModel.misionSugerida.collectAsState()
-
-    val context = LocalContext.current
-    val prefsRepo = remember { UserPreferencesRepository(context) }
-    val prefs by prefsRepo.preferencias.collectAsState(initial = null)
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val usuario = uiState.usuario
+    val misiones = uiState.misiones
+    val busqueda = uiState.busqueda
+    val resultados = uiState.resultados
+    val sugerida = uiState.sugerida
+    val prefs = uiState.preferencias
     val charPrimary = prefs?.avatarPrimaryColor ?: AvatarColor.COBALT_BLUE
     val charSecondary = prefs?.avatarSecondaryColor ?: AvatarColor.RUBY_RED
     val charSpecies = prefs?.characterSpecies ?: CharacterSpecies.DUDE
@@ -197,15 +191,10 @@ fun HomeScreen(
         }
     }
 
-    val scope = rememberCoroutineScope()
     if (prefs != null && !prefs!!.tutorialVisto) {
         OnboardingDialog(
-            onDismiss = {
-                scope.launch { prefsRepo.setTutorialVisto(true) }
-            },
-            onCompletar = {
-                scope.launch { prefsRepo.setTutorialVisto(true) }
-            }
+            onDismiss = viewModel::marcarTutorialVisto,
+            onCompletar = viewModel::marcarTutorialVisto
         )
     }
 }

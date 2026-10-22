@@ -6,7 +6,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,7 +75,7 @@ fun CampusQuestNavHost(container: AppContainer) {
     val sessionViewModel: SessionViewModel = viewModel(
         factory = GenericViewModelFactory { SessionViewModel(container) }
     )
-    val usuario by sessionViewModel.usuarioActual.collectAsState()
+    val usuario by sessionViewModel.usuarioActual.collectAsStateWithLifecycle()
 
     NavHost(navController = navController, startDestination = Routes.SPLASH) {
 
@@ -124,10 +124,10 @@ fun CampusQuestNavHost(container: AppContainer) {
             } else {
                 val tabSolicitada by entrada.savedStateHandle
                     .getStateFlow(Routes.KEY_TAB_SOLICITADA, -1)
-                    .collectAsState()
+                    .collectAsStateWithLifecycle()
                 val puntoDestinoId by entrada.savedStateHandle
                     .getStateFlow<Int?>(Routes.KEY_PUNTO_DESTINO, null)
-                    .collectAsState()
+                    .collectAsStateWithLifecycle()
 
                 MainTabsScreen(
                     tabSolicitada = tabSolicitada,
@@ -139,7 +139,9 @@ fun CampusQuestNavHost(container: AppContainer) {
                         Routes.HOME -> {
                             val homeViewModel: HomeViewModel = viewModel(
                                 key = "home-$usuarioId",
-                                factory = GenericViewModelFactory { HomeViewModel(container.campusRepository, usuarioId) }
+                                factory = GenericViewModelFactory {
+                                    HomeViewModel(container.campusRepository, usuarioId, container.preferencesRepository)
+                                }
                             )
                             HomeScreen(
                                 viewModel = homeViewModel,
