@@ -6,6 +6,13 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import kotlinx.coroutines.flow.flowOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -86,17 +93,52 @@ fun CampusQuestNavHost(container: AppContainer) {
 fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionState,
     container: CampusQuestDependencies, onLogin: (Int) -> Unit, onLogout: () -> Unit,
     onRetryRestore: () -> Unit) {
-    val preferencias by container.preferencesRepository.preferencias.collectAsStateWithLifecycle(com.example.gamequest.data.preferences.UserPreferences())
-    val usuarioFlow = androidx.compose.runtime.remember(preferencias.usuarioActivoId) { container.campusRepository.observarUsuario(preferencias.usuarioActivoId) }
-    val usuario by usuarioFlow.collectAsStateWithLifecycle(null)
-
+    val auth = sessionState as? SessionState.Authenticated
+    val userFlow = remember(auth?.localUserId) {
+        auth?.let { container.campusRepository.observarUsuario(it.localUserId) } ?: flowOf(null)
+    }
+    val storedUser by userFlow.collectAsStateWithLifecycle(null)
+    val usuario = storedUser?.takeIf { it.id == auth?.localUserId }
+    val entry by navController.currentBackStackEntryAsState()
+    val route = entry?.destination?.route
+    var lastUserId by rememberSaveable { mutableStateOf<Int?>(null) }
+    val publicRoutes = setOf(Routes.SPLASH, Routes.LOGIN, Routes.REGISTER)
+    val snackbar = remember { androidx.compose.material3.SnackbarHostState() }
+    val reason = (sessionState as? SessionState.SignedOut)?.reason
+    LaunchedEffect(reason) { reason?.let { snackbar.showSnackbar(it) } }
+    LaunchedEffect(sessionState, route) {
+        fun replaceRoot(destination: String) {
+            navController.navigate(destination) { popUpTo(0) { inclusive = true }; launchSingleTop = true }
+        }
+        when (sessionState) {
+            SessionState.Restoring, is SessionState.RecoveryRequired -> {
+                if (route != null && route != Routes.SPLASH) replaceRoot(Routes.SPLASH)
+            }
+            is SessionState.SignedOut -> {
+                lastUserId = null
+                if (route != null && route != Routes.LOGIN && route != Routes.REGISTER) replaceRoot(Routes.LOGIN)
+            }
+            is SessionState.Authenticated -> {
+                if ((lastUserId != null && lastUserId != sessionState.localUserId) || route in publicRoutes)
+                    replaceRoot(Routes.MAIN)
+                lastUserId = sessionState.localUserId
+            }
+        }
+    }
+    Box(Modifier.fillMaxSize()) {
     NavHost(navController = navController, startDestination = Routes.SPLASH) {
 
         composable(Routes.SPLASH) {
-            SplashScreen(onTimeout = {
-                val destino = if (preferencias.usuarioActivoId > 0) Routes.MAIN else Routes.LOGIN
-                navController.navigate(destino) { popUpTo(Routes.SPLASH) { inclusive = true } }
-            })
+            if (sessionState is SessionState.RecoveryRequired) {
+                androidx.compose.foundation.layout.Column(
+                    Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
+                ) {
+                    Text(sessionState.message)
+                    TextButton(onClick = onRetryRestore) { Text("Reintentar") }
+                    TextButton(onClick = onLogout) { Text("Volver al inicio de sesi\u00f3n") }
+                }
+            } else SplashScreen()
         }
 
         composable(Routes.LOGIN) {
@@ -105,7 +147,6 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                 viewModel = authViewModel,
                 onLoginExitoso = { usuarioLogueado ->
                     onLogin(usuarioLogueado.id)
-                    navController.navigate(Routes.MAIN) { popUpTo(0) }
                 },
                 onIrARegistro = {
                     navController.navigate(Routes.REGISTER)
@@ -119,7 +160,6 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                 viewModel = registerViewModel,
                 onRegistroExitoso = { usuarioRegistrado ->
                     onLogin(usuarioRegistrado.id)
-                    navController.navigate(Routes.MAIN) { popUpTo(0) }
                 },
                 onVolverALogin = {
                     navController.popBackStack()
@@ -131,7 +171,7 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
         // Cada ViewModel se crea al mostrar su página por primera vez (carga perezosa)
         // y queda asociado a esta entrada, así que sobrevive al cambiar de pestaña.
         composable(Routes.MAIN) { entrada ->
-            val usuarioId = usuario?.id
+            val usuarioId = auth?.localUserId
             if (usuarioId == null) {
                 CargandoPantallaCompleta()
             } else {
@@ -228,7 +268,6 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                                 onMissionManagement = { navController.navigate(Routes.MISSION_MANAGEMENT) },
                                 onCerrarSesion = {
                                     onLogout()
-                                    navController.navigate(Routes.LOGIN) { popUpTo(0) }
                                 }
                             )
                         }
@@ -241,7 +280,7 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
             Routes.MISSION_DETAIL,
             arguments = listOf(navArgument("misionId") { type = NavType.IntType })
         ) { backStackEntry ->
-            val usuarioId = usuario?.id
+            val usuarioId = auth?.localUserId
             val misionId = backStackEntry.arguments?.getInt("misionId") ?: -1
             if (usuarioId == null) {
                 CargandoPantallaCompleta()
@@ -273,7 +312,7 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
             Routes.BADGE_EARNED,
             arguments = listOf(navArgument("misionId") { type = NavType.IntType })
         ) { backStackEntry ->
-            val usuarioId = usuario?.id
+            val usuarioId = auth?.localUserId
             val misionId = backStackEntry.arguments?.getInt("misionId") ?: -1
             if (usuarioId == null) {
                 CargandoPantallaCompleta()
@@ -292,6 +331,7 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
         }
 
         composable(Routes.SETTINGS) {
+            if (auth == null) { CargandoPantallaCompleta(); return@composable }
             val settingsViewModel: SettingsViewModel = viewModel(
                 factory = GenericViewModelFactory { SettingsViewModel(container.preferencesRepository) }
             )
@@ -300,13 +340,13 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                 onBack = { navController.popBackStack() },
                 onCerrarSesion = {
                     onLogout()
-                    navController.navigate(Routes.LOGIN) { popUpTo(0) }
                 }
             )
         }
 
         composable(Routes.MISSION_MANAGEMENT) {
-            if (usuario?.rol == Rol.TUTOR) {
+            if (auth == null) { CargandoPantallaCompleta(); return@composable }
+            if (auth != null && usuario?.rol == Rol.TUTOR) {
                 val managementViewModel: MissionManagementViewModel = viewModel(
                     factory = GenericViewModelFactory { MissionManagementViewModel(container.campusRepository) }
                 )
@@ -325,7 +365,7 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
             Routes.MISSION_FORM,
             arguments = listOf(navArgument("puntoId") { type = NavType.IntType; defaultValue = -1 })
         ) { backStackEntry ->
-            if (usuario?.rol == Rol.TUTOR) {
+            if (auth != null && usuario?.rol == Rol.TUTOR) {
                 val puntoId = backStackEntry.arguments?.getInt("puntoId")?.takeIf { it > 0 }
                 val formViewModel: MissionFormViewModel = viewModel(
                     key = "form-$puntoId",
@@ -340,6 +380,8 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                 AccesoNoAutorizado { navController.popBackStack() }
             }
         }
+    }
+    androidx.compose.material3.SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
     }
 }
 
