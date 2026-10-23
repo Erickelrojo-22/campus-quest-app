@@ -17,7 +17,9 @@ import kotlinx.coroutines.sync.withLock
 class RemoteCampusRepository(private val db: AppDatabase, private val api: CampusGateway) : CampusRepository(
     database = db, puntoDao = db.puntoInteresDao(), misionDao = db.misionDao(),
     progresoDao = db.progresoMisionDao(), usuarioDao = db.usuarioDao()
-) {
+), com.example.gamequest.data.session.SessionAccess {
+    override suspend fun resolverIdentidad() = resolveIdentity()
+    override suspend fun sincronizarCatalogoYProgreso(localUserId: Int) = syncCatalogAndProgress(localUserId)
     private val lock = Mutex()
     private val identities = LocalIdentityStore(db)
     private val ranking = MutableStateFlow<List<RankingEntry>>(emptyList())

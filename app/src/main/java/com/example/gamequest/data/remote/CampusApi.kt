@@ -14,7 +14,7 @@ class ApiException(val status: Int, message: String) : IOException(message)
 
 /** HTTPS requests run off the main thread and never retry a mutation automatically. */
 class CampusApi(override val tokens: TokenStore) : CampusGateway {
-    override var onUnauthorized: () -> Unit = {}
+    override var onUnauthorized: (String) -> Unit = {}
     suspend fun request(path: String, method: String = "GET", body: JSONObject? = null,
                         token: String? = tokens.token): String = withContext(Dispatchers.IO) {
         val connection = URL(BuildConfig.API_BASE_URL + path).openConnection() as HttpURLConnection
@@ -35,10 +35,7 @@ class CampusApi(override val tokens: TokenStore) : CampusGateway {
             val raw = (if (status in 200..299) connection.inputStream else connection.errorStream)
                 ?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
             if (status !in 200..299) {
-                if (status == 401 && token != null && tokens.token == token) {
-                    tokens.clear()
-                    onUnauthorized()
-                }
+                if (status == 401 && token != null) onUnauthorized(token)
                 val detail = runCatching { JSONObject(raw).opt("detail") }.getOrNull()
                 val message = when (detail) {
                     is String -> detail

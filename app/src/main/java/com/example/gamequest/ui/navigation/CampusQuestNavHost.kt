@@ -17,6 +17,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.gamequest.CampusQuestDependencies
+import com.example.gamequest.data.session.*
 import com.example.gamequest.AppContainer
 import com.example.gamequest.data.local.entity.Rol
 import com.example.gamequest.ui.auth.AuthViewModel
@@ -75,13 +77,24 @@ fun CampusQuestNavHost(container: AppContainer) {
     val sessionViewModel: SessionViewModel = viewModel(
         factory = GenericViewModelFactory { SessionViewModel(container) }
     )
-    val usuario by sessionViewModel.usuarioActual.collectAsStateWithLifecycle()
+    val state by sessionViewModel.state.collectAsStateWithLifecycle()
+    CampusQuestNavGraph(navController, state, container,
+        sessionViewModel::iniciarSesion, sessionViewModel::cerrarSesion, sessionViewModel::retry)
+}
+
+@Composable
+fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionState,
+    container: CampusQuestDependencies, onLogin: (Int) -> Unit, onLogout: () -> Unit,
+    onRetryRestore: () -> Unit) {
+    val preferencias by container.preferencesRepository.preferencias.collectAsStateWithLifecycle(com.example.gamequest.data.preferences.UserPreferences())
+    val usuarioFlow = androidx.compose.runtime.remember(preferencias.usuarioActivoId) { container.campusRepository.observarUsuario(preferencias.usuarioActivoId) }
+    val usuario by usuarioFlow.collectAsStateWithLifecycle(null)
 
     NavHost(navController = navController, startDestination = Routes.SPLASH) {
 
         composable(Routes.SPLASH) {
             SplashScreen(onTimeout = {
-                val destino = if (sessionViewModel.preferencias.value.usuarioActivoId > 0) Routes.MAIN else Routes.LOGIN
+                val destino = if (preferencias.usuarioActivoId > 0) Routes.MAIN else Routes.LOGIN
                 navController.navigate(destino) { popUpTo(Routes.SPLASH) { inclusive = true } }
             })
         }
@@ -91,7 +104,7 @@ fun CampusQuestNavHost(container: AppContainer) {
             LoginScreen(
                 viewModel = authViewModel,
                 onLoginExitoso = { usuarioLogueado ->
-                    sessionViewModel.iniciarSesion(usuarioLogueado.id)
+                    onLogin(usuarioLogueado.id)
                     navController.navigate(Routes.MAIN) { popUpTo(0) }
                 },
                 onIrARegistro = {
@@ -105,7 +118,7 @@ fun CampusQuestNavHost(container: AppContainer) {
             RegisterScreen(
                 viewModel = registerViewModel,
                 onRegistroExitoso = { usuarioRegistrado ->
-                    sessionViewModel.iniciarSesion(usuarioRegistrado.id)
+                    onLogin(usuarioRegistrado.id)
                     navController.navigate(Routes.MAIN) { popUpTo(0) }
                 },
                 onVolverALogin = {
@@ -214,7 +227,7 @@ fun CampusQuestNavHost(container: AppContainer) {
                                 onSettings = { navController.navigate(Routes.SETTINGS) },
                                 onMissionManagement = { navController.navigate(Routes.MISSION_MANAGEMENT) },
                                 onCerrarSesion = {
-                                    sessionViewModel.cerrarSesion()
+                                    onLogout()
                                     navController.navigate(Routes.LOGIN) { popUpTo(0) }
                                 }
                             )
@@ -286,7 +299,7 @@ fun CampusQuestNavHost(container: AppContainer) {
                 viewModel = settingsViewModel,
                 onBack = { navController.popBackStack() },
                 onCerrarSesion = {
-                    sessionViewModel.cerrarSesion()
+                    onLogout()
                     navController.navigate(Routes.LOGIN) { popUpTo(0) }
                 }
             )

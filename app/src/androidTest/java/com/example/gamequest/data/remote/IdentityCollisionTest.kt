@@ -24,7 +24,7 @@ class IdentityCollisionTest {
     }
     private val gateway = object : CampusGateway {
         override val tokens = this@IdentityCollisionTest.tokens
-        override var onUnauthorized: () -> Unit = {}
+        override var onUnauthorized: (String) -> Unit = {}
         override suspend fun authenticate(path: String, body: JSONObject) = AuthPayload("server-token", remote(51))
         override suspend fun me() = remote(51)
         override suspend fun logout(token: String) = Unit

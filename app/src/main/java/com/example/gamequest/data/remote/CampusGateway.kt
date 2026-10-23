@@ -7,7 +7,7 @@ data class AuthPayload(val accessToken: String, val user: RemoteUserDto)
 
 interface CampusGateway {
     val tokens: TokenStore
-    var onUnauthorized: () -> Unit
+    var onUnauthorized: (String) -> Unit
     suspend fun authenticate(path: String, body: JSONObject): AuthPayload
     suspend fun me(): RemoteUserDto
     suspend fun logout(token: String)

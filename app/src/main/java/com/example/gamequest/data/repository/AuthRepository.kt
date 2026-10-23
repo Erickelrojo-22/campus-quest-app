@@ -20,13 +20,19 @@ sealed class AuthResult {
  * Acceso simplificado: el usuario solo escribe su nombre para entrar.
  * Si el nombre ya existe se reutiliza la cuenta (con su progreso); si no, se crea una nueva.
  */
-class AuthRepository(private val usuarioDao: UsuarioDao, private val api: CampusGateway? = null) {
+class AuthRepository(private val usuarioDao: UsuarioDao, private val api: CampusGateway? = null,
+    private val sessionCommitter: com.example.gamequest.data.session.SessionCommitter? = null) {
 
     val minimumPasswordLength: Int get() = if (api != null) 8 else MIN_CONTRASENA_LENGTH
 
+    private suspend fun commitSession(token: String, localId: Int) {
+        if (sessionCommitter != null) sessionCommitter.commitAuthenticated(token,localId)
+        else api!!.tokens.save(token,localId)
+    }
+
     private suspend fun persistRemote(payload: AuthPayload): AuthResult = try {
         val user = usuarioDao.guardarUsuarioRemoto(payload.user.toLocal())
-        api!!.tokens.save(payload.accessToken, user.id)
+        commitSession(payload.accessToken, user.id)
         AuthResult.Exito(user)
     } catch (e: CancellationException) { throw e
     } catch (e: Exception) { AuthResult.Error(e.message ?: "No se pudo guardar la sesión.") }
@@ -147,7 +153,7 @@ class AuthRepository(private val usuarioDao: UsuarioDao, private val api: Campus
                     "Ese nombre pertenece a una cuenta estudiantil. Inicia sesión desde la pestaña Estudiantil."
                 )
             }
-            api?.tokens?.save("offline-visitor-${it.id}", it.id)
+            if (api != null) commitSession("offline-visitor-${it.id}", it.id)
             return AuthResult.Exito(it)
         }
 
@@ -159,7 +165,7 @@ class AuthRepository(private val usuarioDao: UsuarioDao, private val api: Campus
             rol = Rol.ESTUDIANTE
         )
         val id = usuarioDao.insertar(nuevo)
-        api?.tokens?.save("offline-visitor-$id", id.toInt())
+        if (api != null) commitSession("offline-visitor-$id", id.toInt())
         return AuthResult.Exito(nuevo.copy(id = id.toInt()))
     }
 }

@@ -4,7 +4,7 @@ import com.example.gamequest.data.local.entity.*
 import org.json.JSONObject
 
 open class FakeCampusGateway(override val tokens: TokenStore = FakeTokenStore()) : CampusGateway {
-    override var onUnauthorized: () -> Unit = {}
+    override var onUnauthorized: (String) -> Unit = {}
     var authentication: suspend (String, JSONObject) -> AuthPayload = { _, _ -> error("Unexpected authentication") }
     override suspend fun authenticate(path: String, body: JSONObject) = authentication(path, body)
     override suspend fun me(): RemoteUserDto = error("Unexpected me")
