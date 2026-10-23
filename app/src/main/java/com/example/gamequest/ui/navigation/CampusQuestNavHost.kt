@@ -346,7 +346,7 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
 
         composable(Routes.MISSION_MANAGEMENT) {
             if (auth == null) { CargandoPantallaCompleta(); return@composable }
-            if (auth != null && usuario?.rol == Rol.TUTOR) {
+            if (usuario?.rol == Rol.TUTOR) {
                 val managementViewModel: MissionManagementViewModel = viewModel(
                     factory = GenericViewModelFactory { MissionManagementViewModel(container.campusRepository) }
                 )

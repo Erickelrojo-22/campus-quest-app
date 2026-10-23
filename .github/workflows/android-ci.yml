@@ -47,15 +47,12 @@ jobs:
 
       - name: Instalar plataforma y build-tools requeridas
         run: |
-          # Intentar instalar android-37 (puede ser preview y no estar aún en el repo público).
-          # Si falla, instalar android-35 y crear un symlink android-37 → android-35
-          # para que Gradle resuelva compileSdk = 37 sin error.
-          if ! $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
-               "platforms;android-37" "build-tools;35.0.0" 2>&1; then
-            echo "android-37 no disponible en sdkmanager; usando android-35 como base"
-            $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0"
-            ln -sfn "$ANDROID_HOME/platforms/android-35" "$ANDROID_HOME/platforms/android-37"
-          fi
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            "platforms;android-37.0" "build-tools;36.0.0"
+          platform="$ANDROID_HOME/platforms/android-37.0"
+          test ! -L "$platform"
+          grep -Eq '^AndroidVersion.ApiLevel=37(\.0)?$' "$platform/source.properties"
+          cat "$platform/source.properties"
 
       - name: Permisos de ejecución para gradlew
         run: chmod +x ./gradlew
@@ -66,8 +63,7 @@ jobs:
       - name: Pruebas unitarias
         run: ./gradlew testDebugUnitTest --stacktrace
 
-      # El job con emulador solo se ejecuta en push/manual. Compilar aquí los
-      # androidTest evita que un PR rompa sus firmas de Compose sin detectarlo.
+      # Compilar androidTest en cada PR, ademas de ejecutarlo en ambos emuladores.
       - name: Compilar pruebas instrumentadas
         run: ./gradlew compileDebugAndroidTestKotlin --stacktrace
 
@@ -120,15 +116,12 @@ jobs:
 
       - name: Instalar plataforma y build-tools requeridas
         run: |
-          # Intentar instalar android-37 (puede ser preview y no estar aún en el repo público).
-          # Si falla, instalar android-35 y crear un symlink android-37 → android-35
-          # para que Gradle resuelva compileSdk = 37 sin error.
-          if ! $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
-               "platforms;android-37" "build-tools;35.0.0" 2>&1; then
-            echo "android-37 no disponible en sdkmanager; usando android-35 como base"
-            $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0"
-            ln -sfn "$ANDROID_HOME/platforms/android-35" "$ANDROID_HOME/platforms/android-37"
-          fi
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            "platforms;android-37.0" "build-tools;36.0.0"
+          platform="$ANDROID_HOME/platforms/android-37.0"
+          test ! -L "$platform"
+          grep -Eq '^AndroidVersion.ApiLevel=37(\.0)?$' "$platform/source.properties"
+          cat "$platform/source.properties"
 
       - name: Permisos de ejecución para gradlew
         run: chmod +x ./gradlew
@@ -146,16 +139,18 @@ jobs:
           if-no-files-found: warn
 
   # ──────────────────────────────────────────────────────────────
-  # 3) Pruebas instrumentadas en emulador (solo push a main / manual)
+  # 3) Pruebas instrumentadas en PR, push y ejecucion manual
   # ──────────────────────────────────────────────────────────────
   instrumented:
     name: Pruebas instrumentadas (emulador)
     runs-on: ubuntu-latest
-    # El emulador es costoso en tiempo: se evita en cada PR.
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     strategy:
       matrix:
-        api-level: [ 29 ]
+        include:
+          - api-level: 29
+            target: default
+          - api-level: 35
+            target: aosp_atd
     steps:
       - name: Checkout del repositorio
         uses: actions/checkout@v4
@@ -179,15 +174,12 @@ jobs:
 
       - name: Instalar plataforma y build-tools requeridas
         run: |
-          # Intentar instalar android-37 (puede ser preview y no estar aún en el repo público).
-          # Si falla, instalar android-35 y crear un symlink android-37 → android-35
-          # para que Gradle resuelva compileSdk = 37 sin error.
-          if ! $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
-               "platforms;android-37" "build-tools;35.0.0" 2>&1; then
-            echo "android-37 no disponible en sdkmanager; usando android-35 como base"
-            $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0"
-            ln -sfn "$ANDROID_HOME/platforms/android-35" "$ANDROID_HOME/platforms/android-37"
-          fi
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            "platforms;android-37.0" "build-tools;36.0.0"
+          platform="$ANDROID_HOME/platforms/android-37.0"
+          test ! -L "$platform"
+          grep -Eq '^AndroidVersion.ApiLevel=37(\.0)?$' "$platform/source.properties"
+          cat "$platform/source.properties"
 
       - name: Permisos de ejecución para gradlew
         run: chmod +x ./gradlew
@@ -203,6 +195,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
+          target: ${{ matrix.target }}
           arch: x86_64
           profile: pixel_5
           disable-animations: true

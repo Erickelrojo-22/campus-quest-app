@@ -16,9 +16,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import org.json.JSONObject
 
 /** Disposable fixtures; no object here constructs a production HTTP client. */
-class FakeCampusQuestDependencies(context: Context) : CampusQuestDependencies, AutoCloseable {
+class FakeCampusQuestDependencies(context: Context, val db: AppDatabase = Room.inMemoryDatabaseBuilder(context,AppDatabase::class.java).build()) : CampusQuestDependencies, AutoCloseable {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    val db = Room.inMemoryDatabaseBuilder(context,AppDatabase::class.java).build()
     val preferences = MutableStateFlow(UserPreferences())
     override val preferencesRepository = object : UserPreferencesRepository() {
         override val preferencias = preferences
@@ -31,15 +30,28 @@ class FakeCampusQuestDependencies(context: Context) : CampusQuestDependencies, A
         override fun clear() { snapshot=SessionSnapshot(null) }
         override fun clearIfCurrent(expectedToken: String): Boolean { if(token != expectedToken) return false; clear(); return true }
     }
+    var authFailure: Int? = null
+    var meFailure: Int? = null
+    val remoteUser = RemoteUserDto(51,"Remote", "", "Software",30,1,"estudiante")
+    var remoteProgress: List<RemoteProgressDto> = emptyList()
     val gateway = object : CampusGateway {
         override val tokens = this@FakeCampusQuestDependencies.tokens
         override var onUnauthorized: (String) -> Unit = {}
-        override suspend fun authenticate(path: String,body: JSONObject): AuthPayload = error("Unexpected auth")
-        override suspend fun me(): RemoteUserDto = error("Unexpected identity lookup")
+        override suspend fun authenticate(path: String,body: JSONObject): AuthPayload {
+            authFailure?.let { throw ApiException(it,"Rejected") }
+            return AuthPayload("remote-51",remoteUser)
+        }
+        override suspend fun me(): RemoteUserDto {
+            meFailure?.let { status ->
+                if(status==401) tokens.token?.let(onUnauthorized)
+                throw ApiException(status,"Expired")
+            }
+            return remoteUser
+        }
         override suspend fun logout(token: String) = Unit
-        override suspend fun puntos(): List<PuntoInteresEntity> = emptyList()
-        override suspend fun misiones(): List<MisionEntity> = emptyList()
-        override suspend fun progreso(id: Int): List<RemoteProgressDto> = emptyList()
+        override suspend fun puntos() = listOf(SeedData.puntosConMisiones().first().punto.copy(id=1))
+        override suspend fun misiones() = listOf(SeedData.puntosConMisiones().first().mision.copy(id=1,puntoInteresId=1))
+        override suspend fun progreso(id: Int) = remoteProgress
         override suspend fun completar(id: Int,mision: Int,codigo: String): RemoteProgressDto = error("Unexpected mutation")
         override suspend fun ranking(): List<RankingEntry> = emptyList()
     }
@@ -47,6 +59,7 @@ class FakeCampusQuestDependencies(context: Context) : CampusQuestDependencies, A
     override val sessionCoordinator = SessionCoordinator(tokens,preferencesRepository,campusRepository,db.usuarioDao()::buscarPorId,gateway::logout,scope)
     override val authRepository = AuthRepository(db.usuarioDao(),gateway,sessionCoordinator)
     override val soundEffectManager = SoundEffectManager(context,preferencesRepository,scope)
+    init { gateway.onUnauthorized = { token -> scope.launch { sessionCoordinator.unauthorized(token) } } }
     suspend fun seed() {
         db.usuarioDao().insertar(UsuarioEntity(8,"Account A","","","",remoteId=51))
         db.usuarioDao().insertar(UsuarioEntity(9,"Account B","","","",remoteId=77))

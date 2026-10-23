@@ -91,9 +91,9 @@ class SessionCoordinator(
                 if (version != generation || tokens.snapshot != snapshot) return
                 if (e is ApiException && e.status == 401) invalidateLocked(requireNotNull(snapshot.token))
                 else {
-                    val cached = if (e.permiteFallbackOffline()) snapshot.localUserId?.let { cachedUser(it) } else null
-                    val valid = cached != null && cached.id == snapshot.localUserId && cached.remoteId != null && !snapshot.token.orEmpty().startsWith("offline-")
                     try {
+                        val cached = if (e.permiteFallbackOffline()) snapshot.localUserId?.let { cachedUser(it) } else null
+                        val valid = cached != null && cached.id == snapshot.localUserId && cached.remoteId != null && !snapshot.token.orEmpty().startsWith("offline-")
                         if (valid) {
                             preferences.setUsuarioActivoId(cached!!.id)
                             mutableState.value = SessionState.Authenticated(cached.id,SessionSource.REMOTE,true)

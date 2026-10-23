@@ -64,4 +64,19 @@ class AuthRepositoryRemoteTest {
         assertFalse(dao.users.any { it.correoInstitucional.isEmpty() })
         assertEquals("previous-session", tokens.token)
     }
+    @Test fun visitanteSinRed_falloRoom_retornaErrorSinSesion() = runTest {
+        gateway.authentication = { _, _ -> throw IOException("offline") }
+        dao.failSave = IOException("disk error")
+        assertTrue(repository.entrarConNombre("Visitor",false) is AuthResult.Error)
+        assertEquals("previous-session",tokens.token)
+        assertTrue(dao.users.isEmpty())
+    }
+    @Test fun visitanteSinRed_falloToken_retornaErrorSinSesion() = runTest {
+        val broken = object : TokenStore by tokens {
+            override fun save(value: String,localUserId: Int?) { throw IOException("disk error") }
+        }
+        val api = FakeCampusGateway(broken).apply { authentication = { _, _ -> throw IOException("offline") } }
+        assertTrue(AuthRepository(dao,api).entrarConNombre("Visitor",false) is AuthResult.Error)
+        assertEquals("previous-session",tokens.token)
+    }
 }

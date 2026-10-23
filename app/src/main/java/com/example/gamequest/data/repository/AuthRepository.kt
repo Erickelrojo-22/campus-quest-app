@@ -142,6 +142,12 @@ class AuthRepository(private val usuarioDao: UsuarioDao, private val api: Campus
             if (payload != null) return persistRemote(payload)
         }
 
+        return try { persistLocalVisitor(nombreNormalizado) }
+        catch (e: CancellationException) { throw e }
+        catch (e: Exception) { AuthResult.Error(e.message ?: "No se pudo guardar la sesión de visitante.") }
+    }
+
+    private suspend fun persistLocalVisitor(nombreNormalizado: String): AuthResult {
         usuarioDao.buscarPorNombre(nombreNormalizado)?.let {
             if (it.rol == Rol.TUTOR) {
                 return AuthResult.Error("Las cuentas tutor deben entrar con correo y contraseña.")

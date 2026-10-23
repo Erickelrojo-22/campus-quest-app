@@ -85,6 +85,14 @@ class SessionCoordinatorTest {
         val sut = SessionCoordinator(tokens,Prefs(),access,{ null },{},backgroundScope)
         sut.restore(); assertTrue(sut.state.value is SessionState.RecoveryRequired)
     }
+    @Test fun sinRed_cacheIlegible_requiereRecuperacion() = runTest {
+        val tokens = FakeTokenStore().apply { save("token",8) }
+        val access = Access().apply { resolve = { throw IOException("offline") } }
+        val sut = SessionCoordinator(tokens,Prefs(),access,{ throw IllegalStateException("unreadable database") },{},backgroundScope)
+        sut.restore()
+        assertTrue(sut.state.value is SessionState.RecoveryRequired)
+        assertEquals("token",tokens.token)
+    }
     @Test fun http401_invalidaSesion() = runTest {
         val tokens = FakeTokenStore().apply { save("token",8) }
         val prefs = Prefs()
