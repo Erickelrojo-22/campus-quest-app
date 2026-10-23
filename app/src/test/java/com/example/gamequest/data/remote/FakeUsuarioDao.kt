@@ -1,5 +1,6 @@
 package com.example.gamequest.data.remote
 
+import kotlinx.coroutines.flow.first
 import com.example.gamequest.data.local.dao.UsuarioDao
 import com.example.gamequest.data.local.entity.UsuarioEntity
 import kotlinx.coroutines.flow.flowOf
@@ -12,6 +13,7 @@ class FakeUsuarioDao : UsuarioDao {
         items.forEach { user -> users.removeAll { it.id == user.id }; users += user }
     }
     override suspend fun insertar(usuario: UsuarioEntity): Long {
+        failSave?.let { throw it }
         val id = (users.maxOfOrNull { it.id } ?: 0) + 1
         users += usuario.copy(id = id)
         return id.toLong()
@@ -24,6 +26,7 @@ class FakeUsuarioDao : UsuarioDao {
     }
     override suspend fun buscarPorCorreo(correo: String) = users.find { it.correoInstitucional.equals(correo, true) }
     override suspend fun buscarPorNombre(nombre: String) = users.find { it.nombres.equals(nombre, true) }
+    override suspend fun buscarPorRemoteId(remoteId: Int): UsuarioEntity? = observarRanking().first().firstOrNull { it.remoteId == remoteId }
     override suspend fun buscarPorId(id: Int) = users.find { it.id == id }
     override fun observarPorId(id: Int) = flowOf(users.find { it.id == id })
     override fun observarRanking() = flowOf(users.sortedByDescending { it.puntajeAcumulado })

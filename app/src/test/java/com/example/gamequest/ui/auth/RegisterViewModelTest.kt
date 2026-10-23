@@ -1,5 +1,6 @@
 package com.example.gamequest.ui.auth
 
+import kotlinx.coroutines.flow.first
 import com.example.gamequest.data.local.dao.UsuarioDao
 import com.example.gamequest.data.local.entity.Rol
 import com.example.gamequest.data.local.entity.UsuarioEntity
@@ -126,7 +127,8 @@ class RegisterViewModelTest {
             return usuarios.find { it.correoInstitucional.equals(correo.trim(), ignoreCase = true) }
         }
         override suspend fun buscarPorNombre(nombre: String): UsuarioEntity? = null
-        override suspend fun buscarPorId(id: Int): UsuarioEntity? = usuarios.find { it.id == id }
+        override suspend fun buscarPorRemoteId(remoteId: Int): UsuarioEntity? = observarRanking().first().firstOrNull { it.remoteId == remoteId }
+    override suspend fun buscarPorId(id: Int): UsuarioEntity? = usuarios.find { it.id == id }
         override fun observarPorId(id: Int): Flow<UsuarioEntity?> = flowOf(usuarios.find { it.id == id })
         override fun observarRanking(): Flow<List<UsuarioEntity>> = flowOf(usuarios)
         override suspend fun sumarPuntos(usuarioId: Int, puntos: Int, nivel: Int) {}

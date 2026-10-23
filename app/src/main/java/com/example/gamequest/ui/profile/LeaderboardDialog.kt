@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.gamequest.data.local.entity.UsuarioEntity
+import com.example.gamequest.data.model.RankingEntry
 import com.example.gamequest.ui.common.encabezado
 import com.example.gamequest.ui.theme.AmberAccent
 import com.example.gamequest.ui.theme.AmberAccentDark
@@ -60,8 +61,9 @@ import com.example.gamequest.util.SoundEffect
 
 @Composable
 fun LeaderboardDialog(
-    ranking: List<UsuarioEntity>,
+    ranking: List<RankingEntry>,
     usuarioActualId: Int,
+    usuarioRemotoId: Int? = null,
     onDismiss: () -> Unit
 ) {
     val soundManager = LocalSoundManager.current
@@ -157,11 +159,11 @@ fun LeaderboardDialog(
                 } else {
                     // Podio superior para el Top 3 (si hay al menos 1)
                     val top3 = ranking.take(3)
-                    val indexActual = ranking.indexOfFirst { it.id == usuarioActualId }
+                    val indexActual = ranking.indexOfFirst { it.isCurrent(usuarioActualId, usuarioRemotoId) }
                     val usuarioActual = if (indexActual >= 0) ranking[indexActual] else null
 
                     Column(modifier = Modifier.fillMaxSize()) {
-                        PodioTop3(top3 = top3, usuarioActualId = usuarioActualId)
+                        PodioTop3(top3 = top3, usuarioActualId = usuarioActualId, usuarioRemotoId = usuarioRemotoId)
 
                         // Resumen de la posición del usuario actual
                         if (usuarioActual != null) {
@@ -210,11 +212,11 @@ fun LeaderboardDialog(
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            itemsIndexed(ranking, key = { _, user -> user.id }) { index, user ->
+                            itemsIndexed(ranking, key = { _, user -> user.stableKey }) { index, user ->
                                 FilaRankingItem(
                                     posicion = index + 1,
                                     usuario = user,
-                                    esUsuarioActual = user.id == usuarioActualId
+                                    esUsuarioActual = user.isCurrent(usuarioActualId, usuarioRemotoId)
                                 )
                             }
                         }
@@ -226,7 +228,7 @@ fun LeaderboardDialog(
 }
 
 @Composable
-private fun PodioTop3(top3: List<UsuarioEntity>, usuarioActualId: Int) {
+private fun PodioTop3(top3: List<RankingEntry>, usuarioActualId: Int, usuarioRemotoId: Int?) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -242,7 +244,7 @@ private fun PodioTop3(top3: List<UsuarioEntity>, usuarioActualId: Int) {
                 usuario = top3[1],
                 colorMedalla = Color(0xFFC0C0C0),
                 altura = 105.dp,
-                esUsuarioActual = top3[1].id == usuarioActualId,
+                esUsuarioActual = top3[1].isCurrent(usuarioActualId, usuarioRemotoId),
                 modifier = Modifier.weight(1f)
             )
         } else {
@@ -259,7 +261,7 @@ private fun PodioTop3(top3: List<UsuarioEntity>, usuarioActualId: Int) {
                 usuario = top3[0],
                 colorMedalla = AmberAccent,
                 altura = 125.dp,
-                esUsuarioActual = top3[0].id == usuarioActualId,
+                esUsuarioActual = top3[0].isCurrent(usuarioActualId, usuarioRemotoId),
                 modifier = Modifier.weight(1.15f)
             )
         }
@@ -274,7 +276,7 @@ private fun PodioTop3(top3: List<UsuarioEntity>, usuarioActualId: Int) {
                 usuario = top3[2],
                 colorMedalla = Color(0xFFCD7F32),
                 altura = 95.dp,
-                esUsuarioActual = top3[2].id == usuarioActualId,
+                esUsuarioActual = top3[2].isCurrent(usuarioActualId, usuarioRemotoId),
                 modifier = Modifier.weight(1f)
             )
         } else {
@@ -287,7 +289,7 @@ private fun PodioTop3(top3: List<UsuarioEntity>, usuarioActualId: Int) {
 private fun TarjetaPodio(
     posicion: Int,
     emoji: String,
-    usuario: UsuarioEntity,
+    usuario: RankingEntry,
     colorMedalla: Color,
     altura: androidx.compose.ui.unit.Dp,
     esUsuarioActual: Boolean,
@@ -340,7 +342,7 @@ private fun TarjetaPodio(
 @Composable
 private fun FilaRankingItem(
     posicion: Int,
-    usuario: UsuarioEntity,
+    usuario: RankingEntry,
     esUsuarioActual: Boolean
 ) {
     val fondo = if (esUsuarioActual) AmberAccent.copy(alpha = 0.22f) else Color.Black.copy(alpha = 0.25f)

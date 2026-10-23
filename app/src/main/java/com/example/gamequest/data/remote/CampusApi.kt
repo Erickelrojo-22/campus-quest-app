@@ -53,7 +53,7 @@ class CampusApi(override val tokens: TokenStore) : CampusGateway {
             throw IOException("No se pudo conectar. Comprueba tu conexión y vuelve a intentarlo.", e)
         } finally { connection.disconnect() }
     }
-    override suspend fun me(): UsuarioEntity = usuario(JSONObject(request("auth/me")))
+    override suspend fun me(): RemoteUserDto = usuario(JSONObject(request("auth/me")))
     override suspend fun logout(token: String) { request("auth/logout", "POST", token = token) }
     override suspend fun authenticate(path: String, body: JSONObject): AuthPayload {
         val json = JSONObject(request("auth/$path", "POST", body, token = null))
@@ -69,16 +69,16 @@ class CampusApi(override val tokens: TokenStore) : CampusGateway {
             m.getInt("puntos"), m.getInt("tiempoEstimadoMin"), m.getString("dificultad"),
             m.getInt("puntoInteresId"), m.getString("insigniaNombre"), m.getString("insigniaEmoji"), m.getBoolean("activa"))
     }
-    override suspend fun progreso(id: Int): List<ProgresoMisionEntity> = list(request("usuarios/$id/progreso"), ::progreso)
-    override suspend fun completar(id: Int, mision: Int, codigo: String): ProgresoMisionEntity =
+    override suspend fun progreso(id: Int): List<RemoteProgressDto> = list(request("usuarios/$id/progreso"), ::progreso)
+    override suspend fun completar(id: Int, mision: Int, codigo: String): RemoteProgressDto =
         progreso(JSONObject(request("usuarios/$id/progreso", "POST", JSONObject().put("misionId", mision).put("codigoQr", codigo))))
-    override suspend fun ranking(): List<UsuarioEntity> = list(request("ranking")) { u ->
-        UsuarioEntity(id = u.getInt("id"), nombres = u.getString("nombres"), correoInstitucional = "",
-            carrera = "", contrasenaHash = "", puntajeAcumulado = u.getInt("puntajeAcumulado"), nivel = u.getInt("nivel"))
+    override suspend fun ranking(): List<com.example.gamequest.data.model.RankingEntry> = list(request("ranking")) { u ->
+        com.example.gamequest.data.model.RankingEntry(u.getInt("id"), null, u.getString("nombres"),
+            u.getInt("puntajeAcumulado"), u.getInt("nivel"))
     }
-    private fun usuario(u: JSONObject) = UsuarioEntity(u.getInt("id"), u.getString("nombres"),
-        u.optString("correoInstitucional"), u.optString("carrera"), "", u.getInt("puntajeAcumulado"), u.getInt("nivel"), u.getString("rol"))
-    private fun progreso(p: JSONObject) = ProgresoMisionEntity(p.getInt("id"), p.getInt("usuarioId"),
+    private fun usuario(u: JSONObject) = RemoteUserDto(u.getInt("id"), u.getString("nombres"),
+        u.optString("correoInstitucional"), u.optString("carrera"), u.getInt("puntajeAcumulado"), u.getInt("nivel"), u.getString("rol"))
+    private fun progreso(p: JSONObject) = RemoteProgressDto(p.getInt("id"), p.getInt("usuarioId"),
         p.getInt("misionId"), p.getLong("fechaHora"), p.getInt("puntosObtenidos"), p.getString("codigoQrValidado"), p.getString("estado"))
     private fun <T> list(raw: String, map: (JSONObject) -> T): List<T> {
         val array = JSONArray(raw)

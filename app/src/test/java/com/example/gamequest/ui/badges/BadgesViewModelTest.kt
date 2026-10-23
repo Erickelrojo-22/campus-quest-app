@@ -163,6 +163,6 @@ class BadgesViewModelTest {
         override fun observarUsuario(id: Int): Flow<UsuarioEntity?> = flowOf(usuario)
         override fun observarMisionesConEstado(usuarioId: Int): Flow<List<MisionConEstado>> =
             flowOf(misionesConEstado)
-        override fun observarRanking(): Flow<List<UsuarioEntity>> = flowOf(ranking)
+        override fun observarRanking() = flowOf(ranking.map(com.example.gamequest.data.model.RankingEntry::local))
     }
 }

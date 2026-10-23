@@ -3,6 +3,7 @@ package com.example.gamequest.ui.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gamequest.data.local.entity.UsuarioEntity
+import com.example.gamequest.data.model.RankingEntry
 import com.example.gamequest.data.preferences.UserPreferencesRepository
 import com.example.gamequest.data.repository.CampusRepository
 import com.example.gamequest.data.repository.ProgresoDetallado
@@ -30,7 +31,7 @@ data class ProfileUiState(
     val showAdventurerCard: Boolean = false,
     val showOnboarding: Boolean = false,
     val showRanking: Boolean = false,
-    val ranking: List<UsuarioEntity> = emptyList(),
+    val ranking: List<RankingEntry> = emptyList(),
     val historial: List<ProgresoDetallado> = emptyList(),
     // Estado del editor de avatar
     val editorSpecies: CharacterSpecies = CharacterSpecies.DUDE,
@@ -97,7 +98,7 @@ class ProfileViewModel(
         val usuario: UsuarioEntity?,
         val totalInsignias: Int,
         val historial: List<ProgresoDetallado>,
-        val ranking: List<UsuarioEntity>
+        val ranking: List<RankingEntry>
     )
 
     private val userDataFlow = combine(

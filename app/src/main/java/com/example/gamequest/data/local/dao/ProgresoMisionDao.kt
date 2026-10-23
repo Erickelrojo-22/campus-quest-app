@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ProgresoMisionDao {
 
+    @Query("SELECT * FROM progreso_mision WHERE remoteId = :remoteId LIMIT 1")
+    suspend fun buscarPorRemoteId(remoteId: Int): ProgresoMisionEntity?
+
     @Upsert
     suspend fun guardarRemotos(items: List<ProgresoMisionEntity>)
 

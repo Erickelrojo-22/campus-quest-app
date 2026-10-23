@@ -25,9 +25,8 @@ class AuthRepository(private val usuarioDao: UsuarioDao, private val api: Campus
     val minimumPasswordLength: Int get() = if (api != null) 8 else MIN_CONTRASENA_LENGTH
 
     private suspend fun persistRemote(payload: AuthPayload): AuthResult = try {
-        val user = payload.user
-        usuarioDao.guardarRemotos(listOf(user))
-        api!!.tokens.save(payload.accessToken)
+        val user = usuarioDao.guardarUsuarioRemoto(payload.user.toLocal())
+        api!!.tokens.save(payload.accessToken, user.id)
         AuthResult.Exito(user)
     } catch (e: CancellationException) { throw e
     } catch (e: Exception) { AuthResult.Error(e.message ?: "No se pudo guardar la sesión.") }
@@ -143,12 +142,12 @@ class AuthRepository(private val usuarioDao: UsuarioDao, private val api: Campus
             }
             // Una cuenta con contraseña (registro institucional) nunca debe abrirse solo con el
             // nombre: el modo de prueba solo reutiliza perfiles de prueba (sin credenciales).
-            if (it.contrasenaHash.isNotBlank() || it.correoInstitucional.isNotBlank()) {
+            if (it.remoteId != null || it.contrasenaHash.isNotBlank() || it.correoInstitucional.isNotBlank()) {
                 return AuthResult.Error(
                     "Ese nombre pertenece a una cuenta estudiantil. Inicia sesión desde la pestaña Estudiantil."
                 )
             }
-            api?.tokens?.save("offline-visitor-${it.id}")
+            api?.tokens?.save("offline-visitor-${it.id}", it.id)
             return AuthResult.Exito(it)
         }
 
@@ -160,7 +159,7 @@ class AuthRepository(private val usuarioDao: UsuarioDao, private val api: Campus
             rol = Rol.ESTUDIANTE
         )
         val id = usuarioDao.insertar(nuevo)
-        api?.tokens?.save("offline-visitor-$id")
+        api?.tokens?.save("offline-visitor-$id", id.toInt())
         return AuthResult.Exito(nuevo.copy(id = id.toInt()))
     }
 }

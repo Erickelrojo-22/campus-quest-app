@@ -24,7 +24,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         MisionEntity::class,
         ProgresoMisionEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -43,7 +43,7 @@ abstract class AppDatabase : RoomDatabase() {
         /** Keep legacy accounts and their progress intact in campus_quest.db. */
         fun getRemoteInstance(context: Context): AppDatabase = REMOTE_INSTANCE ?: synchronized(this) {
             REMOTE_INSTANCE ?: Room.databaseBuilder(context.applicationContext, AppDatabase::class.java,
-                "campus_quest_remote.db").addMigrations(MIGRATION_1_2).build().also { REMOTE_INSTANCE = it }
+                "campus_quest_remote.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { REMOTE_INSTANCE = it }
         }
 
         fun getInstance(context: Context, scope: CoroutineScope): AppDatabase {
@@ -52,7 +52,7 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "campus_quest.db"
-                ).addMigrations(MIGRATION_1_2).addCallback(object : Callback() {
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).addCallback(object : Callback() {
                     override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
                         super.onCreate(db)
                         scope.launch {
@@ -74,7 +74,16 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        private val MIGRATION_1_2 = object : Migration(1, 2) {
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE usuario ADD COLUMN remoteId INTEGER")
+                db.execSQL("ALTER TABLE progreso_mision ADD COLUMN remoteId INTEGER")
+                db.execSQL("CREATE UNIQUE INDEX index_usuario_remoteId ON usuario(remoteId)")
+                db.execSQL("CREATE UNIQUE INDEX index_progreso_mision_remoteId ON progreso_mision(remoteId)")
+            }
+        }
+
+        val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE mision ADD COLUMN activa INTEGER NOT NULL DEFAULT 1")
                 db.execSQL(

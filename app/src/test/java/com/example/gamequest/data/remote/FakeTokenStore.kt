@@ -3,14 +3,15 @@ package com.example.gamequest.data.remote
 import java.io.IOException
 
 class FakeTokenStore(initial: String? = null) : TokenStore {
-    override var token: String? = initial
+    override var snapshot = SessionSnapshot(initial)
         private set
     val saved = mutableListOf<String>()
     var failRemoteSave = false
-    override fun save(value: String) {
+    override fun save(value: String, localUserId: Int?) {
         if (failRemoteSave && !value.startsWith("offline-")) throw IOException("disk unavailable")
         saved += value
-        token = value
+        snapshot = SessionSnapshot(value, localUserId)
     }
-    override fun clear() { token = null }
+    override fun clearIfCurrent(expectedToken: String): Boolean { if (token != expectedToken) return false; clear(); return true }
+    override fun clear() { snapshot = SessionSnapshot(null) }
 }

@@ -1,5 +1,6 @@
 package com.example.gamequest.data.repository
 
+import kotlinx.coroutines.flow.first
 import com.example.gamequest.data.local.dao.UsuarioDao
 import com.example.gamequest.data.local.entity.Rol
 import com.example.gamequest.data.local.entity.UsuarioEntity
@@ -191,7 +192,8 @@ class AuthRepositoryTest {
             return usuarios.find { it.nombres.equals(nombre.trim(), ignoreCase = true) }
         }
 
-        override suspend fun buscarPorId(id: Int): UsuarioEntity? {
+        override suspend fun buscarPorRemoteId(remoteId: Int): UsuarioEntity? = observarRanking().first().firstOrNull { it.remoteId == remoteId }
+    override suspend fun buscarPorId(id: Int): UsuarioEntity? {
             return usuarios.find { it.id == id }
         }
 

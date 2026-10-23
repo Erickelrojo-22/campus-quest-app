@@ -411,6 +411,7 @@ fun ProfileScreen(
         LeaderboardDialog(
             ranking         = uiState.ranking,
             usuarioActualId = usuario?.id ?: 0,
+            usuarioRemotoId = usuario?.remoteId,
             onDismiss       = viewModel::cerrarRanking
         )
     }

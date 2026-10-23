@@ -14,7 +14,7 @@ class AuthRepositoryRemoteTest {
     private val tokens = FakeTokenStore("previous-session")
     private val gateway = FakeCampusGateway(tokens)
     private val repository = AuthRepository(dao, gateway)
-    private val remote = UsuarioEntity(51, "Remote", "student@live.uleam.edu.ec", "Software", "")
+    private val remote = RemoteUserDto(51, "Remote", "student@live.uleam.edu.ec", "Software", 0, 1, "estudiante")
 
     @Test fun visitante_rechazoHttp_noCreaSesionLocal() = runTest {
         for (status in listOf(400, 401, 403, 422, 429, 500)) {
@@ -46,9 +46,10 @@ class AuthRepositoryRemoteTest {
     @Test fun visitante_exitoRemoto_noCreaVisitante() = runTest {
         gateway.authentication = { _, _ -> AuthPayload("real-server-token", remote) }
         val result = repository.entrarConNombre("Visitor", false) as AuthResult.Exito
-        assertEquals(remote, result.usuario)
+        assertEquals(remote.remoteId, result.usuario.remoteId)
+        assertEquals(result.usuario.id, tokens.snapshot.localUserId)
         assertEquals(listOf("real-server-token"), tokens.saved)
-        assertEquals(listOf(remote), dao.users)
+        assertEquals(listOf(result.usuario), dao.users)
     }
     @Test fun persistenciaRoomFallida_noPermiteFallback() = runTest {
         gateway.authentication = { _, _ -> AuthPayload("real-server-token", remote) }
