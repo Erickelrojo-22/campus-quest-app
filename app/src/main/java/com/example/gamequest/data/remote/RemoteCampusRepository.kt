@@ -10,17 +10,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.io.IOException
 
 /**
  * Solo una interrupción real de transporte permite continuar con la copia local.
  * Los HTTP 4xx/5xx representan una decisión del servidor y nunca deben convertirse
  * en puntos locales, especialmente en validaciones QR rechazadas o sesiones vencidas.
  */
-internal fun Throwable.permiteFallbackOffline(): Boolean = this is IOException && this !is ApiException
-
 /** Room is a cache; only the API awards points or changes the shared catalog. */
-class RemoteCampusRepository(private val db: AppDatabase, private val api: CampusApi) : CampusRepository(
+class RemoteCampusRepository(private val db: AppDatabase, private val api: CampusGateway) : CampusRepository(
     database = db, puntoDao = db.puntoInteresDao(), misionDao = db.misionDao(),
     progresoDao = db.progresoMisionDao(), usuarioDao = db.usuarioDao()
 ) {

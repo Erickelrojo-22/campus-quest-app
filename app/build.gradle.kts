@@ -67,6 +67,7 @@ dependencies {
     implementation(libs.zxing.core)
     implementation(libs.kotlinx.coroutines.android)
     testImplementation(libs.junit)
+    testImplementation("org.json:json:20250517")
     testImplementation(libs.kotlinx.coroutines.test)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))

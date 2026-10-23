@@ -4,7 +4,9 @@ import com.example.gamequest.data.local.dao.UsuarioDao
 import com.example.gamequest.data.local.entity.Rol
 import com.example.gamequest.data.local.entity.UsuarioEntity
 import com.example.gamequest.util.PasswordHasher
-import com.example.gamequest.data.remote.CampusApi
+import com.example.gamequest.data.remote.CampusGateway
+import com.example.gamequest.data.remote.AuthPayload
+import com.example.gamequest.data.remote.permiteFallbackOffline
 import kotlinx.coroutines.CancellationException
 import org.json.JSONObject
 
@@ -18,14 +20,20 @@ sealed class AuthResult {
  * Acceso simplificado: el usuario solo escribe su nombre para entrar.
  * Si el nombre ya existe se reutiliza la cuenta (con su progreso); si no, se crea una nueva.
  */
-class AuthRepository(private val usuarioDao: UsuarioDao, private val api: CampusApi? = null) {
+class AuthRepository(private val usuarioDao: UsuarioDao, private val api: CampusGateway? = null) {
 
     val minimumPasswordLength: Int get() = if (api != null) 8 else MIN_CONTRASENA_LENGTH
 
-    private suspend fun remote(path: String, body: JSONObject): AuthResult = try {
-        val user = api!!.authenticate(path, body)
+    private suspend fun persistRemote(payload: AuthPayload): AuthResult = try {
+        val user = payload.user
         usuarioDao.guardarRemotos(listOf(user))
+        api!!.tokens.save(payload.accessToken)
         AuthResult.Exito(user)
+    } catch (e: CancellationException) { throw e
+    } catch (e: Exception) { AuthResult.Error(e.message ?: "No se pudo guardar la sesión.") }
+
+    private suspend fun remote(path: String, body: JSONObject): AuthResult = try {
+        persistRemote(api!!.authenticate(path, body))
     } catch (e: CancellationException) { throw e
     } catch (e: Exception) { AuthResult.Error(e.message ?: "No se pudo conectar con el servidor.") }
 
@@ -115,12 +123,18 @@ class AuthRepository(private val usuarioDao: UsuarioDao, private val api: Campus
         if (nombreNormalizado.isBlank()) return AuthResult.Error("Escribe tu nombre para continuar.")
 
         if (api != null) {
-            val remoteResult = remote("visitor", JSONObject().put("nombres", nombreNormalizado))
-            if (remoteResult is AuthResult.Exito) {
-                return remoteResult
+            val payload = try {
+                api.authenticate("visitor", JSONObject().put("nombres", nombreNormalizado))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                if (!e.permiteFallbackOffline()) {
+                    return AuthResult.Error(e.message ?: "No se pudo iniciar la sesión de visitante.")
+                }
+                null
             }
-            // Si la conexión remota falla (timeout, sin internet, error de servidor),
-            // continuamos con el fallback seguro a Room local para garantizar el funcionamiento offline (RF-20).
+            // Persistence is outside the transport catch: a disk error must not grant offline access.
+            if (payload != null) return persistRemote(payload)
         }
 
         usuarioDao.buscarPorNombre(nombreNormalizado)?.let {

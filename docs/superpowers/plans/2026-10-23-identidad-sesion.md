@@ -55,7 +55,7 @@ Los archivos ya existentes se encuentran en los paquetes vistos durante la revis
 
 ---
 
-### Tarea 1: Preservar el rechazo del servidor en el acceso de visitante
+### Task 1: Preservar el rechazo del servidor en el acceso de visitante
 
 **Files:** crear `src/data/remote/CampusGateway.kt`, `TokenStore.kt`, `OfflineFallbackPolicy.kt`; modificar `CampusApi.kt`, `SessionTokenStore.kt`, `RemoteCampusRepository.kt`, `src/data/repository/AuthRepository.kt`, `AppContainer.kt`; modificar `test/data/repository/AuthRepositoryTest.kt`, `test/data/remote/OfflineFallbackPolicyTest.kt`; crear `test/data/remote/FakeCampusGateway.kt` y `FakeTokenStore.kt`.
 
@@ -80,7 +80,7 @@ Los archivos ya existentes se encuentran en los paquetes vistos durante la revis
 - [ ] Repetir las pruebas dirigidas y ejecutar `:app:compileDebugKotlin`; todos los casos pasan, se conserva la cancelación y no hay cambios de conducta del login institucional.
 - [ ] Revisar el diff y crear un commit: `fix: respect visitor authentication rejections`.
 
-### Tarea 2: Separar claves locales y remotas con migración conservadora
+### Task 2: Separar claves locales y remotas con migración conservadora
 
 **Files:** crear `src/data/remote/RemoteModels.kt`, `LocalIdentityStore.kt`, `src/data/model/RankingEntry.kt`; modificar `src/data/local/entity/UsuarioEntity.kt`, `ProgresoMisionEntity.kt`, `src/data/local/dao/UsuarioDao.kt`, `ProgresoMisionDao.kt`, `src/data/local/AppDatabase.kt`, API/gateway, AuthRepository, RemoteCampusRepository, CampusRepository, TokenStore/SessionTokenStore y AppContainer. Adaptar `src/ui/profile/{ProfileViewModel,ProfileScreen,LeaderboardDialog}.kt` y los fakes afectados. Crear `androidTest/data/local/IdentityMigrationTest.kt`, `androidTest/data/remote/LocalIdentityStoreTest.kt`, `test/data/remote/RemoteIdentityRoutingTest.kt`.
 
@@ -114,7 +114,7 @@ Los archivos ya existentes se encuentran en los paquetes vistos durante la revis
 - [ ] Ejecutar `:app:testDebugUnitTest --tests '*RemoteIdentityRoutingTest' --tests '*AuthRepositoryTest' --tests '*ProfileViewModelTest'`, `:app:compileDebugAndroidTestKotlin` y las pruebas instrumentadas `IdentityMigrationTest`/`LocalIdentityStoreTest`. Esperar 0 fallos y ninguna pérdida o reasignación de filas del fixture.
 - [ ] Crear un commit: `fix: isolate local and remote identities`.
 
-### Tarea 3: Resolver y publicar el estado de sesión
+### Task 3: Resolver y publicar el estado de sesión
 
 **Files:** crear `src/data/session/SessionState.kt`, `SessionCoordinator.kt`, `SessionCommitter.kt` y `SessionAccess.kt`; modificar `src/ui/common/SessionViewModel.kt`, TokenStore/SessionTokenStore, RemoteCampusRepository, AuthRepository, CampusApi y AppContainer. Crear `test/data/session/SessionCoordinatorTest.kt` y ampliar fakes.
 
@@ -134,7 +134,7 @@ Los archivos ya existentes se encuentran en los paquetes vistos durante la revis
 - [ ] Ejecutar `:app:testDebugUnitTest --tests '*SessionCoordinatorTest' --tests '*AuthViewModelTest' --tests '*RegisterViewModelTest'` y `:app:compileDebugKotlin`; todos pasan.
 - [ ] Crear un commit: `fix: make session restoration explicit`.
 
-### Tarea 4: Navegar según sesión y comprobar el NavHost real
+### Task 4: Navegar según sesión y comprobar el NavHost real
 
 **Files:** modificar `src/ui/navigation/CampusQuestNavHost.kt`, `src/ui/splash/SplashScreen.kt`, `src/ui/common/SessionViewModel.kt`, AppContainer y `app/build.gradle.kts`; crear `src/CampusQuestDependencies.kt`, `androidTest/SessionNavigationTest.kt` y `androidTest/FakeCampusQuestDependencies.kt`; conservar `MissionsNavigationTest.kt` funcionando.
 
@@ -150,7 +150,7 @@ Los archivos ya existentes se encuentran en los paquetes vistos durante la revis
 - [ ] Ejecutar `:app:compileDebugAndroidTestKotlin`, las instrumentadas `SessionNavigationTest` y `MissionsNavigationTest`; con MAIN o detalle abierto, un 401 muestra login y Atrás no muestra datos privados.
 - [ ] Crear un commit: `fix: drive navigation from resolved session`.
 
-### Tarea 5: Validación integrada y entrega
+### Task 5: Validación integrada y entrega
 
 **Files:** modificar `.github/workflows/android-ci.yml`, `docs/SECURITY-E2E.md`, `docs/ISSUES.md`; añadir evidencia de QA en un archivo dentro de `docs/`. Reutilizar los tests de tareas 1–4, sin crear otra suite que copie su lógica.
 

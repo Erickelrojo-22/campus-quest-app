@@ -13,8 +13,8 @@ import java.net.URL
 class ApiException(val status: Int, message: String) : IOException(message)
 
 /** HTTPS requests run off the main thread and never retry a mutation automatically. */
-class CampusApi(val tokens: SessionTokenStore) {
-    var onUnauthorized: () -> Unit = {}
+class CampusApi(override val tokens: TokenStore) : CampusGateway {
+    override var onUnauthorized: () -> Unit = {}
     suspend fun request(path: String, method: String = "GET", body: JSONObject? = null,
                         token: String? = tokens.token): String = withContext(Dispatchers.IO) {
         val connection = URL(BuildConfig.API_BASE_URL + path).openConnection() as HttpURLConnection
@@ -53,27 +53,26 @@ class CampusApi(val tokens: SessionTokenStore) {
             throw IOException("No se pudo conectar. Comprueba tu conexión y vuelve a intentarlo.", e)
         } finally { connection.disconnect() }
     }
-    suspend fun me(): UsuarioEntity = usuario(JSONObject(request("auth/me")))
-    suspend fun logout(token: String) { request("auth/logout", "POST", token = token) }
-    suspend fun authenticate(path: String, body: JSONObject): UsuarioEntity {
+    override suspend fun me(): UsuarioEntity = usuario(JSONObject(request("auth/me")))
+    override suspend fun logout(token: String) { request("auth/logout", "POST", token = token) }
+    override suspend fun authenticate(path: String, body: JSONObject): AuthPayload {
         val json = JSONObject(request("auth/$path", "POST", body, token = null))
-        tokens.save(json.getString("accessToken"))
-        return usuario(json.getJSONObject("usuario"))
+        return AuthPayload(json.getString("accessToken"), usuario(json.getJSONObject("usuario")))
     }
-    suspend fun puntos(): List<PuntoInteresEntity> = list(request("puntos")) { p ->
+    override suspend fun puntos(): List<PuntoInteresEntity> = list(request("puntos")) { p ->
         PuntoInteresEntity(p.getInt("id"), p.getString("nombre"), p.getString("categoria"),
             p.getString("descripcion"), p.getString("horarioAtencion"), p.getString("tramites"),
             p.getDouble("posX").toFloat(), p.getDouble("posY").toFloat(), p.getString("codigoQr"))
     }
-    suspend fun misiones(): List<MisionEntity> = list(request("catalogo")) { m ->
+    override suspend fun misiones(): List<MisionEntity> = list(request("catalogo")) { m ->
         MisionEntity(m.getInt("id"), m.getString("titulo"), m.getString("descripcionPista"),
             m.getInt("puntos"), m.getInt("tiempoEstimadoMin"), m.getString("dificultad"),
             m.getInt("puntoInteresId"), m.getString("insigniaNombre"), m.getString("insigniaEmoji"), m.getBoolean("activa"))
     }
-    suspend fun progreso(id: Int): List<ProgresoMisionEntity> = list(request("usuarios/$id/progreso"), ::progreso)
-    suspend fun completar(id: Int, mision: Int, codigo: String): ProgresoMisionEntity =
+    override suspend fun progreso(id: Int): List<ProgresoMisionEntity> = list(request("usuarios/$id/progreso"), ::progreso)
+    override suspend fun completar(id: Int, mision: Int, codigo: String): ProgresoMisionEntity =
         progreso(JSONObject(request("usuarios/$id/progreso", "POST", JSONObject().put("misionId", mision).put("codigoQr", codigo))))
-    suspend fun ranking(): List<UsuarioEntity> = list(request("ranking")) { u ->
+    override suspend fun ranking(): List<UsuarioEntity> = list(request("ranking")) { u ->
         UsuarioEntity(id = u.getInt("id"), nombres = u.getString("nombres"), correoInstitucional = "",
             carrera = "", contrasenaHash = "", puntajeAcumulado = u.getInt("puntajeAcumulado"), nivel = u.getInt("nivel"))
     }
