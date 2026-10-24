@@ -234,7 +234,10 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                                 factory = GenericViewModelFactory { MissionsViewModel(container.campusRepository, usuarioId) }
                             )
                             MissionsScreen(
-                                viewModel = missionsViewModel,
+                                uiState = missionsViewModel.uiState.collectAsStateWithLifecycle().value,
+                                onBusquedaChange = missionsViewModel::onBusquedaChange,
+                                onFiltroChange = missionsViewModel::onFiltroChange,
+                                onLimpiarBusqueda = missionsViewModel::limpiarBusqueda,
                                 onMisionClick = { misionId ->
                                     container.soundEffectManager.play(com.example.gamequest.util.SoundEffect.CLICK)
                                     navController.navigate(Routes.missionDetail(misionId))

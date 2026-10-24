@@ -59,7 +59,7 @@ open class CampusRepository(
     private val progresoDao: ProgresoMisionDao? = null,
     private val usuarioDao: UsuarioDao? = null,
     private val localCrudAuthorizer: LocalCrudAuthorizer? = null
-) {
+) : CampusDataRepository {
 
     protected open suspend fun <T> runInTransaction(block: suspend () -> T): T {
         return database?.withTransaction { block() } ?: block()
@@ -68,14 +68,14 @@ open class CampusRepository(
     open fun observarPuntos(): Flow<List<PuntoInteresEntity>> =
         puntoDao?.observarTodos() ?: flowOf(emptyList())
 
-    open fun observarUsuario(id: Int): Flow<UsuarioEntity?> =
+    override fun observarUsuario(id: Int): Flow<UsuarioEntity?> =
         usuarioDao?.observarPorId(id) ?: flowOf(null)
 
-    open fun observarRanking(): Flow<List<RankingEntry>> =
+    override fun observarRanking(): Flow<List<RankingEntry>> =
         usuarioDao?.observarRanking()?.map { users -> users.map(RankingEntry::local) } ?: flowOf(emptyList())
 
     /** Lista de misiones combinada con su punto de interés y si el usuario ya la completó. */
-    open fun observarMisionesConEstado(usuarioId: Int): Flow<List<MisionConEstado>> {
+    override fun observarMisionesConEstado(usuarioId: Int): Flow<List<MisionConEstado>> {
         val misionesFlow = misionDao?.observarTodas() ?: flowOf(emptyList())
         val puntosFlow = puntoDao?.observarTodos() ?: flowOf(emptyList())
         val completadasFlow = progresoDao?.observarMisionesCompletadasIds(usuarioId) ?: flowOf(emptyList())
@@ -94,7 +94,7 @@ open class CampusRepository(
     }
 
     /** RF-16: listado de misiones con su punto de interés, para la pantalla de gestión (CRUD). */
-    open fun observarMisionesConPunto(): Flow<List<Pair<MisionEntity, PuntoInteresEntity>>> {
+    override fun observarMisionesConPunto(): Flow<List<Pair<MisionEntity, PuntoInteresEntity>>> {
         val misionesFlow = misionDao?.observarTodas() ?: flowOf(emptyList())
         val puntosFlow = puntoDao?.observarTodos() ?: flowOf(emptyList())
 
@@ -107,25 +107,25 @@ open class CampusRepository(
         }
     }
 
-    open suspend fun buscarPuntoPorId(id: Int): PuntoInteresEntity? = puntoDao?.buscarPorId(id)
+    override suspend fun buscarPuntoPorId(id: Int): PuntoInteresEntity? = puntoDao?.buscarPorId(id)
 
-    open suspend fun buscarMisionPorId(id: Int): MisionEntity? = misionDao?.buscarPorId(id)
+    override suspend fun buscarMisionPorId(id: Int): MisionEntity? = misionDao?.buscarPorId(id)
 
     /** Misión(es) asociada(s) a un punto de interés (relación 1 a 1 en esta etapa). */
-    open suspend fun buscarMisionPorPuntoId(puntoId: Int): MisionEntity? =
+    override suspend fun buscarMisionPorPuntoId(puntoId: Int): MisionEntity? =
         misionDao?.buscarPorPunto(puntoId)?.firstOrNull()
 
-    open fun observarMisionPorId(id: Int): Flow<MisionEntity?> =
+    override fun observarMisionPorId(id: Int): Flow<MisionEntity?> =
         misionDao?.observarPorId(id) ?: flowOf(null)
 
-    open fun observarPuntoPorId(id: Int): Flow<PuntoInteresEntity?> =
+    override fun observarPuntoPorId(id: Int): Flow<PuntoInteresEntity?> =
         puntoDao?.observarPorId(id) ?: flowOf(null)
 
-    open fun observarTotalInsignias(usuarioId: Int): Flow<Int> =
+    override fun observarTotalInsignias(usuarioId: Int): Flow<Int> =
         progresoDao?.observarTotalCompletadas(usuarioId) ?: flowOf(0)
 
     /** RF-15 / Timeline: Historial de actividades y puntos ganados por el usuario en orden cronológico. */
-    open fun observarHistorialProgreso(usuarioId: Int): Flow<List<ProgresoDetallado>> {
+    override fun observarHistorialProgreso(usuarioId: Int): Flow<List<ProgresoDetallado>> {
         val progresoFlow = progresoDao?.observarPorUsuario(usuarioId) ?: flowOf(emptyList())
         val misionesFlow = misionDao?.observarHistorialCatalogo() ?: flowOf(emptyList())
         val puntosFlow = puntoDao?.observarTodos() ?: flowOf(emptyList())
