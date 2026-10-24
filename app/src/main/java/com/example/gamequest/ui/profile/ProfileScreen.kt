@@ -64,24 +64,34 @@ fun ProfileScreen(
     val totalInsignias  = uiState.totalInsignias
     val spriteAnim      = uiState.spriteAnim
 
-    ContenidoAdaptable(modifier = Modifier.fillMaxSize()) {
-        Column(
-            Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-        ) {
+    // En horizontal el perfil es una vista de información, no un formulario:
+    // aprovecha el ancho útil igual que Insignias y conserva el centrado.
+    ContenidoAdaptable(modifier = Modifier.fillMaxSize(), anchoMaximo = 900.dp) {
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            // En teléfonos bajos el contenido sigue siendo desplazable, pero el resumen
+            // superior ocupa menos alto para dejar visible la primera acción.
+            val modoCompacto = maxHeight < 600.dp
+            val altoAvatar = if (modoCompacto) 72.dp else 96.dp
+            val altoSprite = if (modoCompacto) 56.dp else 72.dp
+            val rellenoVertical = if (modoCompacto) 12.dp else 24.dp
+
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+            ) {
             // ── Header con sprite ────────────────────────────────────────
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.primary)
-                    .padding(vertical = 24.dp, horizontal = 16.dp),
+                    .padding(vertical = rellenoVertical, horizontal = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 // Sprite animado — tap para animar Walk
                 Box(
                     modifier = Modifier
-                        .size(96.dp)
+                        .size(altoAvatar)
                         .clip(CircleShape)
                         .background(Color.White.copy(alpha = 0.15f))
                         .clickable(role = Role.Button) {
@@ -98,11 +108,11 @@ fun ProfileScreen(
                         animation      = spriteAnim,
                         primaryColor   = primaryColor,
                         secondaryColor = secondaryColor,
-                        size           = 72.dp,
+                        size           = altoSprite,
                     )
                 }
 
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(if (modoCompacto) 6.dp else 10.dp))
                 Text(
                     usuario?.nombres ?: "",
                     color      = Color.White,
@@ -120,7 +130,7 @@ fun ProfileScreen(
                     Text("Tutor del programa de bienvenida", color = Color.White.copy(alpha = 0.85f), style = MaterialTheme.typography.bodySmall)
                 }
 
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(if (modoCompacto) 6.dp else 10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Surface(color = Color.White.copy(alpha = 0.2f), shape = RoundedCornerShape(4.dp)) {
                         Text(
@@ -220,6 +230,7 @@ fun ProfileScreen(
             )
 
             Spacer(Modifier.height(16.dp))
+            }
         }
     }
 

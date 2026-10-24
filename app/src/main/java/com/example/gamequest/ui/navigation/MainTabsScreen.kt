@@ -12,9 +12,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.background
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -115,7 +118,20 @@ fun MainTabsScreen(
         }
 
         if (usarRiel) {
-            Row(Modifier.fillMaxSize()) {
+            // En horizontal también hay cámaras perforadas y barras laterales. El riel y
+            // las páginas se mantienen fuera de esas áreas sin imponer un tamaño fijo.
+            Row(
+                Modifier
+                    .fillMaxSize()
+                    // El color se pinta antes del padding: también cubre la franja de la
+                    // cámara y los márgenes laterales en teléfonos horizontales.
+                    .background(MaterialTheme.colorScheme.primary)
+                    .windowInsetsPadding(
+                        WindowInsets.safeDrawing.only(
+                            WindowInsetsSides.Top + WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
+                        )
+                    )
+            ) {
                 CampusNavigationRail(selectedIndex = seleccion, onSelect = irATab)
                 // El riel ya respeta el inset lateral: evita que cada pantalla lo duplique.
                 Box(
@@ -130,9 +146,16 @@ fun MainTabsScreen(
         } else {
             Scaffold(
                 bottomBar = { CampusBottomBar(selectedIndex = seleccion, onSelect = irATab) },
-                // Cada pantalla gestiona su inset superior (algunas pintan su barra bajo la
-                // barra de estado); aquí solo reservamos el alto de la barra inferior.
-                contentWindowInsets = WindowInsets(0, 0, 0, 0)
+                // El relleno del área segura prolonga visualmente los encabezados de las
+                // pestañas en vez de dejar una franja del color de fondo bajo la cámara.
+                containerColor = MaterialTheme.colorScheme.primary,
+                // La actividad dibuja borde a borde. Reservamos cámara/notch y bordes
+                // laterales aquí, una sola vez, para que todas las pestañas (incluidas las
+                // que no usan Scaffold) comiencen en una zona segura. La barra inferior ya
+                // administra su propio inset de navegación.
+                contentWindowInsets = WindowInsets.safeDrawing.only(
+                    WindowInsetsSides.Top + WindowInsetsSides.Horizontal
+                )
             ) { padding ->
                 Box(
                     Modifier
