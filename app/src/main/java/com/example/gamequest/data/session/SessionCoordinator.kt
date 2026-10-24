@@ -17,7 +17,7 @@ class SessionCoordinator(
     private val cachedUser: suspend (Int) -> UsuarioEntity?,
     private val revoke: suspend (String) -> Unit,
     private val scope: CoroutineScope
-) : SessionCommitter {
+) : SessionCommitter, LocalAccountSessionCommitter {
     private val lock = Mutex()
     private var generation = 0L
     private var syncJob: Job? = null
@@ -29,7 +29,12 @@ class SessionCoordinator(
             val user = requireNotNull(cachedUser(localUserId)) { "No existe la cuenta local." }
             require(user.id == localUserId) { "Cuenta local inconsistente." }
             val local = token.startsWith("offline-")
-            require(if (local) validVisitor(user, token) else user.remoteId != null) { "Identidad de sesión inválida." }
+            val localAccount = token.startsWith("local-account-")
+            require(when {
+                local -> validVisitor(user, token)
+                localAccount -> validLocalAccount(user, token)
+                else -> user.remoteId != null
+            }) { "Identidad de sesión inválida." }
             generation++
             syncJob?.cancel()
             // A failed preference write leaves no usable binding for the new session.
@@ -46,10 +51,13 @@ class SessionCoordinator(
                 mutableState.value = SessionState.RecoveryRequired("No se pudo guardar la sesión.")
                 throw e
             }
-            mutableState.value = SessionState.Authenticated(localUserId, if(local) SessionSource.LOCAL_VISITOR else SessionSource.REMOTE, local)
-            if (!local) startSync(generation, tokens.snapshot, localUserId)
+            mutableState.value = SessionState.Authenticated(localUserId, sourceFor(token), local)
+            if (!local && !localAccount) startSync(generation, tokens.snapshot, localUserId)
         }
     }
+
+    override suspend fun commitLocalAccount(localUserId: Int) =
+        commitAuthenticated("local-account-${java.util.UUID.randomUUID()}", localUserId)
 
     suspend fun acceptLogin(localUserId: Int) = lock.withLock {
         val current = mutableState.value as? SessionState.Authenticated
@@ -57,10 +65,14 @@ class SessionCoordinator(
         if (current?.localUserId == localUserId) return@withLock
         val token = requireNotNull(tokens.token)
         val user = requireNotNull(cachedUser(localUserId))
-        require(if(token.startsWith("offline-")) validVisitor(user,token) else user.remoteId != null)
+        require(when {
+            token.startsWith("offline-") -> validVisitor(user, token)
+            token.startsWith("local-account-") -> validLocalAccount(user, token)
+            else -> user.remoteId != null
+        })
         generation++
         preferences.setUsuarioActivoId(localUserId)
-        mutableState.value = SessionState.Authenticated(localUserId, if(token.startsWith("offline-")) SessionSource.LOCAL_VISITOR else SessionSource.REMOTE, token.startsWith("offline-"))
+        mutableState.value = SessionState.Authenticated(localUserId, sourceFor(token), token.startsWith("offline-"))
     }
 
     suspend fun restore() {
@@ -112,12 +124,17 @@ class SessionCoordinator(
             try {
                 val token = requireNotNull(snapshot.token)
                 val local = token.startsWith("offline-")
+                val localAccount = token.startsWith("local-account-")
                 require(snapshot.localUserId == null || snapshot.localUserId == user.id) { "El v\u00ednculo local no coincide." }
-                require(if(local) validVisitor(user,token) else user.remoteId != null) { "Identidad inv\u00e1lida." }
+                require(when {
+                    local -> validVisitor(user, token)
+                    localAccount -> validLocalAccount(user, token)
+                    else -> user.remoteId != null
+                }) { "Identidad inv\u00e1lida." }
                 if (snapshot.localUserId == null) tokens.save(token,user.id)
                 preferences.setUsuarioActivoId(user.id)
-                mutableState.value = SessionState.Authenticated(user.id,if(local) SessionSource.LOCAL_VISITOR else SessionSource.REMOTE,local)
-                if (!local) startSync(version,tokens.snapshot,user.id)
+                mutableState.value = SessionState.Authenticated(user.id, sourceFor(token), local)
+                if (!local && !localAccount) startSync(version,tokens.snapshot,user.id)
             } catch (e: CancellationException) { throw e
             } catch (_: Exception) { mutableState.value = SessionState.RecoveryRequired("No se pudo guardar la sesi\u00f3n. Reintenta.") }
         }
@@ -172,7 +189,7 @@ class SessionCoordinator(
             } catch (_: Exception) { mutableState.value = SessionState.RecoveryRequired("No se pudo cerrar la sesi\u00f3n local. Reintenta.") }
             token
         }
-        if (captured != null && !captured.startsWith("offline-")) {
+        if (captured != null && !captured.startsWith("offline-") && !captured.startsWith("local-account-")) {
             try { revoke(captured)
             } catch (e: CancellationException) { throw e
             } catch (_: Exception) {
@@ -186,4 +203,14 @@ class SessionCoordinator(
 
     private fun validVisitor(user: UsuarioEntity, token: String) =
         token == "offline-visitor-${user.id}" && user.remoteId == null && user.contrasenaHash.isBlank() && user.correoInstitucional.isBlank() && user.rol == Rol.ESTUDIANTE
+
+    private fun validLocalAccount(user: UsuarioEntity, token: String) =
+        token.startsWith("local-account-") && user.remoteId == null &&
+            user.contrasenaHash.isNotBlank() && user.correoInstitucional.isNotBlank()
+
+    private fun sourceFor(token: String) = when {
+        token.startsWith("offline-") -> SessionSource.LOCAL_VISITOR
+        token.startsWith("local-account-") -> SessionSource.LOCAL_ACCOUNT
+        else -> SessionSource.REMOTE
+    }
 }
