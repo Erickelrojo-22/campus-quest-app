@@ -1,6 +1,7 @@
 package com.example.gamequest.ui.profile
 
 import android.content.Context
+import android.content.ClipData
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
@@ -15,15 +16,16 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -40,6 +42,7 @@ import com.example.gamequest.util.AvatarColor
 import com.example.gamequest.util.CharacterSpecies
 import com.example.gamequest.util.LocalSoundManager
 import com.example.gamequest.util.SoundEffect
+import kotlinx.coroutines.launch
 
 private fun obtenerRangoRpg(nivel: Int): String = when {
     nivel >= 7 -> "🏆 Maestro del Campus"
@@ -82,7 +85,8 @@ fun AdventurerCardDialog(
 ) {
     if (usuario == null) return
     val context = LocalContext.current
-    val clipboardManager = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
     val soundManager = LocalSoundManager.current
     val haptic = LocalHapticFeedback.current
     val rango = obtenerRangoRpg(usuario.nivel)
@@ -184,7 +188,11 @@ fun AdventurerCardDialog(
                                 modifier = Modifier.clickable {
                                     soundManager?.play(SoundEffect.CLICK)
                                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    clipboardManager.setText(AnnotatedString(carnetId))
+                                    scope.launch {
+                                        clipboard.setClipEntry(
+                                            ClipEntry(ClipData.newPlainText("Carné de aventurero", carnetId))
+                                        )
+                                    }
                                     Toast.makeText(context, "ID copiado: $carnetId", Toast.LENGTH_SHORT).show()
                                 }
                             ) {
