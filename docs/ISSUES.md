@@ -7,6 +7,10 @@ conservar un issue remoto enlazado.
 
 ## Resueltos
 
+- [x] **Identidades locales/remotas aisladas (2026-10-23).** Room v3 conserva las filas antiguas, separa `remoteId` y traduce FK/endpoints/ranking. Migraciones y colisiones verificadas en API 29 y 35.
+- [x] **Rechazos HTTP del visitante respetados.** HTTP 4xx/5xx, JSON, cancelación y fallos de persistencia no conceden una sesión offline. Los fallos al guardar un visitante sin red devuelven error.
+- [x] **Arranque y expiración de sesión.** Estado explícito, caché vinculada, respuestas tardías descartadas y back stack privado eliminado ante 401. Evidencia: [90 pruebas JVM y 28 instrumentadas por API](QA-identidad-sesion-2026-10-23.md). Backend y crash general de Misiones continúan pendientes.
+
 - [x] **QR crasheaba al gestionar otra ventana mientras escaneaba.**
   Causa: `CamaraPreview` (`ScannerScreen.kt`) desligaba y volvía a
   ligar toda la cámara en cada cambio de estado, con un `.get()`
@@ -58,7 +62,7 @@ conservar un issue remoto enlazado.
 - [x] **Supresión de advertencias de Gradle en compilación.**
   `gradle.properties`: añadida propiedad recomendada para suprimir advertencias experimentales de AGP.
 - [x] **Resiliencia offline en Modo Prueba y validación QR (RF-20).**
-  `AuthRepository.kt` y `RemoteCampusRepository.kt`: implementado fallback automático a Room local si Render está en reposo o no hay internet; generación de tokens locales offline y sincronización transparente.
+  `AuthRepository.kt` y `RemoteCampusRepository.kt`: fallback local limitado a fallos de transporte; los rechazos HTTP se respetan. El progreso offline no tiene outbox ni reconciliación automática. La separación de identidad y el ciclo de sesión se documentan en [QA de identidad y sesión](QA-identidad-sesion-2026-10-23.md).
 - [x] **Tabla de Clasificación y Ranking de Exploradores RPG (RF-18).**
   `LeaderboardDialog.kt`, `ProfileViewModel.kt` y `ProfileScreen.kt`: modal interactivo con podio Top 3 (🥇, 🥈, 🥉), lista completa de aventureros con niveles y puntos, posición destacada del usuario actual y tests unitarios.
 - [x] **Etiquetas de Puntos de Interés y filtro de misiones en el Mapa.**
@@ -79,6 +83,12 @@ conservar un issue remoto enlazado.
   registra progreso si la sesión apunta a un usuario local inexistente.
 
 ## Pendientes
+
+Actualización 2026-10-24: [QA contra Render](QA-BACKEND-2026-10-24.md) completó
+30 comprobaciones de visitante, autorización entre cuentas QA, progreso,
+idempotencia y revocación. El APK real en API 35 abrió 8 misiones/detalle y
+restauró caché sin conexión. La cobertura institucional/admin y física de los
+pendientes siguientes todavía no está completa.
 
 - [ ] **Crash al abrir la sección de Misiones.** Revisados
   `MissionsScreen.kt`, `MissionsViewModel.kt`, `CampusRepository`,

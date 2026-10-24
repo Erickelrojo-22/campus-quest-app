@@ -29,6 +29,7 @@ object EstadoMision {
         )
     ],
     indices = [
+        Index(value = ["remoteId"], unique = true),
         Index("usuarioId"),
         Index("misionId"),
         Index(value = ["usuarioId", "misionId"], unique = true)
@@ -41,5 +42,6 @@ data class ProgresoMisionEntity(
     val fechaHora: Long,
     val puntosObtenidos: Int,
     val codigoQrValidado: String,
-    val estado: String = EstadoMision.COMPLETADA
+    val estado: String = EstadoMision.COMPLETADA,
+    val remoteId: Int? = null
 )

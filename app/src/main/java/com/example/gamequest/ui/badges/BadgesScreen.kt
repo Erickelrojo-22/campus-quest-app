@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.gamequest.data.local.entity.UsuarioEntity
+import com.example.gamequest.data.model.RankingEntry
 import com.example.gamequest.data.repository.MisionConEstado
 import com.example.gamequest.ui.common.ContenidoAdaptable
 import com.example.gamequest.ui.common.encabezado
@@ -160,7 +161,7 @@ fun BadgesScreen(
                 SeccionTitulo("RANKING DEL CAMPUS")
             }
             itemsIndexed(estado.ranking) { indice, usuario ->
-                RankingRow(usuario, esUsuarioActual = usuario.id == usuarioActualId, posicion = indice + 1)
+                RankingRow(usuario, esUsuarioActual = usuario.isCurrent(usuarioActualId, estado.usuario?.remoteId), posicion = indice + 1)
             }
             item { Spacer(Modifier.height(24.dp)) }
         }
@@ -416,7 +417,7 @@ private fun InsigniaDetalleDialog(
 }
 
 @Composable
-private fun RankingRow(usuario: UsuarioEntity, esUsuarioActual: Boolean, posicion: Int) {
+private fun RankingRow(usuario: RankingEntry, esUsuarioActual: Boolean, posicion: Int) {
     val descripcion = "Puesto $posicion, ${usuario.nombres}${if (esUsuarioActual) ", eres tú" else ""}, " +
         "${usuario.puntajeAcumulado} puntos"
     Card(

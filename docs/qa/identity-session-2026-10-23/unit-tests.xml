@@ -1,0 +1,152 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuites tests="90" failures="0" errors="0" skipped="0"><testsuite name="com.example.gamequest.data.remote.OfflineFallbackPolicyTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-24T14:27:27.334Z" hostname="ERICKM" time="0.004">
+  <properties />
+  <testcase name="errorDeTransporte_permiteUsarCacheLocal" classname="com.example.gamequest.data.remote.OfflineFallbackPolicyTest" time="0.002" />
+  <testcase name="errorDeDatos_noSeDisfrazaComoFaltaDeConexion" classname="com.example.gamequest.data.remote.OfflineFallbackPolicyTest" time="0.0" />
+  <testcase name="rechazoHttp_noOtorgaProgresoLocal" classname="com.example.gamequest.data.remote.OfflineFallbackPolicyTest" time="0.001" />
+  <system-out />
+  <system-err />
+</testsuite><testsuite name="com.example.gamequest.data.remote.RemoteIdentityRoutingTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-24T14:27:27.340Z" hostname="ERICKM" time="0.005">
+  <properties />
+  <testcase name="ranking_resaltaCuentaConIdsDistintos" classname="com.example.gamequest.data.remote.RemoteIdentityRoutingTest" time="0.005" />
+  <system-out />
+  <system-err />
+</testsuite><testsuite name="com.example.gamequest.data.repository.AuthRepositoryRemoteTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-24T14:27:27.355Z" hostname="ERICKM" time="0.32">
+  <properties />
+  <testcase name="persistenciaTokenFallida_noPermiteFallback" classname="com.example.gamequest.data.repository.AuthRepositoryRemoteTest" time="0.272" />
+  <testcase name="visitante_respuestaInvalida_noCreaSesionLocal" classname="com.example.gamequest.data.repository.AuthRepositoryRemoteTest" time="0.005" />
+  <testcase name="persistenciaRoomFallida_noPermiteFallback" classname="com.example.gamequest.data.repository.AuthRepositoryRemoteTest" time="0.005" />
+  <testcase name="visitante_exitoRemoto_noCreaVisitante" classname="com.example.gamequest.data.repository.AuthRepositoryRemoteTest" time="0.006" />
+  <testcase name="visitante_errorTransporte_permitaFallback" classname="com.example.gamequest.data.repository.AuthRepositoryRemoteTest" time="0.01" />
+  <testcase name="visitanteSinRed_falloRoom_retornaErrorSinSesion" classname="com.example.gamequest.data.repository.AuthRepositoryRemoteTest" time="0.004" />
+  <testcase name="visitante_cancelacion_noCreaSesionLocal" classname="com.example.gamequest.data.repository.AuthRepositoryRemoteTest" time="0.005" />
+  <testcase name="visitante_rechazoHttp_noCreaSesionLocal" classname="com.example.gamequest.data.repository.AuthRepositoryRemoteTest" time="0.006" />
+  <testcase name="visitanteSinRed_falloToken_retornaErrorSinSesion" classname="com.example.gamequest.data.repository.AuthRepositoryRemoteTest" time="0.006" />
+  <system-out />
+  <system-err />
+</testsuite><testsuite name="com.example.gamequest.data.repository.AuthRepositoryTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-10-24T14:27:27.680Z" hostname="ERICKM" time="0.913">
+  <properties />
+  <testcase name="registrar_rechazaCorreoDuplicado" classname="com.example.gamequest.data.repository.AuthRepositoryTest" time="0.262" />
+  <testcase name="registrar_rechazaContrasenaDemasiadoCorta" classname="com.example.gamequest.data.repository.AuthRepositoryTest" time="0.003" />
+  <testcase name="entrarConNombre_noAbreCuentaEstudiantilRegistradaSinContrasena" classname="com.example.gamequest.data.repository.AuthRepositoryTest" time="0.067" />
+  <testcase name="iniciarSesionConCredenciales_rechazaCorreoFueraDelDominio" classname="com.example.gamequest.data.repository.AuthRepositoryTest" time="0.004" />
+  <testcase name="iniciarSesionConCredenciales_fallaConPasswordIncorrecto" classname="com.example.gamequest.data.repository.AuthRepositoryTest" time="0.397" />
+  <testcase name="entrarConNombre_creaYReutilizaPerfilDePrueba" classname="com.example.gamequest.data.repository.AuthRepositoryTest" time="0.003" />
+  <testcase name="iniciarSesionConCredenciales_exitosoConPasswordCorrecto" classname="com.example.gamequest.data.repository.AuthRepositoryTest" time="0.088" />
+  <testcase name="registrar_exitosoConCredencialesValidas" classname="com.example.gamequest.data.repository.AuthRepositoryTest" time="0.088" />
+  <testcase name="validarCorreoInstitucional_aceptaDominioOficial" classname="com.example.gamequest.data.repository.AuthRepositoryTest" time="0.0" />
+  <testcase name="validarCorreoInstitucional_rechazaDominioExterno" classname="com.example.gamequest.data.repository.AuthRepositoryTest" time="0.0" />
+  <system-out />
+  <system-err />
+</testsuite><testsuite name="com.example.gamequest.data.repository.CampusRepositoryTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-24T14:27:28.604Z" hostname="ERICKM" time="0.064">
+  <properties />
+  <testcase name="validarCodigo_completaMisionYActualizaPuntajeYNivel" classname="com.example.gamequest.data.repository.CampusRepositoryTest" time="0.042" />
+  <testcase name="observarHistorialProgreso_retornaListaDetalladaConFechaYPuntos" classname="com.example.gamequest.data.repository.CampusRepositoryTest" time="0.007" />
+  <testcase name="validarCodigo_usuarioInexistente_noRegistraProgresoNiPuntos" classname="com.example.gamequest.data.repository.CampusRepositoryTest" time="0.002" />
+  <testcase name="validarCodigo_retornaCodigoNoReconocidoParaQrInexistente" classname="com.example.gamequest.data.repository.CampusRepositoryTest" time="0.003" />
+  <testcase name="validarCodigo_rechazaSiMisionYaFueCompletada" classname="com.example.gamequest.data.repository.CampusRepositoryTest" time="0.003" />
+  <testcase name="observarMisionesConEstado_combinaCorrectamenteMisionYPunto" classname="com.example.gamequest.data.repository.CampusRepositoryTest" time="0.004" />
+  <testcase name="generarCodigoQr_incluyePrefijoDeCategoria" classname="com.example.gamequest.data.repository.CampusRepositoryTest" time="0.002" />
+  <system-out />
+  <system-err />
+</testsuite><testsuite name="com.example.gamequest.data.session.SessionCoordinatorTest" tests="14" skipped="0" failures="0" errors="0" timestamp="2026-10-24T14:27:28.671Z" hostname="ERICKM" time="0.184">
+  <properties />
+  <testcase name="acceptLogin_esIdempotente" classname="com.example.gamequest.data.session.SessionCoordinatorTest" time="0.044" />
+  <testcase name="visitanteAntiguo_conservaIdLocal" classname="com.example.gamequest.data.session.SessionCoordinatorTest" time="0.022" />
+  <testcase name="tokenAntiguo_sinVinculo_sinRed_requiereRecuperacion" classname="com.example.gamequest.data.session.SessionCoordinatorTest" time="0.007" />
+  <testcase name="cancelacion_noPublicaErrorDeRed" classname="com.example.gamequest.data.session.SessionCoordinatorTest" time="0.008" />
+  <testcase name="preferenciasLentas_noAutenticaPorIdObsoleto" classname="com.example.gamequest.data.session.SessionCoordinatorTest" time="0.015" />
+  <testcase name="logout_limpiaLocalAntesDeRevocarConTokenCapturado" classname="com.example.gamequest.data.session.SessionCoordinatorTest" time="0.012" />
+  <testcase name="commitCancelado_noPublicaErrorNiConservaToken" classname="com.example.gamequest.data.session.SessionCoordinatorTest" time="0.009" />
+  <testcase name="http401_invalidaSesion" classname="com.example.gamequest.data.session.SessionCoordinatorTest" time="0.009" />
+  <testcase name="resultadoTardio_noCambiaLoginNuevo" classname="com.example.gamequest.data.session.SessionCoordinatorTest" time="0.014" />
+  <testcase name="sinRed_cacheIlegible_requiereRecuperacion" classname="com.example.gamequest.data.session.SessionCoordinatorTest" time="0.009" />
+  <testcase name="sinRed_sinCache_requiereRecuperacion" classname="com.example.gamequest.data.session.SessionCoordinatorTest" time="0.007" />
+  <testcase name="tokenValido_resuelveAntesDelCatalogo" classname="com.example.gamequest.data.session.SessionCoordinatorTest" time="0.009" />
+  <testcase name="sinRed_conVinculoValido_usaCache" classname="com.example.gamequest.data.session.SessionCoordinatorTest" time="0.008" />
+  <testcase name="sinToken_esperaLimpiezaAntesDeSignedOut" classname="com.example.gamequest.data.session.SessionCoordinatorTest" time="0.008" />
+  <system-out />
+  <system-err />
+</testsuite><testsuite name="com.example.gamequest.ExampleUnitTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-24T14:27:27.316Z" hostname="ERICKM" time="0.012">
+  <properties />
+  <testcase name="addition_isCorrect" classname="com.example.gamequest.ExampleUnitTest" time="0.003" />
+  <system-out />
+  <system-err />
+</testsuite><testsuite name="com.example.gamequest.ui.auth.AuthViewModelTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-24T14:27:28.862Z" hostname="ERICKM" time="0.103">
+  <properties />
+  <testcase name="onModoInstitucionalChange_actualizaEstadoYBorraError" classname="com.example.gamequest.ui.auth.AuthViewModelTest" time="0.008" />
+  <testcase name="entrarInstitucional_conCredencialesValidas_iniciaSesion" classname="com.example.gamequest.ui.auth.AuthViewModelTest" time="0.091" />
+  <testcase name="onInputsChange_actualizaValoresEnUiState" classname="com.example.gamequest.ui.auth.AuthViewModelTest" time="0.001" />
+  <testcase name="entrarInstitucional_credencialesIncorrectas_muestraError" classname="com.example.gamequest.ui.auth.AuthViewModelTest" time="0.001" />
+  <testcase name="entrarRapido_conNombreValido_iniciaSesion" classname="com.example.gamequest.ui.auth.AuthViewModelTest" time="0.002" />
+  <system-out />
+  <system-err />
+</testsuite><testsuite name="com.example.gamequest.ui.auth.RegisterViewModelTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-24T14:27:28.972Z" hostname="ERICKM" time="0.046">
+  <properties />
+  <testcase name="registrar_fallaSiCorreoNoEsInstitucional" classname="com.example.gamequest.ui.auth.RegisterViewModelTest" time="0.002" />
+  <testcase name="registrar_fallaSiNombreEstaVacio" classname="com.example.gamequest.ui.auth.RegisterViewModelTest" time="0.001" />
+  <testcase name="registrar_exitosoConDatosValidos" classname="com.example.gamequest.ui.auth.RegisterViewModelTest" time="0.041" />
+  <testcase name="registrar_fallaSiContrasenasNoCoinciden" classname="com.example.gamequest.ui.auth.RegisterViewModelTest" time="0.002" />
+  <system-out />
+  <system-err />
+</testsuite><testsuite name="com.example.gamequest.ui.badges.BadgesViewModelTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-24T14:27:29.022Z" hostname="ERICKM" time="0.073">
+  <properties />
+  <testcase name="seleccionarInsignia_actualizaInsigniaSeleccionada" classname="com.example.gamequest.ui.badges.BadgesViewModelTest" time="0.056" />
+  <testcase name="cerrarDetalleInsignia_limpiaSeleccion" classname="com.example.gamequest.ui.badges.BadgesViewModelTest" time="0.01" />
+  <testcase name="estadoInicial_clasificaObtenidasYPendientes" classname="com.example.gamequest.ui.badges.BadgesViewModelTest" time="0.007" />
+  <system-out />
+  <system-err />
+</testsuite><testsuite name="com.example.gamequest.ui.home.HomeViewModelTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-24T14:27:29.100Z" hostname="ERICKM" time="0.065">
+  <properties />
+  <testcase name="busquedaPorCategoria_filtraPorServicios" classname="com.example.gamequest.ui.home.HomeViewModelTest" time="0.026" />
+  <testcase name="busquedaPorTexto_filtraPorTituloOLugar" classname="com.example.gamequest.ui.home.HomeViewModelTest" time="0.013" />
+  <testcase name="busquedaVacia_resultadosBusquedaEstaVacia" classname="com.example.gamequest.ui.home.HomeViewModelTest" time="0.011" />
+  <testcase name="misionSugerida_priorizaCafeteriaPendiente" classname="com.example.gamequest.ui.home.HomeViewModelTest" time="0.013" />
+  <system-out />
+  <system-err />
+</testsuite><testsuite name="com.example.gamequest.ui.missions.MissionsViewModelTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-24T14:27:29.170Z" hostname="ERICKM" time="0.091">
+  <properties />
+  <testcase name="filtradoTodas_retornaTodasLasMisiones" classname="com.example.gamequest.ui.missions.MissionsViewModelTest" time="0.02" />
+  <testcase name="contadores_reflejanConteoCorrecto" classname="com.example.gamequest.ui.missions.MissionsViewModelTest" time="0.017" />
+  <testcase name="filtradoActivas_soloRetornaMisionesNoCompletadas" classname="com.example.gamequest.ui.missions.MissionsViewModelTest" time="0.01" />
+  <testcase name="limpiarBusqueda_restauraListaFiltrada" classname="com.example.gamequest.ui.missions.MissionsViewModelTest" time="0.009" />
+  <testcase name="busqueda_filtraPorTitulo" classname="com.example.gamequest.ui.missions.MissionsViewModelTest" time="0.011" />
+  <testcase name="busqueda_filtraPorNombreLugar" classname="com.example.gamequest.ui.missions.MissionsViewModelTest" time="0.011" />
+  <testcase name="filtroInicial_esActivas" classname="com.example.gamequest.ui.missions.MissionsViewModelTest" time="0.001" />
+  <testcase name="filtradoCompletadas_soloRetornaMisionesCompletadas" classname="com.example.gamequest.ui.missions.MissionsViewModelTest" time="0.011" />
+  <system-out />
+  <system-err />
+</testsuite><testsuite name="com.example.gamequest.ui.profile.ProfileViewModelTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-24T14:27:29.268Z" hostname="ERICKM" time="0.156">
+  <properties />
+  <testcase name="uiState_inicializaConDatosDeRepositoriosYPreferencias" classname="com.example.gamequest.ui.profile.ProfileViewModelTest" time="0.035" />
+  <testcase name="adventurerCardDialog_abreYCierraCorrectamente" classname="com.example.gamequest.ui.profile.ProfileViewModelTest" time="0.014" />
+  <testcase name="timelineDialog_abreYCierraCorrectamente" classname="com.example.gamequest.ui.profile.ProfileViewModelTest" time="0.018" />
+  <testcase name="rankingDialog_abreYCierraCorrectamente" classname="com.example.gamequest.ui.profile.ProfileViewModelTest" time="0.015" />
+  <testcase name="toggleSpriteAnim_alternaEntreIdleYWalk" classname="com.example.gamequest.ui.profile.ProfileViewModelTest" time="0.023" />
+  <testcase name="restablecerEditor_revierteCambiosNoGuardados" classname="com.example.gamequest.ui.profile.ProfileViewModelTest" time="0.014" />
+  <testcase name="abrirEditor_inicializaDraftConPreferenciasActuales" classname="com.example.gamequest.ui.profile.ProfileViewModelTest" time="0.011" />
+  <testcase name="onboardingDialog_abreYCierraCorrectamente" classname="com.example.gamequest.ui.profile.ProfileViewModelTest" time="0.012" />
+  <testcase name="editarAvatarYGuardar_actualizaPreferenciasYPersiste" classname="com.example.gamequest.ui.profile.ProfileViewModelTest" time="0.013" />
+  <system-out />
+  <system-err />
+</testsuite><testsuite name="com.example.gamequest.ui.scanner.ScannerViewModelTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-24T14:27:29.428Z" hostname="ERICKM" time="0.016">
+  <properties />
+  <testcase name="onCodigoManualChange_actualizaValor" classname="com.example.gamequest.ui.scanner.ScannerViewModelTest" time="0.002" />
+  <testcase name="validarCodigoManual_cierraDialogoYEvalua" classname="com.example.gamequest.ui.scanner.ScannerViewModelTest" time="0.006" />
+  <testcase name="validar_errorDelRepositorio_exponeMensajeRecuperable" classname="com.example.gamequest.ui.scanner.ScannerViewModelTest" time="0.003" />
+  <testcase name="dialogoManual_controlDeAperturaYCierre" classname="com.example.gamequest.ui.scanner.ScannerViewModelTest" time="0.0" />
+  <testcase name="validar_codigoVacio_noConsultaRepositorio" classname="com.example.gamequest.ui.scanner.ScannerViewModelTest" time="0.003" />
+  <testcase name="reiniciar_restableceEstadoAEscaneando" classname="com.example.gamequest.ui.scanner.ScannerViewModelTest" time="0.0" />
+  <system-out />
+  <system-err />
+</testsuite><testsuite name="com.example.gamequest.util.PasswordHasherTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-24T14:27:29.446Z" hostname="ERICKM" time="0.357">
+  <properties />
+  <testcase name="matches_aceptaHashLegacyParaPermitirMigracion" classname="com.example.gamequest.util.PasswordHasherTest" time="0.004" />
+  <testcase name="matches_retornaFalseCuandoLaContrasenaNoCoincide" classname="com.example.gamequest.util.PasswordHasherTest" time="0.078" />
+  <testcase name="hash_usaSaltAleatorio" classname="com.example.gamequest.util.PasswordHasherTest" time="0.072" />
+  <testcase name="matches_retornaTrueCuandoLaContrasenaCoincide" classname="com.example.gamequest.util.PasswordHasherTest" time="0.079" />
+  <testcase name="hash_incluyeAlgoritmoSaltYCoste" classname="com.example.gamequest.util.PasswordHasherTest" time="0.043" />
+  <testcase name="hash_generaDiferentesHashesParaDiferentesEntradas" classname="com.example.gamequest.util.PasswordHasherTest" time="0.08" />
+  <system-out />
+  <system-err />
+</testsuite></testsuites>

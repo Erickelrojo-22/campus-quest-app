@@ -3,6 +3,7 @@ package com.example.gamequest.ui.badges
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gamequest.data.local.entity.UsuarioEntity
+import com.example.gamequest.data.model.RankingEntry
 import com.example.gamequest.data.repository.CampusRepository
 import com.example.gamequest.data.repository.MisionConEstado
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +16,7 @@ data class BadgesUiState(
     val usuario: UsuarioEntity? = null,
     val obtenidas: List<MisionConEstado> = emptyList(),
     val pendientes: List<MisionConEstado> = emptyList(),
-    val ranking: List<UsuarioEntity> = emptyList(),
+    val ranking: List<RankingEntry> = emptyList(),
     val insigniaSeleccionada: MisionConEstado? = null
 )
 

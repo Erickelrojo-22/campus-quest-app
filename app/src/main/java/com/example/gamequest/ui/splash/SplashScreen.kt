@@ -23,7 +23,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,19 +35,13 @@ import androidx.compose.ui.unit.sp
 import com.example.gamequest.ui.theme.AmberAccent
 import com.example.gamequest.ui.theme.TealPrimary
 import com.example.gamequest.ui.theme.TealPrimaryDark
-import kotlinx.coroutines.delay
 
 /**
  * RF-01: splash screen — muestra el logotipo mientras se carga la
  * configuración inicial (DataStore) y se verifica si existe una sesión activa.
  */
 @Composable
-fun SplashScreen(onTimeout: () -> Unit) {
-    LaunchedEffect(Unit) {
-        delay(1100)
-        onTimeout()
-    }
-
+fun SplashScreen() {
     val transition = rememberInfiniteTransition(label = "splash-progress")
     val progreso by transition.animateFloat(
         initialValue = 0.15f,

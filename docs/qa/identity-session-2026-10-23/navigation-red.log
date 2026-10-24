@@ -1,0 +1,74 @@
+INSTRUMENTATION_STATUS: class=com.example.gamequest.SessionNavigationTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: stream=
+com.example.gamequest.SessionNavigationTest:
+INSTRUMENTATION_STATUS: test=restoring_masDe1100ms_noAbreMainNiLogin
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.example.gamequest.SessionNavigationTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: stack=org.junit.ComparisonFailure: expected:<[splash]> but was:<[login]>
+	at org.junit.Assert.assertEquals(Assert.java:117)
+	at org.junit.Assert.assertEquals(Assert.java:146)
+	at com.example.gamequest.SessionNavigationTest.restoring_masDe1100ms_noAbreMainNiLogin(SessionNavigationTest.kt:50)
+
+INSTRUMENTATION_STATUS: stream=
+Error in restoring_masDe1100ms_noAbreMainNiLogin(com.example.gamequest.SessionNavigationTest):
+org.junit.ComparisonFailure: expected:<[splash]> but was:<[login]>
+	at org.junit.Assert.assertEquals(Assert.java:117)
+	at org.junit.Assert.assertEquals(Assert.java:146)
+	at com.example.gamequest.SessionNavigationTest.restoring_masDe1100ms_noAbreMainNiLogin(SessionNavigationTest.kt:50)
+
+INSTRUMENTATION_STATUS: test=restoring_masDe1100ms_noAbreMainNiLogin
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: class=com.example.gamequest.SessionNavigationTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=http401EnMain_limpiaBackStackPrivado
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.example.gamequest.SessionNavigationTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: stack=androidx.compose.ui.test.ComposeTimeoutException: Condition still not satisfied after 10000 ms
+	at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$AndroidComposeUiTestImpl.waitUntil(ComposeUiTest.android.kt:887)
+	at androidx.compose.ui.test.junit4.AndroidComposeTestRule.waitUntil(AndroidComposeTestRule.android.kt:482)
+	at com.example.gamequest.SessionNavigationTest.route(SessionNavigationTest.kt:46)
+	at com.example.gamequest.SessionNavigationTest.http401EnMain_limpiaBackStackPrivado(SessionNavigationTest.kt:68)
+
+INSTRUMENTATION_STATUS: stream=
+Error in http401EnMain_limpiaBackStackPrivado(com.example.gamequest.SessionNavigationTest):
+androidx.compose.ui.test.ComposeTimeoutException: Condition still not satisfied after 10000 ms
+	at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$AndroidComposeUiTestImpl.waitUntil(ComposeUiTest.android.kt:887)
+	at androidx.compose.ui.test.junit4.AndroidComposeTestRule.waitUntil(AndroidComposeTestRule.android.kt:482)
+	at com.example.gamequest.SessionNavigationTest.route(SessionNavigationTest.kt:46)
+	at com.example.gamequest.SessionNavigationTest.http401EnMain_limpiaBackStackPrivado(SessionNavigationTest.kt:68)
+
+INSTRUMENTATION_STATUS: test=http401EnMain_limpiaBackStackPrivado
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 26.436
+There were 2 failures:
+1) restoring_masDe1100ms_noAbreMainNiLogin(com.example.gamequest.SessionNavigationTest)
+org.junit.ComparisonFailure: expected:<[splash]> but was:<[login]>
+	at org.junit.Assert.assertEquals(Assert.java:117)
+	at org.junit.Assert.assertEquals(Assert.java:146)
+	at com.example.gamequest.SessionNavigationTest.restoring_masDe1100ms_noAbreMainNiLogin(SessionNavigationTest.kt:50)
+2) http401EnMain_limpiaBackStackPrivado(com.example.gamequest.SessionNavigationTest)
+androidx.compose.ui.test.ComposeTimeoutException: Condition still not satisfied after 10000 ms
+	at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$AndroidComposeUiTestImpl.waitUntil(ComposeUiTest.android.kt:887)
+	at androidx.compose.ui.test.junit4.AndroidComposeTestRule.waitUntil(AndroidComposeTestRule.android.kt:482)
+	at com.example.gamequest.SessionNavigationTest.route(SessionNavigationTest.kt:46)
+	at com.example.gamequest.SessionNavigationTest.http401EnMain_limpiaBackStackPrivado(SessionNavigationTest.kt:68)
+
+FAILURES!!!
+Tests run: 2,  Failures: 2
+
+
+INSTRUMENTATION_CODE: -1

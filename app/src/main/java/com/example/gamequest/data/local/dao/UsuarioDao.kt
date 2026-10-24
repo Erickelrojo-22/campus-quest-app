@@ -1,5 +1,6 @@
 package com.example.gamequest.data.local.dao
 
+import androidx.room.Transaction
 import androidx.room.Upsert
 import androidx.room.Dao
 import androidx.room.Insert
@@ -10,6 +11,21 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface UsuarioDao {
+
+    @Query("SELECT * FROM usuario WHERE remoteId = :remoteId LIMIT 1")
+    suspend fun buscarPorRemoteId(remoteId: Int): UsuarioEntity?
+
+    @Transaction
+    suspend fun guardarUsuarioRemoto(usuario: UsuarioEntity): UsuarioEntity {
+        val remoteId = requireNotNull(usuario.remoteId)
+        val anterior = buscarPorRemoteId(remoteId)
+        val mapped = usuario.copy(id = anterior?.id ?: 0)
+        if (anterior != null) {
+            actualizar(mapped)
+            return mapped
+        }
+        return mapped.copy(id = insertar(mapped).toInt())
+    }
 
     @Upsert
     suspend fun guardarRemotos(items: List<UsuarioEntity>)

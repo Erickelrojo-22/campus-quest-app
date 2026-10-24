@@ -1,81 +1,70 @@
 # Seguridad y pruebas E2E
 
-## Estado de la auditoría
+## Arquitectura vigente
 
-La aplicación es actualmente **offline-first**: Room es la fuente local, no
-hay API ni proveedor OAuth en el APK. Por tanto, los controles de identidad,
-roles y progreso local son defensas de la aplicación, no una autorización
-server-side. Antes de producción multiusuario se debe añadir un backend que
-derive el usuario y el rol desde una sesión validada.
+Android utiliza una API REST sobre HTTPS y Room como caché local. El APK no
+incluye un proveedor OAuth. La autorización de las operaciones remotas corresponde
+al servidor. La matriz automatizada usa una API simulada; una pasada adicional
+valida visitantes contra Render y el APK real en API 35. El issue de validación
+completa del backend sigue abierto por su cobertura institucional/admin y física.
 
-Controles aplicados en el cliente:
+El token se cifra con AES-GCM y una clave de Android Keystore. El token cifrado y
+su ID local se escriben juntos en SharedPreferences. Las preferencias de interfaz
+usan DataStore y no están cifradas. Las cuentas del repositorio local conservan
+su verificación PBKDF2; no se almacena la contraseña recibida de la API.
 
-- El registro público solo crea usuarios estudiante; el rol tutor no se toma
-  del formulario.
-- Las rutas de administración comprueban el rol tutor antes de mostrar CRUD.
-- Las contraseñas nuevas usan PBKDF2-HMAC-SHA256 con salt aleatorio y migran
-  hashes SHA-256 heredados tras un login correcto.
-- La base Room usa transacciones para validar QR y crear punto+misión.
-- El progreso tiene una clave única por usuario y misión para evitar doble
-  recompensa concurrente.
-- Los QR tienen índice único y valores no predecibles.
-- Las misiones se archivan en lugar de borrar el historial de progreso.
-- La base y preferencias quedan fuera de backup y transferencia del dispositivo.
-- Los errores de persistencia del formulario y del escáner se muestran como
-  estados reintentables.
+## Identidad y actualización de datos
 
-## Matriz E2E requerida
+- Room v3 separa las claves locales autogeneradas de `remoteId`, único y nullable,
+  tanto para usuarios como para eventos de progreso.
+- La UI, las FK y la preferencia de usuario activo usan IDs locales. Los endpoints
+  reciben IDs remotos. El ranking distingue ambos espacios de identidad.
+- La migración v2→v3 conserva filas, PK y FK y deja `remoteId = NULL` en los
+  registros antiguos. Se mantiene la migración v1→v2 existente y su depuración previa. No vincula cuentas por nombre, correo ni coincidencia numérica.
+- Una cuenta remota validada obtiene su identidad canónica y su caché del servidor.
+  El historial antiguo permanece separado. Esto no repara autorías que ya estuvieran
+  mezcladas antes de actualizar.
+- Un token heredado de visitante solo reutiliza su perfil local sin credenciales,
+  correo, rol tutor ni vínculo remoto. Un token remoto sin vínculo requiere validación
+  en línea antes de seleccionar una cuenta local.
 
-| Área | Caso | Resultado esperado |
-|---|---|---|
-| Arranque | Abrir instalación limpia | Splash lleva a login sin usuario activo |
-| Sesión | Login institucional válido | Usuario llega a Home y la sesión sobrevive a reinicio |
-| Sesión | Contraseña incorrecta/cuenta incompleta | Error visible, sin navegación |
-| Sesión | Logout y cambio de cuenta | Sesión anterior no reaparece |
-| Roles | Registro público solicita tutor | Siempre se crea estudiante |
-| Roles | Estudiante abre ruta CRUD | Se muestra acceso no autorizado y no se modifica nada |
-| Roles | Tutor autorizado abre CRUD | Puede listar, crear, editar y archivar |
-| Actividades | Crear punto+m misión | Ambas filas se guardan o ninguna si falla la operación |
-| Actividades | QR duplicado | Se rechaza sin dejar un punto huérfano |
-| Actividades | Campos numéricos inválidos | No se permite guardar valores no válidos |
-| QR | Código válido | Se registra una sola completación y se actualizan puntos/nivel |
-| QR | Código inválido o de misión archivada | No se otorgan puntos |
-| QR | Dos validaciones simultáneas | Solo una recompensa y un registro de progreso |
-| Historial | Archivar misión completada | El progreso permanece consultable y no se duplica |
-| Persistencia | Rotación/recreación de Activity | Se conserva pantalla y usuario |
-| Backup | Restaurar backup de la app | No se restaura base local ni sesión autenticada |
-| Release | Instalar APK release | Arranca, navega y conserva recursos tras R8 |
+## Fallback y ciclo de sesión
 
-## Ejecución
+Solo un fallo de transporte permite crear o reutilizar un visitante offline.
+Cualquier rechazo HTTP, incluidos 4xx y 5xx, conserva el error. Cancelaciones,
+errores de JSON y fallos al persistir el login no conceden una sesión offline.
 
-Validación local reproducible:
+`SessionCoordinator` publica `Restoring`, `SignedOut`, `Authenticated` o
+`RecoveryRequired` y serializa las escrituras de sesión. El temporizador visual
+del splash no decide el acceso. La identidad se resuelve antes de descargar
+catálogo, ranking y progreso. Sin red solo se utiliza una identidad remota
+previamente vinculada y almacenada; sin esa caché se ofrecen reintento y login.
 
-```bash
-./gradlew check --no-daemon --no-parallel
-./gradlew assembleDebug --no-daemon --no-parallel
-./gradlew assembleRelease --no-daemon --no-parallel
-```
+Un 401 vigente invalida la sesión y elimina las rutas privadas. El callback
+incluye el token rechazado: una respuesta antigua no cierra una sesión nueva.
+El logout limpia primero la sesión local y después intenta revocar el token
+capturado. Cambiar de cuenta reinicia la navegación privada.
 
-Las pruebas instrumentadas requieren un emulador o dispositivo conectado:
+El modo local no dispone de outbox ni de reconciliación automática de recompensas.
+La autorización remota de QR, roles y administración debe comprobarse también en
+el backend. En la configuración remota, el CRUD se deriva al panel web.
 
-```bash
-./gradlew connectedDebugAndroidTest --no-daemon --no-parallel
-```
+## Pruebas y evidencia
 
-Si no existe un dispositivo conectado, el resultado no es una aprobación E2E:
-solo quedan validados compilación, pruebas unitarias y lint. La prueba
-instrumentada debe ejecutarse en CI con un emulador API 29+ antes de publicar.
+Consultar [QA de identidad y sesión](QA-identidad-sesion-2026-10-23.md) para el
+entorno, comandos, resultados, logs y limitaciones de esta corrección.
 
-## Requisitos para backend/OAuth
+| Área | Verificación automatizada |
+|---|---|
+| Identidad | Colisiones usuario 51 y evento 1; snapshots repetidos; FK ajenas rechazadas; endpoint con ID remoto |
+| Migración | v1→v2→v3, v2→v3 y creación limpia; conservación de filas y FK |
+| Login | HTTP 400/401/403/422/429/500, transporte, JSON, persistencia y cancelación |
+| Sesión | Preferencias lentas, tokens heredados, caché válida/ausente, 401, logout y respuestas tardías |
+| Navegación | Grafo real, más de 1100 ms en restauración, Main/detalle, recuperación, cambio de cuenta y recreación de estado |
+| Persistencia | Snapshot cifrado tras nueva instancia; invalidación condicional; token antiguo sin vínculo |
+| Integración | Base v2 con historial, visitante offline, remoto con ID coincidente, restauración, 403 y 401 |
 
-Cuando se incorpore Google OIDC o una API:
-
-1. Validar firma, emisor, audiencia, expiración y `sub` del token en servidor.
-2. Derivar `usuarioId` y rol del token/servidor; nunca aceptar esos campos como
-   autoridad enviada por Android.
-3. Autorizar cada operación CRUD en servidor y registrar auditoría.
-4. Validar QR y otorgamiento de puntos en una transacción server-side.
-5. Usar TLS, rotación de secretos, expiración/revocación de sesiones y rate
-   limiting.
-6. Ejecutar pruebas negativas de token expirado, audiencia incorrecta, usuario
-   revocado, rol insuficiente y replay de QR.
+La [pasada adicional contra Render](QA-BACKEND-2026-10-24.md) valida visitantes
+autenticados, progreso y revocación, además del APK real en API 35 y su caché.
+No certifica el registro/login institucional, administración ni teléfono físico.
+Tampoco cierra el reporte general de Misiones.

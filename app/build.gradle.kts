@@ -19,6 +19,8 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
+
     buildTypes {
         release {
             // R8: reduce y ofusca el código (menos métodos, menor APK, arranque
@@ -66,13 +68,18 @@ dependencies {
     implementation(libs.androidx.camera.view)
     implementation(libs.zxing.core)
     implementation(libs.kotlinx.coroutines.android)
+    // Room's migration serializers require the same runtime in both APKs.
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
     testImplementation(libs.junit)
+    testImplementation("org.json:json:20250517")
     testImplementation(libs.kotlinx.coroutines.test)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation("androidx.navigation:navigation-testing:${libs.versions.navigationCompose.get()}")
+    androidTestImplementation("androidx.room:room-testing:${libs.versions.room.get()}")
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

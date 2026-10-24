@@ -12,9 +12,11 @@ import com.example.gamequest.data.local.entity.MisionEntity
 import com.example.gamequest.data.local.entity.ProgresoMisionEntity
 import com.example.gamequest.data.local.entity.PuntoInteresEntity
 import com.example.gamequest.data.local.entity.UsuarioEntity
+import com.example.gamequest.data.model.RankingEntry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 
 /** Misión combinada con su punto de interés y el estado de avance del usuario actual. */
 data class MisionConEstado(
@@ -68,8 +70,8 @@ open class CampusRepository(
     open fun observarUsuario(id: Int): Flow<UsuarioEntity?> =
         usuarioDao?.observarPorId(id) ?: flowOf(null)
 
-    open fun observarRanking(): Flow<List<UsuarioEntity>> =
-        usuarioDao?.observarRanking() ?: flowOf(emptyList())
+    open fun observarRanking(): Flow<List<RankingEntry>> =
+        usuarioDao?.observarRanking()?.map { users -> users.map(RankingEntry::local) } ?: flowOf(emptyList())
 
     /** Lista de misiones combinada con su punto de interés y si el usuario ya la completó. */
     open fun observarMisionesConEstado(usuarioId: Int): Flow<List<MisionConEstado>> {

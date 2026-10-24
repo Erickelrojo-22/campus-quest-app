@@ -16,7 +16,7 @@ object Rol {
  */
 @Entity(
     tableName = "usuario",
-    indices = [Index("correoInstitucional"), Index("nombres")]
+    indices = [Index("correoInstitucional"), Index("nombres"), Index(value = ["remoteId"], unique = true)]
 )
 data class UsuarioEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
@@ -26,5 +26,6 @@ data class UsuarioEntity(
     val contrasenaHash: String,
     val puntajeAcumulado: Int = 0,
     val nivel: Int = 1,
-    val rol: String = Rol.ESTUDIANTE
+    val rol: String = Rol.ESTUDIANTE,
+    val remoteId: Int? = null
 )

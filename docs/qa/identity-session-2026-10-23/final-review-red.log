@@ -1,0 +1,116 @@
+INSTRUMENTATION_STATUS: class=com.example.gamequest.data.remote.IdentityCollisionTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stream=
+com.example.gamequest.data.remote.IdentityCollisionTest:
+INSTRUMENTATION_STATUS: test=completarConfirmado_perfilSinRed_conservaEventoYNoRepite
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.example.gamequest.data.remote.IdentityCollisionTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stack=java.io.IOException: Profile unavailable after accepted completion
+	at com.example.gamequest.data.remote.IdentityCollisionTest$completarConfirmado_perfilSinRed_conservaEventoYNoRepite$1$api$1.me(IdentityCollisionTest.kt:112)
+	at com.example.gamequest.data.remote.RemoteCampusRepository.validarCodigo(RemoteCampusRepository.kt:107)
+	at com.example.gamequest.data.remote.RemoteCampusRepository$validarCodigo$1.invokeSuspend(Unknown Source:16)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source:1)
+	at com.example.gamequest.data.remote.IdentityCollisionTest.completarConfirmado_perfilSinRed_conservaEventoYNoRepite(IdentityCollisionTest.kt:104)
+
+INSTRUMENTATION_STATUS: stream=
+Error in completarConfirmado_perfilSinRed_conservaEventoYNoRepite(com.example.gamequest.data.remote.IdentityCollisionTest):
+java.io.IOException: Profile unavailable after accepted completion
+	at com.example.gamequest.data.remote.IdentityCollisionTest$completarConfirmado_perfilSinRed_conservaEventoYNoRepite$1$api$1.me(IdentityCollisionTest.kt:112)
+	at com.example.gamequest.data.remote.RemoteCampusRepository.validarCodigo(RemoteCampusRepository.kt:107)
+	at com.example.gamequest.data.remote.RemoteCampusRepository$validarCodigo$1.invokeSuspend(Unknown Source:16)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source:1)
+	at com.example.gamequest.data.remote.IdentityCollisionTest.completarConfirmado_perfilSinRed_conservaEventoYNoRepite(IdentityCollisionTest.kt:104)
+
+INSTRUMENTATION_STATUS: test=completarConfirmado_perfilSinRed_conservaEventoYNoRepite
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: class=com.example.gamequest.SessionNavigationTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stream=
+com.example.gamequest.SessionNavigationTest:
+INSTRUMENTATION_STATUS: test=restauracionPendiente_mismaCuenta_conservaDetalle
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.example.gamequest.SessionNavigationTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stack=androidx.compose.ui.test.ComposeTimeoutException: Condition still not satisfied after 10000 ms
+	at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$AndroidComposeUiTestImpl.waitUntil(ComposeUiTest.android.kt:887)
+	at androidx.compose.ui.test.junit4.AndroidComposeTestRule.waitUntil(AndroidComposeTestRule.android.kt:482)
+	at com.example.gamequest.SessionNavigationTest.route(SessionNavigationTest.kt:46)
+	at com.example.gamequest.SessionNavigationTest.restauracionPendiente_mismaCuenta_conservaDetalle(SessionNavigationTest.kt:102)
+
+INSTRUMENTATION_STATUS: stream=
+Error in restauracionPendiente_mismaCuenta_conservaDetalle(com.example.gamequest.SessionNavigationTest):
+androidx.compose.ui.test.ComposeTimeoutException: Condition still not satisfied after 10000 ms
+	at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$AndroidComposeUiTestImpl.waitUntil(ComposeUiTest.android.kt:887)
+	at androidx.compose.ui.test.junit4.AndroidComposeTestRule.waitUntil(AndroidComposeTestRule.android.kt:482)
+	at com.example.gamequest.SessionNavigationTest.route(SessionNavigationTest.kt:46)
+	at com.example.gamequest.SessionNavigationTest.restauracionPendiente_mismaCuenta_conservaDetalle(SessionNavigationTest.kt:102)
+
+INSTRUMENTATION_STATUS: test=restauracionPendiente_mismaCuenta_conservaDetalle
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: class=com.example.gamequest.SessionNavigationTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=restauracionPendiente_otraCuenta_limpiaDetalleAnterior
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.example.gamequest.SessionNavigationTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=restauracionPendiente_otraCuenta_limpiaDetalleAnterior
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_RESULT: stream=
+
+Time: 24.42
+There were 2 failures:
+1) completarConfirmado_perfilSinRed_conservaEventoYNoRepite(com.example.gamequest.data.remote.IdentityCollisionTest)
+java.io.IOException: Profile unavailable after accepted completion
+	at com.example.gamequest.data.remote.IdentityCollisionTest$completarConfirmado_perfilSinRed_conservaEventoYNoRepite$1$api$1.me(IdentityCollisionTest.kt:112)
+	at com.example.gamequest.data.remote.RemoteCampusRepository.validarCodigo(RemoteCampusRepository.kt:107)
+	at com.example.gamequest.data.remote.RemoteCampusRepository$validarCodigo$1.invokeSuspend(Unknown Source:16)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source:1)
+	at com.example.gamequest.data.remote.IdentityCollisionTest.completarConfirmado_perfilSinRed_conservaEventoYNoRepite(IdentityCollisionTest.kt:104)
+2) restauracionPendiente_mismaCuenta_conservaDetalle(com.example.gamequest.SessionNavigationTest)
+androidx.compose.ui.test.ComposeTimeoutException: Condition still not satisfied after 10000 ms
+	at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$AndroidComposeUiTestImpl.waitUntil(ComposeUiTest.android.kt:887)
+	at androidx.compose.ui.test.junit4.AndroidComposeTestRule.waitUntil(AndroidComposeTestRule.android.kt:482)
+	at com.example.gamequest.SessionNavigationTest.route(SessionNavigationTest.kt:46)
+	at com.example.gamequest.SessionNavigationTest.restauracionPendiente_mismaCuenta_conservaDetalle(SessionNavigationTest.kt:102)
+
+FAILURES!!!
+Tests run: 3,  Failures: 2
+
+
+INSTRUMENTATION_CODE: -1

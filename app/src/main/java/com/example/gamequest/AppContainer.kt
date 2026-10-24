@@ -10,13 +10,14 @@ import com.example.gamequest.data.remote.RemoteCampusRepository
 import com.example.gamequest.util.SoundEffectManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 /**
  * Contenedor de dependencias manual (sin framework de inyección): crea y
  * expone una única instancia de la base de datos y de los repositorios
  * mientras dure la aplicación.
  */
-class AppContainer(context: Context) {
+class AppContainer(context: Context) : CampusQuestDependencies {
 
     private val applicationScope = CoroutineScope(SupervisorJob())
 
@@ -24,11 +25,18 @@ class AppContainer(context: Context) {
 
     val api = CampusApi(SessionTokenStore(context))
 
-    val preferencesRepository = UserPreferencesRepository(context)
+    override val preferencesRepository = UserPreferencesRepository(context)
 
-    val soundEffectManager = SoundEffectManager(context, preferencesRepository, applicationScope)
+    override val soundEffectManager = SoundEffectManager(context, preferencesRepository, applicationScope)
 
-    val authRepository = AuthRepository(database.usuarioDao(), api)
+    override val campusRepository = RemoteCampusRepository(database, api)
 
-    val campusRepository = RemoteCampusRepository(database, api)
+    override val sessionCoordinator = com.example.gamequest.data.session.SessionCoordinator(
+        api.tokens, preferencesRepository, campusRepository, database.usuarioDao()::buscarPorId,
+        api::logout, applicationScope
+    )
+
+    override val authRepository = AuthRepository(database.usuarioDao(), api, sessionCoordinator)
+
+    init { api.onUnauthorized = { token -> applicationScope.launch { sessionCoordinator.unauthorized(token) } } }
 }

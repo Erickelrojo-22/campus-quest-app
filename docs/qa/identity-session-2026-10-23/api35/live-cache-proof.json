@@ -1,0 +1,16 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "remoteId": null,
+      "nombres": "QA-Codex-UI24"
+    },
+    {
+      "id": 2,
+      "remoteId": 22,
+      "nombres": "QA-Online24"
+    }
+  ],
+  "points": 8,
+  "missions": 8
+}

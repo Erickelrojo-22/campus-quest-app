@@ -1,5 +1,6 @@
 package com.example.gamequest.data.repository
 
+import kotlinx.coroutines.flow.first
 import com.example.gamequest.data.local.dao.MisionDao
 import com.example.gamequest.data.local.dao.ProgresoMisionDao
 import com.example.gamequest.data.local.dao.PuntoInteresDao
@@ -201,7 +202,7 @@ class CampusRepositoryTest {
         }
 
         override fun observarTodos(): Flow<List<PuntoInteresEntity>> = flowOf(puntos)
-        override suspend fun buscarPorId(id: Int): PuntoInteresEntity? = puntos.find { it.id == id }
+    override suspend fun buscarPorId(id: Int): PuntoInteresEntity? = puntos.find { it.id == id }
         override fun observarPorId(id: Int): Flow<PuntoInteresEntity?> = flowOf(puntos.find { it.id == id })
         override suspend fun buscarPorCodigoQr(codigo: String): PuntoInteresEntity? =
             puntos.find { it.codigoQr.equals(codigo, ignoreCase = true) }
@@ -262,7 +263,8 @@ class CampusRepositoryTest {
         val progresos = mutableListOf<ProgresoMisionEntity>()
         private var nextId = 1
 
-        override suspend fun insertar(progreso: ProgresoMisionEntity): Long {
+        override suspend fun buscarPorRemoteId(remoteId: Int): ProgresoMisionEntity? = progresos.firstOrNull { it.remoteId == remoteId }
+    override suspend fun insertar(progreso: ProgresoMisionEntity): Long {
             val conId = progreso.copy(id = nextId++)
             progresos.add(conId)
             return conId.id.toLong()
@@ -288,6 +290,8 @@ class CampusRepositoryTest {
     }
 
     private class FakeUsuarioDao : UsuarioDao {
+        override suspend fun buscarPorRemoteId(remoteId: Int): UsuarioEntity? = observarRanking().first().firstOrNull { it.remoteId == remoteId }
+
         override suspend fun guardarRemotos(items: List<UsuarioEntity>) {
             items.forEach { item ->
                 usuarios.removeAll { it.id == item.id }
