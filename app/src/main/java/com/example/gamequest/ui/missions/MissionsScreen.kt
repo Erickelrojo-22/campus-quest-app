@@ -39,8 +39,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -60,11 +58,13 @@ import com.example.gamequest.util.SoundEffect
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun MissionsScreen(
-    viewModel: MissionsViewModel,
+    uiState: MissionsUiState,
+    onBusquedaChange: (String) -> Unit,
+    onFiltroChange: (FiltroMisiones) -> Unit,
+    onLimpiarBusqueda: () -> Unit,
     onMisionClick: (Int) -> Unit
 ) {
     val soundManager = LocalSoundManager.current
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val filtro = uiState.filtro
     val busqueda = uiState.busqueda
     val misiones = uiState.misiones
@@ -92,7 +92,7 @@ fun MissionsScreen(
             ) {
                 TextField(
                     value = busqueda,
-                    onValueChange = viewModel::onBusquedaChange,
+                    onValueChange = onBusquedaChange,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(24.dp),
                     placeholder = { Text("Buscar misión, lugar o dificultad...", color = Color.White.copy(alpha = 0.8f)) },
@@ -101,7 +101,7 @@ fun MissionsScreen(
                         if (busqueda.isNotEmpty()) {
                             IconButton(onClick = {
                                 soundManager?.play(SoundEffect.CLICK)
-                                viewModel.limpiarBusqueda()
+                                onLimpiarBusqueda()
                             }) {
                                 Icon(Icons.Filled.Close, contentDescription = "Limpiar búsqueda", tint = Color.White)
                             }
@@ -131,7 +131,7 @@ fun MissionsScreen(
                         selected = filtro == FiltroMisiones.ACTIVAS,
                         onClick = {
                             soundManager?.play(SoundEffect.CLICK)
-                            viewModel.onFiltroChange(FiltroMisiones.ACTIVAS)
+                            onFiltroChange(FiltroMisiones.ACTIVAS)
                         },
                         label = { Text("Activas · $activas") }
                     )
@@ -139,7 +139,7 @@ fun MissionsScreen(
                         selected = filtro == FiltroMisiones.COMPLETADAS,
                         onClick = {
                             soundManager?.play(SoundEffect.CLICK)
-                            viewModel.onFiltroChange(FiltroMisiones.COMPLETADAS)
+                            onFiltroChange(FiltroMisiones.COMPLETADAS)
                         },
                         label = { Text("Completadas · $completadas") }
                     )
@@ -147,7 +147,7 @@ fun MissionsScreen(
                         selected = filtro == FiltroMisiones.TODAS,
                         onClick = {
                             soundManager?.play(SoundEffect.CLICK)
-                            viewModel.onFiltroChange(FiltroMisiones.TODAS)
+                            onFiltroChange(FiltroMisiones.TODAS)
                         },
                         label = { Text("Todas") }
                     )

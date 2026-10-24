@@ -46,31 +46,15 @@ abstract class AppDatabase : RoomDatabase() {
                 "campus_quest_remote.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { REMOTE_INSTANCE = it }
         }
 
-        fun getInstance(context: Context, scope: CoroutineScope): AppDatabase {
+        fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
                     "campus_quest.db"
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).addCallback(object : Callback() {
-                    override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
-                        super.onCreate(db)
-                        scope.launch {
-                            INSTANCE?.let { poblarDatosIniciales(it) }
-                        }
-                    }
-                }).build()
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build()
                 INSTANCE = instance
                 instance
-            }
-        }
-
-        private suspend fun poblarDatosIniciales(db: AppDatabase) {
-            val puntoDao = db.puntoInteresDao()
-            val misionDao = db.misionDao()
-            SeedData.puntosConMisiones().forEach { semilla ->
-                val puntoId = puntoDao.insertar(semilla.punto)
-                misionDao.insertar(semilla.mision.copy(puntoInteresId = puntoId.toInt()))
             }
         }
 

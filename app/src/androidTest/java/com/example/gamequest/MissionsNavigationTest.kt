@@ -4,6 +4,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -14,6 +15,7 @@ import androidx.compose.ui.test.performClick
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.gamequest.data.local.SeedData
 import com.example.gamequest.data.local.entity.UsuarioEntity
 import com.example.gamequest.data.repository.CampusRepository
@@ -75,7 +77,14 @@ class MissionsNavigationTest {
                         })
                     }
                     composable(Routes.MISSIONS) {
-                        MissionsScreen(missionsViewModel, onMisionClick = {})
+                        val state by missionsViewModel.uiState.collectAsStateWithLifecycle()
+                        MissionsScreen(
+                            uiState = state,
+                            onBusquedaChange = missionsViewModel::onBusquedaChange,
+                            onFiltroChange = missionsViewModel::onFiltroChange,
+                            onLimpiarBusqueda = missionsViewModel::limpiarBusqueda,
+                            onMisionClick = {}
+                        )
                     }
                 }
             }

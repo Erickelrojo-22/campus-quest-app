@@ -2,7 +2,7 @@ package com.example.gamequest.ui.missions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.gamequest.data.repository.CampusRepository
+import com.example.gamequest.data.repository.CampusDataRepository
 import com.example.gamequest.data.repository.MisionConEstado
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -23,7 +23,7 @@ data class MissionsUiState(
 
 /** RF-08 Listar misiones (activas, completadas, todas). */
 class MissionsViewModel(
-    campusRepository: CampusRepository,
+    campusRepository: CampusDataRepository,
     usuarioId: Int
 ) : ViewModel() {
 

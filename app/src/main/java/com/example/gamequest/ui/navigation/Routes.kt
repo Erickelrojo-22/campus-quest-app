@@ -4,6 +4,7 @@ object Routes {
     const val SPLASH = "splash"
     const val LOGIN = "login"
     const val REGISTER = "register"
+    const val LOCAL_TUTOR_SETUP = "local_tutor_setup"
 
 
     // Contenedor único de las 5 pestañas (carrusel deslizable). Las constantes

@@ -21,7 +21,8 @@ sealed class AuthResult {
  * Si el nombre ya existe se reutiliza la cuenta (con su progreso); si no, se crea una nueva.
  */
 class AuthRepository(private val usuarioDao: UsuarioDao, private val api: CampusGateway? = null,
-    private val sessionCommitter: com.example.gamequest.data.session.SessionCommitter? = null) {
+    private val sessionCommitter: com.example.gamequest.data.session.SessionCommitter? = null,
+    private val localAccountCommitter: com.example.gamequest.data.session.LocalAccountSessionCommitter? = null) {
 
     val minimumPasswordLength: Int get() = if (api != null) 8 else MIN_CONTRASENA_LENGTH
 
@@ -90,7 +91,9 @@ class AuthRepository(private val usuarioDao: UsuarioDao, private val api: Campus
             rol = Rol.ESTUDIANTE
         )
         val id = usuarioDao.insertar(nuevoUsuario)
-        return AuthResult.Exito(nuevoUsuario.copy(id = id.toInt()))
+        val saved = nuevoUsuario.copy(id = id.toInt())
+        localAccountCommitter?.commitLocalAccount(saved.id)
+        return AuthResult.Exito(saved)
     }
 
     suspend fun iniciarSesionConCredenciales(correo: String, contrasena: String): AuthResult {
@@ -117,6 +120,7 @@ class AuthRepository(private val usuarioDao: UsuarioDao, private val api: Campus
             usuarioDao.actualizarContrasena(usuario.id, PasswordHasher.hash(pass))
         }
 
+        localAccountCommitter?.commitLocalAccount(usuario.id)
         return AuthResult.Exito(usuario)
     }
 
@@ -159,7 +163,7 @@ class AuthRepository(private val usuarioDao: UsuarioDao, private val api: Campus
                     "Ese nombre pertenece a una cuenta estudiantil. Inicia sesión desde la pestaña Estudiantil."
                 )
             }
-            if (api != null) commitSession("offline-visitor-${it.id}", it.id)
+            if (sessionCommitter != null || api != null) commitSession("offline-visitor-${it.id}", it.id)
             return AuthResult.Exito(it)
         }
 
@@ -171,7 +175,7 @@ class AuthRepository(private val usuarioDao: UsuarioDao, private val api: Campus
             rol = Rol.ESTUDIANTE
         )
         val id = usuarioDao.insertar(nuevo)
-        if (api != null) commitSession("offline-visitor-$id", id.toInt())
+        if (sessionCommitter != null || api != null) commitSession("offline-visitor-$id", id.toInt())
         return AuthResult.Exito(nuevo.copy(id = id.toInt()))
     }
 }
