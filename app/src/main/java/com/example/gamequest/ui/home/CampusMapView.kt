@@ -165,6 +165,8 @@ fun CampusMapView(
     primaryColor: AvatarColor = AvatarColor.COBALT_BLUE,
     secondaryColor: AvatarColor = AvatarColor.RUBY_RED,
     characterSpecies: CharacterSpecies = CharacterSpecies.DUDE,
+    /** En horizontal el visor se hace más ancho; el mapa se recorta, no se deforma. */
+    viewportAspectRatio: Float = 0.85f,
     mapAssetPath: String = "maps/campus_map_uleam.png",
 ) {
     val context = LocalContext.current
@@ -324,7 +326,7 @@ fun CampusMapView(
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
-            .aspectRatio(0.85f)
+            .aspectRatio(viewportAspectRatio)
             .clip(RoundedCornerShape(12.dp))
             .border(2.dp, AmberAccent, RoundedCornerShape(12.dp))
             .background(Color(0xFF23352B))
@@ -745,11 +747,12 @@ fun CampusMapView(
             }
         }
 
-        // 5.1 Selector rápido de filtro en el mapa: Solo Pendientes vs Todos
+        // 5.1 Selector rápido de filtro en el mapa: Solo Pendientes vs Todos.
+        // Va abajo a la derecha para no cubrir la etiqueta de misión activa.
         Surface(
             modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(10.dp)
+                .align(Alignment.BottomEnd)
+                .padding(12.dp)
                 .clip(RoundedCornerShape(20.dp))
                 .border(BorderStroke(1.5.dp, if (soloPendientes) AmberAccent else Color(0xFF3B6B58)), RoundedCornerShape(20.dp))
                 .clickable {

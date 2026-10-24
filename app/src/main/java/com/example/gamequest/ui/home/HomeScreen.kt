@@ -87,6 +87,8 @@ fun HomeScreen(
             // sugerida, así el mapa conserva altura útil en lugar de quedar aplastado.
             val compactoAlto = maxHeight < 480.dp
             val horizontal = maxWidth > maxHeight && maxWidth >= 560.dp
+            val anchoContenido = maxWidth
+            val altoContenido = maxHeight
 
             Column(Modifier.fillMaxSize()) {
                 EncabezadoInicio(
@@ -147,8 +149,15 @@ fun HomeScreen(
                     }
 
                     if (horizontal) {
-                        Row(Modifier.weight(1f).fillMaxWidth()) {
-                            Box(Modifier.weight(1f).fillMaxHeight()) {
+                        // Agrupamos mapa y misión sugerida por tamaños, no dejando que el
+                        // espacio sobrante del Row los separe demasiado en horizontal.
+                        val anchoMapa = (altoContenido * 1.15f).coerceAtMost(360.dp)
+                        val anchoTarjeta = (anchoContenido - anchoMapa - 40.dp).coerceAtMost(360.dp)
+                        Row(
+                            modifier = Modifier.weight(1f).fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally)
+                        ) {
+                            Box(Modifier.width(anchoMapa).fillMaxHeight()) {
                                 MapaCampus(
                                     puntos = puntosMapa,
                                     completados = completadosMapa,
@@ -156,12 +165,13 @@ fun HomeScreen(
                                     primaryColor = charPrimary,
                                     secondaryColor = charSecondary,
                                     species = charSpecies,
-                                    onPuntoClick = alAbrirPunto
+                                    onPuntoClick = alAbrirPunto,
+                                    viewportAspectRatio = 1.15f
                                 )
                             }
                             sugerida?.let { estado ->
                                 Box(
-                                    Modifier.width(320.dp).fillMaxHeight().padding(end = 16.dp),
+                                    Modifier.width(anchoTarjeta).fillMaxHeight(),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     MisionSugeridaCard(estado = estado, onClick = { onMisionClick(estado.mision.id) })
@@ -346,7 +356,8 @@ private fun MapaCampus(
     primaryColor: AvatarColor,
     secondaryColor: AvatarColor,
     species: CharacterSpecies,
-    onPuntoClick: (PuntoInteresEntity) -> Unit
+    onPuntoClick: (PuntoInteresEntity) -> Unit,
+    viewportAspectRatio: Float = 0.85f
 ) {
     BoxWithConstraints(
         modifier = Modifier.fillMaxSize().padding(16.dp),
@@ -354,7 +365,7 @@ private fun MapaCampus(
     ) {
         CampusMapView(
             modifier = Modifier
-                .widthIn(max = maxHeight * 0.85f)
+                .widthIn(max = maxHeight * viewportAspectRatio)
                 .semantics {
                     contentDescription = "Mapa interactivo del campus con ${puntos.size} puntos de interés, " +
                         "${completados.size} completados. Para una lista accesible usa el buscador " +
@@ -366,6 +377,7 @@ private fun MapaCampus(
             primaryColor = primaryColor,
             secondaryColor = secondaryColor,
             characterSpecies = species,
+            viewportAspectRatio = viewportAspectRatio,
             onPuntoClick = onPuntoClick
         )
     }
