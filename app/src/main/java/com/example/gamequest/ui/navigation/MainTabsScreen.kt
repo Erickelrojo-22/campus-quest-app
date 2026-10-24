@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.background
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Scaffold
@@ -122,6 +123,9 @@ fun MainTabsScreen(
             Row(
                 Modifier
                     .fillMaxSize()
+                    // El color se pinta antes del padding: también cubre la franja de la
+                    // cámara y los márgenes laterales en teléfonos horizontales.
+                    .background(MaterialTheme.colorScheme.primary)
                     .windowInsetsPadding(
                         WindowInsets.safeDrawing.only(
                             WindowInsetsSides.Top + WindowInsetsSides.Horizontal
