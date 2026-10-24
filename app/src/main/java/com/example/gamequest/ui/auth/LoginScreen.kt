@@ -72,7 +72,8 @@ import com.example.gamequest.ui.theme.TealPrimaryDark
 fun LoginScreen(
     viewModel: AuthViewModel,
     onLoginExitoso: (UsuarioEntity) -> Unit,
-    onIrARegistro: () -> Unit = {}
+    onIrARegistro: () -> Unit = {},
+    onConfigurarTutorLocal: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -338,6 +339,11 @@ fun LoginScreen(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = AmberAccent
                             )
+                        }
+                        onConfigurarTutorLocal?.let { setup ->
+                            TextButton(onClick = setup) {
+                                Text("Configurar tutor de este dispositivo", style = MaterialTheme.typography.bodySmall, color = AmberAccent)
+                            }
                         }
                     }
                 }

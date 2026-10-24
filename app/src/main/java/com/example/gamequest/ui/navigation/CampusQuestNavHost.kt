@@ -32,6 +32,8 @@ import com.example.gamequest.ui.auth.AuthViewModel
 import com.example.gamequest.ui.auth.LoginScreen
 import com.example.gamequest.ui.auth.RegisterScreen
 import com.example.gamequest.ui.auth.RegisterViewModel
+import com.example.gamequest.ui.auth.LocalTutorSetupScreen
+import com.example.gamequest.ui.auth.LocalTutorSetupViewModel
 
 import com.example.gamequest.ui.badges.BadgeEarnedViewModel
 import com.example.gamequest.ui.badges.BadgeEarnedScreen
@@ -154,8 +156,21 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                 },
                 onIrARegistro = {
                     navController.navigate(Routes.REGISTER)
-                }
+                },
+                onConfigurarTutorLocal = container.tutorSetupRepository?.let { { navController.navigate(Routes.LOCAL_TUTOR_SETUP) } }
             )
+        }
+
+        composable(Routes.LOCAL_TUTOR_SETUP) {
+            val setup = container.tutorSetupRepository
+            if (setup == null) {
+                AccesoNoAutorizado { navController.popBackStack() }
+            } else {
+                val setupViewModel: LocalTutorSetupViewModel = viewModel(
+                    factory = GenericViewModelFactory { LocalTutorSetupViewModel(setup) }
+                )
+                LocalTutorSetupScreen(setupViewModel, onConfigured = { navController.navigate(Routes.MAIN) { popUpTo(Routes.LOGIN) { inclusive = true } } }, onBack = { navController.popBackStack() })
+            }
         }
 
         composable(Routes.REGISTER) {
