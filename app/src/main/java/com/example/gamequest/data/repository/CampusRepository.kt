@@ -57,7 +57,8 @@ open class CampusRepository(
     private val puntoDao: PuntoInteresDao? = null,
     private val misionDao: MisionDao? = null,
     private val progresoDao: ProgresoMisionDao? = null,
-    private val usuarioDao: UsuarioDao? = null
+    private val usuarioDao: UsuarioDao? = null,
+    private val localCrudAuthorizer: LocalCrudAuthorizer? = null
 ) {
 
     protected open suspend fun <T> runInTransaction(block: suspend () -> T): T {
@@ -213,7 +214,8 @@ open class CampusRepository(
         dificultad: String,
         insigniaNombre: String,
         insigniaEmoji: String
-    ): Int = runInTransaction {
+    ): Int = authorizeCrud {
+        runInTransaction {
         val puntoId = puntoDao!!.insertar(punto).toInt()
         misionDao!!.insertar(
             MisionEntity(
@@ -228,9 +230,10 @@ open class CampusRepository(
             )
         )
         puntoId
+        }
     }
 
-    open suspend fun actualizarMisionYPunto(mision: MisionEntity, punto: PuntoInteresEntity) {
+    open suspend fun actualizarMisionYPunto(mision: MisionEntity, punto: PuntoInteresEntity) = authorizeCrud {
         val existeOtro = puntoDao?.existeOtroConCodigoQr(punto.codigoQr, punto.id) ?: false
         require(!existeOtro) {
             "Ya existe otro punto con ese código QR."
@@ -239,9 +242,12 @@ open class CampusRepository(
         puntoDao?.actualizar(punto)
     }
 
-    open suspend fun eliminarMision(mision: MisionEntity) {
+    open suspend fun eliminarMision(mision: MisionEntity) = authorizeCrud {
         misionDao?.archivar(mision.id)
     }
+
+    private suspend fun <T> authorizeCrud(block: suspend () -> T): T =
+        localCrudAuthorizer?.withTutor(block) ?: block()
 
     open fun generarCodigoQr(categoria: String): String {
         val prefijo = categoria.take(3).uppercase().ifBlank { "CQ0" }
