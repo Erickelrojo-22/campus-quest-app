@@ -1,3 +1,4 @@
+Starting a Gradle Daemon, 1 stopped Daemon could not be reused, use --status for details
 Reusing configuration cache.
 > Task :app:preBuild UP-TO-DATE
 > Task :app:preDebugBuild UP-TO-DATE
@@ -27,7 +28,7 @@ w: file:///C:/Users/Erick/.codex/worktrees/campus-quest-fixes-20261023/app/src/m
 > Task :app:bundleDebugClassesToCompileJar
 > Task :app:kspDebugUnitTestKotlin
 > Task :app:preDebugUnitTestBuild UP-TO-DATE
-> Task :app:compileDebugUnitTestKotlin UP-TO-DATE
+> Task :app:compileDebugUnitTestKotlin
 > Task :app:javaPreCompileDebugUnitTest UP-TO-DATE
 > Task :app:compileDebugUnitTestJavaWithJavac NO-SOURCE
 > Task :app:processDebugJavaRes UP-TO-DATE
@@ -160,6 +161,6 @@ w: file:///C:/Users/Erick/.codex/worktrees/campus-quest-fixes-20261023/app/src/m
 > Task :app:createReleaseApkListingFileRedirect UP-TO-DATE
 > Task :app:assembleRelease
 
-BUILD SUCCESSFUL in 8m 16s
-136 actionable tasks: 28 executed, 108 up-to-date
+BUILD SUCCESSFUL in 9m 8s
+136 actionable tasks: 29 executed, 107 up-to-date
 Configuration cache entry reused.

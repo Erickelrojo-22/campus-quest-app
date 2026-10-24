@@ -1,77 +1,80 @@
 <?xml version='1.0' encoding='UTF-8' ?>
-<testsuites tests="25" failures="0" errors="0" skipped="0" time="45.314" timestamp="2026-10-23T19:31:39" hostname="localhost">
-  <testsuite name="com.example.gamequest.ExampleInstrumentedTest" tests="1" failures="0" errors="0" skipped="0" time="0.047" timestamp="2026-10-23T19:31:39" hostname="localhost">
+<testsuites tests="28" failures="0" errors="0" skipped="0" time="50.291" timestamp="2026-10-24T14:36:58" hostname="localhost">
+  <testsuite name="com.example.gamequest.ExampleInstrumentedTest" tests="1" failures="0" errors="0" skipped="0" time="0.042" timestamp="2026-10-24T14:36:58" hostname="localhost">
     <properties>
       <property name="device" value="CampusQuest_API29(AVD) - 10" />
       <property name="flavor" value="" />
       <property name="project" value=":app" />
     </properties>
-    <testcase name="useAppContext" classname="com.example.gamequest.ExampleInstrumentedTest" time="0.047" />
+    <testcase name="useAppContext" classname="com.example.gamequest.ExampleInstrumentedTest" time="0.042" />
   </testsuite>
-  <testsuite name="com.example.gamequest.IntegratedSessionTest" tests="1" failures="0" errors="0" skipped="0" time="7.961" timestamp="2026-10-23T19:31:39" hostname="localhost">
+  <testsuite name="com.example.gamequest.IntegratedSessionTest" tests="1" failures="0" errors="0" skipped="0" time="7.268" timestamp="2026-10-24T14:36:58" hostname="localhost">
     <properties>
       <property name="device" value="CampusQuest_API29(AVD) - 10" />
       <property name="flavor" value="" />
       <property name="project" value=":app" />
     </properties>
-    <testcase name="migrar_restaurar_cambiarCuenta_rechazar403_expirar401" classname="com.example.gamequest.IntegratedSessionTest" time="7.961" />
+    <testcase name="migrar_restaurar_cambiarCuenta_rechazar403_expirar401" classname="com.example.gamequest.IntegratedSessionTest" time="7.268" />
   </testsuite>
-  <testsuite name="com.example.gamequest.MissionsNavigationTest" tests="3" failures="0" errors="0" skipped="0" time="7.131" timestamp="2026-10-23T19:31:39" hostname="localhost">
+  <testsuite name="com.example.gamequest.MissionsNavigationTest" tests="3" failures="0" errors="0" skipped="0" time="6.444" timestamp="2026-10-24T14:36:58" hostname="localhost">
     <properties>
       <property name="device" value="CampusQuest_API29(AVD) - 10" />
       <property name="flavor" value="" />
       <property name="project" value=":app" />
     </properties>
-    <testcase name="activeAndCompletedMissionsRenderAndFilterAfterNavigation" classname="com.example.gamequest.MissionsNavigationTest" time="3.326" />
-    <testcase name="emptyCatalogOpensAndShowsEmptyState" classname="com.example.gamequest.MissionsNavigationTest" time="1.911" />
-    <testcase name="nextMissionFromEarnedBadgeOpensCompletedCatalog" classname="com.example.gamequest.MissionsNavigationTest" time="1.894" />
+    <testcase name="activeAndCompletedMissionsRenderAndFilterAfterNavigation" classname="com.example.gamequest.MissionsNavigationTest" time="2.457" />
+    <testcase name="emptyCatalogOpensAndShowsEmptyState" classname="com.example.gamequest.MissionsNavigationTest" time="1.939" />
+    <testcase name="nextMissionFromEarnedBadgeOpensCompletedCatalog" classname="com.example.gamequest.MissionsNavigationTest" time="2.048" />
   </testsuite>
-  <testsuite name="com.example.gamequest.SessionNavigationTest" tests="10" failures="0" errors="0" skipped="0" time="26.079" timestamp="2026-10-23T19:31:39" hostname="localhost">
+  <testsuite name="com.example.gamequest.SessionNavigationTest" tests="12" failures="0" errors="0" skipped="0" time="31.554" timestamp="2026-10-24T14:36:58" hostname="localhost">
     <properties>
       <property name="device" value="CampusQuest_API29(AVD) - 10" />
       <property name="flavor" value="" />
       <property name="project" value=":app" />
     </properties>
-    <testcase name="signedOut_abreLogin" classname="com.example.gamequest.SessionNavigationTest" time="1.624" />
-    <testcase name="rotacion_noDuplicaNavegacion" classname="com.example.gamequest.SessionNavigationTest" time="3.876" />
-    <testcase name="restoring_masDe1100ms_noAbreMainNiLogin" classname="com.example.gamequest.SessionNavigationTest" time="1.927" />
-    <testcase name="authenticated_abreMainUnaVez" classname="com.example.gamequest.SessionNavigationTest" time="2.697" />
-    <testcase name="http401EnDetalle_limpiaBackStackPrivado" classname="com.example.gamequest.SessionNavigationTest" time="3.006" />
-    <testcase name="loginNuevo_noRecuperaPantallasDeLaCuentaAnterior" classname="com.example.gamequest.SessionNavigationTest" time="4.432" />
-    <testcase name="mismaCuenta_enDetalle_noVuelveAMain" classname="com.example.gamequest.SessionNavigationTest" time="2.952" />
-    <testcase name="errorSinCache_puedeVolverAlLogin" classname="com.example.gamequest.SessionNavigationTest" time="1.683" />
-    <testcase name="recoveryRequired_muestraReintento" classname="com.example.gamequest.SessionNavigationTest" time="1.195" />
-    <testcase name="http401EnMain_limpiaBackStackPrivado" classname="com.example.gamequest.SessionNavigationTest" time="2.687" />
+    <testcase name="signedOut_abreLogin" classname="com.example.gamequest.SessionNavigationTest" time="1.801" />
+    <testcase name="rotacion_noDuplicaNavegacion" classname="com.example.gamequest.SessionNavigationTest" time="4.445" />
+    <testcase name="restoring_masDe1100ms_noAbreMainNiLogin" classname="com.example.gamequest.SessionNavigationTest" time="1.335" />
+    <testcase name="authenticated_abreMainUnaVez" classname="com.example.gamequest.SessionNavigationTest" time="2.934" />
+    <testcase name="http401EnDetalle_limpiaBackStackPrivado" classname="com.example.gamequest.SessionNavigationTest" time="2.575" />
+    <testcase name="loginNuevo_noRecuperaPantallasDeLaCuentaAnterior" classname="com.example.gamequest.SessionNavigationTest" time="3.991" />
+    <testcase name="restauracionPendiente_mismaCuenta_conservaDetalle" classname="com.example.gamequest.SessionNavigationTest" time="3.119" />
+    <testcase name="restauracionPendiente_otraCuenta_limpiaDetalleAnterior" classname="com.example.gamequest.SessionNavigationTest" time="3.702" />
+    <testcase name="mismaCuenta_enDetalle_noVuelveAMain" classname="com.example.gamequest.SessionNavigationTest" time="2.72" />
+    <testcase name="errorSinCache_puedeVolverAlLogin" classname="com.example.gamequest.SessionNavigationTest" time="1.234" />
+    <testcase name="recoveryRequired_muestraReintento" classname="com.example.gamequest.SessionNavigationTest" time="1.188" />
+    <testcase name="http401EnMain_limpiaBackStackPrivado" classname="com.example.gamequest.SessionNavigationTest" time="2.51" />
   </testsuite>
-  <testsuite name="com.example.gamequest.data.local.IdentityMigrationTest" tests="3" failures="0" errors="0" skipped="0" time="0.903" timestamp="2026-10-23T19:31:39" hostname="localhost">
+  <testsuite name="com.example.gamequest.data.local.IdentityMigrationTest" tests="3" failures="0" errors="0" skipped="0" time="0.865" timestamp="2026-10-24T14:36:58" hostname="localhost">
     <properties>
       <property name="device" value="CampusQuest_API29(AVD) - 10" />
       <property name="flavor" value="" />
       <property name="project" value=":app" />
     </properties>
-    <testcase name="version1_pasaPorVersion2" classname="com.example.gamequest.data.local.IdentityMigrationTest" time="0.667" />
-    <testcase name="version3_creacionLimpia" classname="com.example.gamequest.data.local.IdentityMigrationTest" time="0.034" />
-    <testcase name="version2_conservaIdsYRelaciones" classname="com.example.gamequest.data.local.IdentityMigrationTest" time="0.202" />
+    <testcase name="version1_pasaPorVersion2" classname="com.example.gamequest.data.local.IdentityMigrationTest" time="0.699" />
+    <testcase name="version3_creacionLimpia" classname="com.example.gamequest.data.local.IdentityMigrationTest" time="0.007" />
+    <testcase name="version2_conservaIdsYRelaciones" classname="com.example.gamequest.data.local.IdentityMigrationTest" time="0.159" />
   </testsuite>
-  <testsuite name="com.example.gamequest.data.remote.IdentityCollisionTest" tests="5" failures="0" errors="0" skipped="0" time="0.925" timestamp="2026-10-23T19:31:39" hostname="localhost">
+  <testsuite name="com.example.gamequest.data.remote.IdentityCollisionTest" tests="6" failures="0" errors="0" skipped="0" time="1.23" timestamp="2026-10-24T14:36:58" hostname="localhost">
     <properties>
       <property name="device" value="CampusQuest_API29(AVD) - 10" />
       <property name="flavor" value="" />
       <property name="project" value=":app" />
     </properties>
-    <testcase name="eventoLocalYRemoto_mismoNumero_noSeSobrescriben" classname="com.example.gamequest.data.remote.IdentityCollisionTest" time="0.218" />
-    <testcase name="solicitudProgreso_usaRemoteId" classname="com.example.gamequest.data.remote.IdentityCollisionTest" time="0.205" />
-    <testcase name="snapshotRepetido_noDuplicaCuentaNiEvento" classname="com.example.gamequest.data.remote.IdentityCollisionTest" time="0.226" />
-    <testcase name="visitanteYRemoto_mismoNumero_noSeMezclan" classname="com.example.gamequest.data.remote.IdentityCollisionTest" time="0.133" />
-    <testcase name="progresoDeOtroUsuario_seRechaza" classname="com.example.gamequest.data.remote.IdentityCollisionTest" time="0.143" />
+    <testcase name="eventoLocalYRemoto_mismoNumero_noSeSobrescriben" classname="com.example.gamequest.data.remote.IdentityCollisionTest" time="0.285" />
+    <testcase name="solicitudProgreso_usaRemoteId" classname="com.example.gamequest.data.remote.IdentityCollisionTest" time="0.158" />
+    <testcase name="snapshotRepetido_noDuplicaCuentaNiEvento" classname="com.example.gamequest.data.remote.IdentityCollisionTest" time="0.284" />
+    <testcase name="visitanteYRemoto_mismoNumero_noSeMezclan" classname="com.example.gamequest.data.remote.IdentityCollisionTest" time="0.183" />
+    <testcase name="completarConfirmado_perfilSinRed_conservaEventoYNoRepite" classname="com.example.gamequest.data.remote.IdentityCollisionTest" time="0.257" />
+    <testcase name="progresoDeOtroUsuario_seRechaza" classname="com.example.gamequest.data.remote.IdentityCollisionTest" time="0.063" />
   </testsuite>
-  <testsuite name="com.example.gamequest.data.remote.SessionTokenStoreTest" tests="2" failures="0" errors="0" skipped="0" time="0.17" timestamp="2026-10-23T19:31:39" hostname="localhost">
+  <testsuite name="com.example.gamequest.data.remote.SessionTokenStoreTest" tests="2" failures="0" errors="0" skipped="0" time="0.194" timestamp="2026-10-24T14:36:58" hostname="localhost">
     <properties>
       <property name="device" value="CampusQuest_API29(AVD) - 10" />
       <property name="flavor" value="" />
       <property name="project" value=":app" />
     </properties>
-    <testcase name="tokenCifradoAntiguo_sigueSinVinculo" classname="com.example.gamequest.data.remote.SessionTokenStoreTest" time="0.135" />
-    <testcase name="snapshotPersisteVinculoYRechazaInvalidacionAntigua" classname="com.example.gamequest.data.remote.SessionTokenStoreTest" time="0.035" />
+    <testcase name="tokenCifradoAntiguo_sigueSinVinculo" classname="com.example.gamequest.data.remote.SessionTokenStoreTest" time="0.16" />
+    <testcase name="snapshotPersisteVinculoYRechazaInvalidacionAntigua" classname="com.example.gamequest.data.remote.SessionTokenStoreTest" time="0.034" />
   </testsuite>
 </testsuites>

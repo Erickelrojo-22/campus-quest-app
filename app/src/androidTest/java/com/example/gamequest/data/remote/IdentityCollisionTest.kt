@@ -7,6 +7,8 @@ import com.example.gamequest.data.local.SeedData
 import com.example.gamequest.data.local.entity.*
 import com.example.gamequest.data.repository.AuthRepository
 import com.example.gamequest.data.repository.AuthResult
+import com.example.gamequest.data.repository.ValidacionQrResult
+import java.io.IOException
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import org.junit.After
@@ -98,5 +100,33 @@ class IdentityCollisionTest {
         assertEquals(8, repo.resolveIdentity().id)
         repo.syncCatalogAndProgress(8)
         assertEquals(51, requested)
+    }
+    @Test fun completarConfirmado_perfilSinRed_conservaEventoYNoRepite() = runBlocking {
+        db.usuarioDao().insertar(user(8, "Bound").copy(remoteId = 51))
+        tokens.save("server-token", 8)
+        var profiles = 0
+        var completions = 0
+        val api = object : CampusGateway by gateway {
+            override suspend fun me(): RemoteUserDto {
+                profiles++
+                if (profiles == 2) throw IOException("Profile unavailable after accepted completion")
+                return remote(51).copy(puntajeAcumulado = if (profiles > 2) 30 else 0)
+            }
+            override suspend fun completar(id: Int, mision: Int, codigo: String): RemoteProgressDto {
+                completions++
+                if (completions > 1) throw ApiException(409, "Already completed")
+                return RemoteProgressDto(1, id, mision, 20, 30, codigo, "completada")
+            }
+        }
+        val repo = RemoteCampusRepository(db, api)
+        val code = requireNotNull(db.puntoInteresDao().buscarPorId(1)).codigoQr
+        val result = repo.validarCodigo(code, 8) as ValidacionQrResult.MisionCompletada
+        assertEquals(30, result.puntosGanados)
+        assertEquals(30, result.nuevoPuntajeTotal)
+        assertEquals(1, db.progresoMisionDao().buscar(8, 1)?.remoteId)
+        assertEquals(1, db.progresoMisionDao().contarCompletadas(8))
+        assertEquals(ValidacionQrResult.YaCompletada, repo.validarCodigo(code, 8))
+        assertEquals(1, completions)
+        assertEquals(30, db.usuarioDao().buscarPorId(8)?.puntajeAcumulado)
     }
 }

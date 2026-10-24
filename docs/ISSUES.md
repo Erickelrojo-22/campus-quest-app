@@ -9,7 +9,7 @@ conservar un issue remoto enlazado.
 
 - [x] **Identidades locales/remotas aisladas (2026-10-23).** Room v3 conserva las filas antiguas, separa `remoteId` y traduce FK/endpoints/ranking. Migraciones y colisiones verificadas en API 29 y 35.
 - [x] **Rechazos HTTP del visitante respetados.** HTTP 4xx/5xx, JSON, cancelación y fallos de persistencia no conceden una sesión offline. Los fallos al guardar un visitante sin red devuelven error.
-- [x] **Arranque y expiración de sesión.** Estado explícito, caché vinculada, respuestas tardías descartadas y back stack privado eliminado ante 401. Evidencia: [90 pruebas JVM y 25 instrumentadas por API](QA-identidad-sesion-2026-10-23.md). Backend y crash general de Misiones continúan pendientes.
+- [x] **Arranque y expiración de sesión.** Estado explícito, caché vinculada, respuestas tardías descartadas y back stack privado eliminado ante 401. Evidencia: [90 pruebas JVM y 28 instrumentadas por API](QA-identidad-sesion-2026-10-23.md). Backend y crash general de Misiones continúan pendientes.
 
 - [x] **QR crasheaba al gestionar otra ventana mientras escaneaba.**
   Causa: `CamaraPreview` (`ScannerScreen.kt`) desligaba y volvía a

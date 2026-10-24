@@ -1,4 +1,4 @@
-Starting a Gradle Daemon, 6 stopped Daemons could not be reused, use --status for details
+Starting a Gradle Daemon, 3 stopped Daemons could not be reused, use --status for details
 Reusing configuration cache.
 > Task :app:preBuild UP-TO-DATE
 > Task :app:preDebugBuild UP-TO-DATE
@@ -80,14 +80,14 @@ Reusing configuration cache.
 > Task :app:writeDebugAndroidTestSigningConfigVersions UP-TO-DATE
 > Task :app:packageDebugAndroidTest UP-TO-DATE
 > Task :app:createDebugAndroidTestApkListingFileRedirect UP-TO-DATE
-Starting 25 tests on CampusQuest_API35(AVD) - 15
-CampusQuest_API35(AVD) - 15 Tests 2/25 completed. (0 skipped) (0 failed)
+Starting 28 tests on CampusQuest_API35(AVD) - 15
+CampusQuest_API35(AVD) - 15 Tests 4/28 completed. (0 skipped) (0 failed)
 > Task :app:connectedDebugAndroidTest
 
-CampusQuest_API35(AVD) - 15 Tests 9/25 completed. (0 skipped) (0 failed)
-CampusQuest_API35(AVD) - 15 Tests 14/25 completed. (0 skipped) (0 failed)
-Finished 25 tests on CampusQuest_API35(AVD) - 15
+CampusQuest_API35(AVD) - 15 Tests 10/28 completed. (0 skipped) (0 failed)
+CampusQuest_API35(AVD) - 15 Tests 13/28 completed. (0 skipped) (0 failed)
+Finished 28 tests on CampusQuest_API35(AVD) - 15
 
-BUILD SUCCESSFUL in 1m 22s
+BUILD SUCCESSFUL in 1m 19s
 74 actionable tasks: 1 executed, 73 up-to-date
 Configuration cache entry reused.

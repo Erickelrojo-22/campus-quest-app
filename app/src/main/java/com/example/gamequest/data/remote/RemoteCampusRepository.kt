@@ -104,13 +104,34 @@ class RemoteCampusRepository(private val db: AppDatabase, private val api: Campu
             if (e.permiteFallbackOffline() && api.tokens.snapshot == snapshot) return@withLock super.validarCodigo(codigo, usuarioId)
             throw e
         }
-        val updated = api.me()
-        require(updated.remoteId == user.remoteId) { "La cuenta cambió." }
-        db.withTransaction {
+        require(event.misionId == mission.id) { "La respuesta no corresponde a la misión solicitada." }
+        // The mutation is already acknowledged. Commit it before the auxiliary profile GET.
+        val confirmedUser = db.withTransaction {
             check(api.tokens.snapshot == snapshot) { "La sesión cambió." }
-            identities.guardarUsuario(updated)
+            val current = requireNotNull(db.usuarioDao().buscarPorId(user.id))
+            val previous = db.progresoMisionDao().buscar(user.id, mission.id)
             identities.guardarProgreso(event, user.id)
+            val confirmed = if (previous == null) {
+                val total = current.puntajeAcumulado + event.puntosObtenidos
+                current.copy(puntajeAcumulado = total, nivel = maxOf(current.nivel, 1 + total / 100))
+                    .also { db.usuarioDao().actualizar(it) }
+            } else current
             check(api.tokens.snapshot == snapshot) { "La sesión cambió." }
+            confirmed
+        }
+        val profile = try { api.me() } catch (e: CancellationException) { throw e
+        } catch (e: Exception) {
+            if (!e.permiteFallbackOffline()) throw e
+            null
+        }
+        val updated = db.withTransaction {
+            check(api.tokens.snapshot == snapshot) { "La sesión cambió." }
+            val resolved = if (profile == null) confirmedUser else {
+                require(profile.remoteId == user.remoteId) { "La cuenta cambió." }
+                identities.guardarUsuario(profile)
+            }
+            check(api.tokens.snapshot == snapshot) { "La sesión cambió." }
+            resolved
         }
         ValidacionQrResult.MisionCompletada(mission, point, event.puntosObtenidos,
             updated.puntajeAcumulado, updated.nivel, db.progresoMisionDao().contarCompletadas(user.id))

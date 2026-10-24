@@ -93,4 +93,22 @@ class SessionNavigationTest {
         restoration.emulateSavedInstanceStateRestore(); route(Routes.MISSION_DETAIL)
         compose.runOnIdle { assertEquals(Routes.MAIN,nav.previousBackStackEntry?.destination?.route) }
     }
+    @Test fun restauracionPendiente_mismaCuenta_conservaDetalle() {
+        val restoration=StateRestorationTester(compose)
+        launch(auth(),restoration); route(Routes.MAIN)
+        compose.runOnIdle { nav.navigate(Routes.missionDetail(1)) }; route(Routes.MISSION_DETAIL)
+        compose.runOnIdle { state.value=SessionState.Restoring }; compose.waitForIdle()
+        restoration.emulateSavedInstanceStateRestore()
+        compose.runOnIdle { state.value=auth() }; route(Routes.MISSION_DETAIL)
+        compose.runOnIdle { assertEquals(Routes.MAIN,nav.previousBackStackEntry?.destination?.route) }
+    }
+    @Test fun restauracionPendiente_otraCuenta_limpiaDetalleAnterior() {
+        val restoration=StateRestorationTester(compose)
+        launch(auth(),restoration); route(Routes.MAIN)
+        compose.runOnIdle { nav.navigate(Routes.missionDetail(1)) }; route(Routes.MISSION_DETAIL)
+        compose.runOnIdle { state.value=SessionState.Restoring }; compose.waitForIdle()
+        restoration.emulateSavedInstanceStateRestore()
+        compose.runOnIdle { state.value=auth(9) }; route(Routes.MAIN)
+        compose.runOnIdle { assertNull(nav.previousBackStackEntry) }
+    }
 }

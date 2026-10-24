@@ -111,7 +111,9 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
             navController.navigate(destination) { popUpTo(0) { inclusive = true }; launchSingleTop = true }
         }
         when (sessionState) {
-            SessionState.Restoring, is SessionState.RecoveryRequired -> {
+            // Private destinations render a loader until the saved stack's owner is resolved.
+            SessionState.Restoring -> Unit
+            is SessionState.RecoveryRequired -> {
                 if (route != null && route != Routes.SPLASH) replaceRoot(Routes.SPLASH)
             }
             is SessionState.SignedOut -> {
@@ -119,9 +121,11 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                 if (route != null && route != Routes.LOGIN && route != Routes.REGISTER) replaceRoot(Routes.LOGIN)
             }
             is SessionState.Authenticated -> {
-                if ((lastUserId != null && lastUserId != sessionState.localUserId) || route in publicRoutes)
-                    replaceRoot(Routes.MAIN)
-                lastUserId = sessionState.localUserId
+                if (route != null) {
+                    if (lastUserId != sessionState.localUserId || route in publicRoutes)
+                        replaceRoot(Routes.MAIN)
+                    lastUserId = sessionState.localUserId
+                }
             }
         }
     }
@@ -365,7 +369,9 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
             Routes.MISSION_FORM,
             arguments = listOf(navArgument("puntoId") { type = NavType.IntType; defaultValue = -1 })
         ) { backStackEntry ->
-            if (auth != null && usuario?.rol == Rol.TUTOR) {
+            if (auth == null) {
+                CargandoPantallaCompleta()
+            } else if (usuario?.rol == Rol.TUTOR) {
                 val puntoId = backStackEntry.arguments?.getInt("puntoId")?.takeIf { it > 0 }
                 val formViewModel: MissionFormViewModel = viewModel(
                     key = "form-$puntoId",

@@ -1,5 +1,5 @@
-Starting a Gradle Daemon, 8 stopped Daemons could not be reused, use --status for details
-Calculating task graph as configuration cache cannot be reused because file 'app\build.gradle.kts' has changed.
+Starting a Gradle Daemon, 2 stopped Daemons could not be reused, use --status for details
+Reusing configuration cache.
 > Task :app:preBuild UP-TO-DATE
 > Task :app:preDebugBuild UP-TO-DATE
 > Task :app:generateDebugBuildConfig UP-TO-DATE
@@ -80,15 +80,16 @@ Calculating task graph as configuration cache cannot be reused because file 'app
 > Task :app:writeDebugAndroidTestSigningConfigVersions UP-TO-DATE
 > Task :app:packageDebugAndroidTest UP-TO-DATE
 > Task :app:createDebugAndroidTestApkListingFileRedirect UP-TO-DATE
-Starting 25 tests on CampusQuest_API29(AVD) - 10
-CampusQuest_API29(AVD) - 10 Tests 2/25 completed. (0 skipped) (0 failed)
+Starting 28 tests on CampusQuest_API29(AVD) - 10
+CampusQuest_API29(AVD) - 10 Tests 3/28 completed. (0 skipped) (0 failed)
 > Task :app:connectedDebugAndroidTest
 
-CampusQuest_API29(AVD) - 10 Tests 6/25 completed. (0 skipped) (0 failed)
-CampusQuest_API29(AVD) - 10 Tests 10/25 completed. (0 skipped) (0 failed)
-CampusQuest_API29(AVD) - 10 Tests 14/25 completed. (0 skipped) (0 failed)
-Finished 25 tests on CampusQuest_API29(AVD) - 10
+CampusQuest_API29(AVD) - 10 Tests 6/28 completed. (0 skipped) (0 failed)
+CampusQuest_API29(AVD) - 10 Tests 10/28 completed. (0 skipped) (0 failed)
+CampusQuest_API29(AVD) - 10 Tests 13/28 completed. (0 skipped) (0 failed)
+CampusQuest_API29(AVD) - 10 Tests 28/28 completed. (0 skipped) (0 failed)
+Finished 28 tests on CampusQuest_API29(AVD) - 10
 
-BUILD SUCCESSFUL in 1m 50s
+BUILD SUCCESSFUL in 1m 41s
 74 actionable tasks: 1 executed, 73 up-to-date
-Configuration cache entry stored.
+Configuration cache entry reused.

@@ -19,14 +19,17 @@ necesita cuentas, secretos ni solicitudes al backend de producción.
 
 ## Resultados
 
+Verificación final ejecutada el 2026-10-24, después de corregir los dos
+hallazgos adicionales de la [revisión final](REVISION-identidad-sesion.md).
+
 | Gate | Resultado | Evidencia |
 |---|---|---|
 | JVM | 90 pruebas, 0 fallos/errores/omisiones | [XML consolidado](qa/identity-session-2026-10-23/unit-tests.xml) |
 | Lint debug | 0 errores, 49 advertencias | [SARIF](qa/identity-session-2026-10-23/lint.sarif) |
 | Debug y androidTest | Compilación y APK correctos | [Log de build](qa/identity-session-2026-10-23/build.log) |
 | Release con R8 | APK sin firmar generado correctamente | [Hashes de APK](qa/identity-session-2026-10-23/apks.sha256) |
-| Android API 29 | 25 pruebas, 0 fallos/errores/omisiones | [XML](qa/identity-session-2026-10-23/api29/tests.xml), [log](qa/identity-session-2026-10-23/api29/gradle-connected.log) |
-| Android API 35 | 25 pruebas, 0 fallos/errores/omisiones | [XML](qa/identity-session-2026-10-23/api35/tests.xml), [log](qa/identity-session-2026-10-23/api35/gradle-connected.log) |
+| Android API 29 | 28 pruebas, 0 fallos/errores/omisiones | [XML](qa/identity-session-2026-10-23/api29/tests.xml), [log](qa/identity-session-2026-10-23/api29/gradle-connected.log) |
+| Android API 35 | 28 pruebas, 0 fallos/errores/omisiones | [XML](qa/identity-session-2026-10-23/api35/tests.xml), [log](qa/identity-session-2026-10-23/api35/gradle-connected.log) |
 
 Las advertencias de Lint se conservan en el reporte: recursos sin uso,
 actualizaciones de dependencias, estilo de Modifier y recomendaciones KTX/TOML.
@@ -34,7 +37,7 @@ No se declaran resueltas por esta corrección.
 
 Se ejecutó además el caso integrado de forma dirigida para capturar el
 [login tras el 401](qa/identity-session-2026-10-23/api35/session-expired.png).
-Esta ejecución visual adicional no se suma a las 50 de la matriz requerida.
+Esta ejecución visual adicional no se suma a las 56 de la matriz requerida.
 Gradle retira los APK al terminar sus pruebas, por eso la captura se obtuvo
 con una ejecución instrumentada dirigida que conserva la instalación.
 
@@ -70,6 +73,12 @@ se reduce el heap de Gradle y se conecta un solo emulador por ejecución.
   acepta solo caché vinculada y descarta resultados de una sesión anterior.
 - La navegación comprueba recuperación, Main/detalle, cambio de cuenta,
   conservación del detalle de la misma cuenta y recreación de estado guardado.
+- Una misión confirmada conserva su evento y recompensa si falla el transporte
+  de la consulta posterior del perfil; repetir el QR no repite la mutación.
+- La transición `Restoring` con recreación conserva el detalle de la misma
+  cuenta y descarta el de otra. Ambos fallos nuevos se observaron antes de la
+  corrección ([RED](qa/identity-session-2026-10-23/final-review-red.log)) y los
+  tres casos posteriores pasan en ambas API.
 - El recorrido integrado parte de una base v2 con un visitante y progreso;
   migra a v3, restaura sin red, inicia un remoto con ID coincidente, restaura
   el vínculo, rechaza 403 y elimina la navegación privada ante 401.

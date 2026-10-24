@@ -9,6 +9,8 @@
 - Navegar desde el estado resuelto, limpiar rutas privadas ante 401 y reiniciar
   el contexto al cambiar de cuenta.
 - Adaptar ranking, probar migraciones/grafo real e incluir API 29/35 en CI de PR.
+- Conservar completados ya confirmados si falla la consulta auxiliar del perfil
+  y preservar el detalle guardado durante la restauración de la misma cuenta.
 
 ## Datos antiguos
 
@@ -18,7 +20,7 @@ y su snapshot remoto. No se fusiona historial por nombre, correo o ID coincident
 
 ## Validación y límites
 
-90 pruebas JVM y 25 instrumentadas en cada API (29/35), sin fallos. Lint sin errores (49 advertencias); APK debug y release con R8 compilados.
+Verificación final del 2026-10-24: 90 pruebas JVM y 28 instrumentadas en cada API (29/35), sin fallos. Lint sin errores (49 advertencias); APK debug y release con R8 compilados.
 
 Consultar [evidencia de QA](QA-identidad-sesion-2026-10-23.md) y
 [arquitectura de seguridad](SECURITY-E2E.md). El backend real no se certifica con
