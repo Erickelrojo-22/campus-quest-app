@@ -83,7 +83,9 @@ fun BadgesScreen(
     val haptic = LocalHapticFeedback.current
     val estado by viewModel.estado.collectAsStateWithLifecycle()
 
-    ContenidoAdaptable(modifier = Modifier.fillMaxSize()) {
+    // Insignias y ranking aprovechan el ancho de tablets/horizontal; no son un
+    // formulario y no deben quedar limitados al ancho estrecho de Perfil.
+    ContenidoAdaptable(modifier = Modifier.fillMaxSize(), anchoMaximo = 900.dp) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             item {
                 Column(

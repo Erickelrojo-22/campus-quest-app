@@ -128,7 +128,7 @@ fun MainTabsScreen(
                     .background(MaterialTheme.colorScheme.primary)
                     .windowInsetsPadding(
                         WindowInsets.safeDrawing.only(
-                            WindowInsetsSides.Top + WindowInsetsSides.Horizontal
+                            WindowInsetsSides.Top + WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
                         )
                     )
             ) {
