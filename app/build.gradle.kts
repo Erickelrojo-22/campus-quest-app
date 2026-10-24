@@ -9,12 +9,19 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.example.gamequest"
+        applicationId = "com.example.gamequest.local"
         minSdk = 29
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
         buildConfigField("String", "API_BASE_URL", "\"https://campus-quest-api-prod.onrender.com/api/v1/\"")
+
+        val dataMode = providers.gradleProperty("campusDataMode").orElse("local").get().lowercase()
+        require(dataMode == "local" || dataMode == "remote") {
+            "campusDataMode must be local or remote."
+        }
+        buildConfigField("String", "CAMPUS_DATA_MODE", "\"$dataMode\"")
+        if (dataMode == "remote") applicationId = "com.example.gamequest"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
