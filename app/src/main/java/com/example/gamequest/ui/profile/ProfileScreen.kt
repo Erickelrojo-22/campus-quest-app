@@ -64,7 +64,9 @@ fun ProfileScreen(
     val totalInsignias  = uiState.totalInsignias
     val spriteAnim      = uiState.spriteAnim
 
-    ContenidoAdaptable(modifier = Modifier.fillMaxSize()) {
+    // En horizontal el perfil es una vista de información, no un formulario:
+    // aprovecha el ancho útil igual que Insignias y conserva el centrado.
+    ContenidoAdaptable(modifier = Modifier.fillMaxSize(), anchoMaximo = 900.dp) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
             // En teléfonos bajos el contenido sigue siendo desplazable, pero el resumen
             // superior ocupa menos alto para dejar visible la primera acción.
