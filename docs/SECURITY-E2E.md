@@ -4,8 +4,9 @@
 
 Android utiliza una API REST sobre HTTPS y Room como caché local. El APK no
 incluye un proveedor OAuth. La autorización de las operaciones remotas corresponde
-al servidor; estas pruebas usan una API simulada y no certifican el backend de
-producción. El issue de validación autenticada del backend sigue abierto.
+al servidor. La matriz automatizada usa una API simulada; una pasada adicional
+valida visitantes contra Render y el APK real en API 35. El issue de validación
+completa del backend sigue abierto por su cobertura institucional/admin y física.
 
 El token se cifra con AES-GCM y una clave de Android Keystore. El token cifrado y
 su ID local se escriben juntos en SharedPreferences. Las preferencias de interfaz
@@ -63,5 +64,7 @@ entorno, comandos, resultados, logs y limitaciones de esta corrección.
 | Persistencia | Snapshot cifrado tras nueva instancia; invalidación condicional; token antiguo sin vínculo |
 | Integración | Base v2 con historial, visitante offline, remoto con ID coincidente, restauración, 403 y 401 |
 
-Las pruebas no sustituyen un recorrido autenticado contra el backend ni una
-validación en un teléfono físico. Tampoco cierran el reporte general de Misiones.
+La [pasada adicional contra Render](QA-BACKEND-2026-10-24.md) valida visitantes
+autenticados, progreso y revocación, además del APK real en API 35 y su caché.
+No certifica el registro/login institucional, administración ni teléfono físico.
+Tampoco cierra el reporte general de Misiones.

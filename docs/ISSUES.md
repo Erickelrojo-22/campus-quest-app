@@ -84,6 +84,12 @@ conservar un issue remoto enlazado.
 
 ## Pendientes
 
+Actualización 2026-10-24: [QA contra Render](QA-BACKEND-2026-10-24.md) completó
+30 comprobaciones de visitante, autorización entre cuentas QA, progreso,
+idempotencia y revocación. El APK real en API 35 abrió 8 misiones/detalle y
+restauró caché sin conexión. La cobertura institucional/admin y física de los
+pendientes siguientes todavía no está completa.
+
 - [ ] **Crash al abrir la sección de Misiones.** Revisados
   `MissionsScreen.kt`, `MissionsViewModel.kt`, `CampusRepository`,
   los 3 DAOs y el `NavHost`. Revalidación del 2026-10-18: compilación,

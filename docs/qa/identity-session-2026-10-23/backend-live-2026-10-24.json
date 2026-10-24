@@ -1,0 +1,179 @@
+{
+  "date": "2026-10-24",
+  "base": "https://campus-quest-api-prod.onrender.com/api/v1/",
+  "checks": [
+    {
+      "name": "health",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "no_session_auth/me",
+      "passed": true,
+      "status": 401
+    },
+    {
+      "name": "no_session_puntos",
+      "passed": true,
+      "status": 401
+    },
+    {
+      "name": "no_session_catalogo",
+      "passed": true,
+      "status": 401
+    },
+    {
+      "name": "no_session_ranking",
+      "passed": true,
+      "status": 401
+    },
+    {
+      "name": "visitor_login_A",
+      "passed": true,
+      "status": 201
+    },
+    {
+      "name": "restore_A",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "visitor_login_B",
+      "passed": true,
+      "status": 201
+    },
+    {
+      "name": "restore_B",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "separate_identities",
+      "passed": true
+    },
+    {
+      "name": "point_contract",
+      "passed": true,
+      "status": 200,
+      "count": 8
+    },
+    {
+      "name": "catalog_contract",
+      "passed": true,
+      "status": 200,
+      "count": 8
+    },
+    {
+      "name": "ranking_contract",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "initial_own_progress",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "other_qa_account_forbidden",
+      "passed": true,
+      "status": 403
+    },
+    {
+      "name": "visitor_user_directory_forbidden",
+      "passed": true,
+      "status": 403
+    },
+    {
+      "name": "active_mission_available",
+      "passed": true
+    },
+    {
+      "name": "invalid_qr_rejected",
+      "passed": true,
+      "status": 422
+    },
+    {
+      "name": "invalid_qr_no_progress",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "confirmed_completion",
+      "passed": true,
+      "status": 201
+    },
+    {
+      "name": "server_points_updated",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "confirmed_history",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "duplicate_idempotent_existing_event",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "duplicate_no_extra_event",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "duplicate_no_extra_points",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "other_qa_history_unchanged",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "logout_0",
+      "passed": true,
+      "status": 204
+    },
+    {
+      "name": "revoked_session_0",
+      "passed": true,
+      "status": 401
+    },
+    {
+      "name": "logout_1",
+      "passed": true,
+      "status": 204
+    },
+    {
+      "name": "revoked_session_1",
+      "passed": true,
+      "status": 401
+    }
+  ],
+  "testAccounts": [
+    {
+      "name": "QA-Codex-20261024-36858663-A",
+      "remoteId": 20,
+      "role": "visitante"
+    },
+    {
+      "name": "QA-Codex-20261024-36858663-B",
+      "remoteId": 21,
+      "role": "visitante"
+    }
+  ],
+  "limits": [
+    "No institutional registration/login or admin account was provided.",
+    "Only dedicated QA visitor accounts and their own progress may be created.",
+    "No catalog edits, real user access, or physical device certification."
+  ],
+  "notes": [
+    "The live backend handles repeated completion idempotently with HTTP200 and the existing event, without extra points.",
+    "Visitor login creates a new identity even for the same display name; token restoration is verified with auth/me.",
+    "Earlier exploratory requests created dedicated QA visitors 17, 18, 19; only QA-owned progress was changed. No catalog edits."
+  ],
+  "passed": true
+}

@@ -83,6 +83,13 @@ se reduce el heap de Gradle y se conecta un solo emulador por ejecución.
   migra a v3, restaura sin red, inicia un remoto con ID coincidente, restaura
   el vínculo, rechaza 403 y elimina la navegación privada ante 401.
 
+## Validación adicional contra Render
+
+Se añadieron 30 comprobaciones correctas contra la API real con visitantes QA,
+incluidos progreso, duplicados idempotentes y revocación. El APK real en API 35
+descargó 8 misiones, abrió su detalle y restauró su caché sin red. Los métodos,
+evidencias y límites se detallan en [QA del backend](QA-BACKEND-2026-10-24.md).
+
 ## CI
 
 Las pruebas instrumentadas se configuran para PR, push a main y ejecución manual,
@@ -95,7 +102,8 @@ la ejecución alojada en GitHub requiere publicar la rama y no se acredita aquí
 El historial antiguo ambiguo se conserva separado: no se puede reconstruir
 su autoría automáticamente. No se añadieron outbox, reconciliación de puntos,
 actualización del ranking tras recompensas, cambios del analizador QR ni backend.
-Las pruebas del backend autenticado y en teléfono físico siguen pendientes.
+La validación institucional/administrativa y en teléfono físico sigue pendiente;
+la pasada autenticada de visitantes se documenta en QA del backend.
 El issue del backend y el reporte general del crash de Misiones permanecen abiertos.
 La prueba de recreación usa `StateRestorationTester`; no representa una prueba
 manual de rotación en un teléfono físico.

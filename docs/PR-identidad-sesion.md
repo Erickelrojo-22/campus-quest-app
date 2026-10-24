@@ -23,5 +23,8 @@ y su snapshot remoto. No se fusiona historial por nombre, correo o ID coincident
 Verificación final del 2026-10-24: 90 pruebas JVM y 28 instrumentadas en cada API (29/35), sin fallos. Lint sin errores (49 advertencias); APK debug y release con R8 compilados.
 
 Consultar [evidencia de QA](QA-identidad-sesion-2026-10-23.md) y
-[arquitectura de seguridad](SECURITY-E2E.md). El backend real no se certifica con
-estas pruebas. No cerrar el issue general de backend ni el crash de Misiones.
+[arquitectura de seguridad](SECURITY-E2E.md). Se añaden 30 comprobaciones de
+visitante autenticado contra Render y una pasada del APK real con catálogo y
+caché offline en API 35: [QA de backend](QA-BACKEND-2026-10-24.md).
+No certifica las cuentas institucionales/admin ni teléfono físico. No cerrar
+el issue general de backend ni el crash de Misiones.

@@ -30,9 +30,9 @@ Se mantienen estas exclusiones del diseño aprobado:
   en caché. Conservar una respuesta de completado confirmada sí pertenece a esta
   corrección y no introduce una cola de operaciones.
 
-## Entrega local y auxiliares
+## Entrega y auxiliares
 
-Los cambios están en `codex/campus-quest-identity-session`, con una
+Los cambios están en la rama `codex/campus-quest-identity-session`, con una
 [descripción de PR preparada](PR-identidad-sesion.md). La evidencia reproducible
 queda versionada en `docs/qa/identity-session-2026-10-23`.
 
