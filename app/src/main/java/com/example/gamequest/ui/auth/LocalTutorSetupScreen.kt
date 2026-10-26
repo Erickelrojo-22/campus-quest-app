@@ -4,7 +4,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -14,12 +17,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.gamequest.ui.common.ContenidoAdaptable
+import com.example.gamequest.ui.common.LocalPerfilVentanaCampus
 
 /** First-run setup for the one tutor allowed by a local install. */
 @Composable
 fun LocalTutorSetupScreen(viewModel: LocalTutorSetupViewModel, onConfigured: () -> Unit, onBack: () -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val perfilVentana = LocalPerfilVentanaCampus.current
+    ContenidoAdaptable(Modifier.fillMaxSize()) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .imePadding()
+                .padding(horizontal = perfilVentana.margenHorizontal, vertical = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
         Text("Configurar tutor local")
         Text("Esta cuenta administra únicamente el catálogo almacenado en este dispositivo.")
         OutlinedTextField(state.nombres, viewModel::nombres, Modifier.fillMaxWidth(), label = { Text("Nombres") })
@@ -31,5 +45,6 @@ fun LocalTutorSetupScreen(viewModel: LocalTutorSetupViewModel, onConfigured: () 
             Text(if (state.cargando) "Guardando…" else "Crear tutor local")
         }
         Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Cancelar") }
+        }
     }
 }

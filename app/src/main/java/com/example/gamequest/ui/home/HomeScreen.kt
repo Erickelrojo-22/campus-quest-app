@@ -52,6 +52,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.gamequest.data.local.entity.PuntoInteresEntity
 import com.example.gamequest.data.repository.MisionConEstado
+import com.example.gamequest.ui.common.ClaseAltoVentana
+import com.example.gamequest.ui.common.LocalPerfilVentanaCampus
 import com.example.gamequest.ui.common.encabezado
 import com.example.gamequest.ui.components.DudeAnimation
 import com.example.gamequest.ui.components.DudeSprite
@@ -80,12 +82,13 @@ fun HomeScreen(
     val charPrimary = prefs?.avatarPrimaryColor ?: AvatarColor.COBALT_BLUE
     val charSecondary = prefs?.avatarSecondaryColor ?: AvatarColor.RUBY_RED
     val charSpecies = prefs?.characterSpecies ?: CharacterSpecies.DUDE
+    val perfilVentana = LocalPerfilVentanaCampus.current
 
     Scaffold { padding ->
         BoxWithConstraints(Modifier.fillMaxSize().padding(padding)) {
             // Horizontal / poco alto: encabezado en una sola fila y panel lateral para la misión
             // sugerida, así el mapa conserva altura útil en lugar de quedar aplastado.
-            val compactoAlto = maxHeight < 480.dp
+            val compactoAlto = perfilVentana.alto == ClaseAltoVentana.COMPACTO
             val horizontal = maxWidth > maxHeight && maxWidth >= 560.dp
             val anchoContenido = maxWidth
             val altoContenido = maxHeight

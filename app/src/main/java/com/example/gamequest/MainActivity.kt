@@ -8,6 +8,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.CompositionLocalProvider
 import com.example.gamequest.data.preferences.UserPreferences
+import com.example.gamequest.ui.common.ProveedorPerfilVentanaCampus
 import com.example.gamequest.ui.navigation.CampusQuestNavHost
 import com.example.gamequest.ui.theme.GamequestTheme
 import com.example.gamequest.util.LocalSoundManager
@@ -22,7 +23,9 @@ class MainActivity : ComponentActivity() {
                 .collectAsStateWithLifecycle(initialValue = UserPreferences())
             CompositionLocalProvider(LocalSoundManager provides container.soundEffectManager) {
                 GamequestTheme(darkTheme = prefs.temaOscuro) {
-                    CampusQuestNavHost(container = container)
+                    ProveedorPerfilVentanaCampus {
+                        CampusQuestNavHost(container = container)
+                    }
                 }
             }
         }
