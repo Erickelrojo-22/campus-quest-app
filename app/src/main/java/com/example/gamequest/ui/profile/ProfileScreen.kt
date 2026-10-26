@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.gamequest.data.local.entity.Rol
 import com.example.gamequest.ui.common.ContenidoAdaptable
+import com.example.gamequest.ui.common.LocalPerfilVentanaCampus
 import com.example.gamequest.ui.common.encabezado
 import com.example.gamequest.ui.components.CharacterSprite
 import com.example.gamequest.ui.components.OnboardingDialog
@@ -63,6 +64,7 @@ fun ProfileScreen(
     val secondaryColor  = uiState.secondaryColor
     val totalInsignias  = uiState.totalInsignias
     val spriteAnim      = uiState.spriteAnim
+    val perfilVentana   = LocalPerfilVentanaCampus.current
 
     // En horizontal el perfil es una vista de información, no un formulario:
     // aprovecha el ancho útil igual que Insignias y conserva el centrado.
@@ -85,7 +87,7 @@ fun ProfileScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.primary)
-                    .padding(vertical = rellenoVertical, horizontal = 16.dp),
+                    .padding(vertical = rellenoVertical, horizontal = perfilVentana.margenHorizontal),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 // Sprite animado — tap para animar Walk
