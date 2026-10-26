@@ -26,9 +26,28 @@ componente equivalente que **no componga el `Text` no seleccionado**, en vez
 de confiar en `maxLines`/`Ellipsis`. Esos atributos sólo maquillan el síntoma
 y no resuelven el espacio vertical.
 
-Para ancho expandido u orientación horizontal se conserva el riel lateral,
-que ya se selecciona con el breakpoint `ANCHO_PANTALLA_AMPLIA` y ofrece ancho
-suficiente para nombres completos.
+Para ancho medio/expandido u orientación compacta se usa riel lateral, que
+evita restar altura al contenido y ofrece ancho suficiente para nombres completos.
+
+## Perfiles adoptados
+
+Los perfiles viven también como comentarios y tipos en `Adaptable.kt`, para
+que los breakpoints se puedan encontrar junto al código que los aplica. Son
+perfiles de **ventana en dp**, no una lista de marcas: la resolución física y
+las pulgadas no bastan para conocer el espacio disponible.
+
+| Perfil | Rango | Equipo representativo | Comportamiento |
+| --- | --- | --- | --- |
+| Compacto pequeño | ancho `< 360dp` | móvil pequeño o ventana dividida | Márgenes reducidos, contenido desplazable y menú sólo de iconos. |
+| Compacto | `360–599dp` | teléfono vertical con notch o perforación | Menú sólo de iconos; contenido en una columna. |
+| Medio | `600–839dp` | tablet pequeña/mediana | Riel lateral y contenido centrado. |
+| Expandido | `≥ 840dp` | tablet hasta 11 pulgadas | Riel lateral y ancho máximo para formularios/listas. |
+| Alto compacto | alto `< 480dp` | teléfono horizontal | Riel lateral y encabezados/espaciados reducidos. |
+
+Un notch, perforación, cutout de esquina, barra de gestos, teclado o borde
+curvo no crea otro perfil: se respeta dinámicamente con `WindowInsets`.
+El objetivo específico de prueba llega a tablets de 11 pulgadas; tamaños
+mayores continúan usando el perfil expandido sin una variante dedicada.
 
 ## Matriz de validación inicial
 
