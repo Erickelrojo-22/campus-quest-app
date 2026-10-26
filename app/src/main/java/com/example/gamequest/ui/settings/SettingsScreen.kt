@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.gamequest.ui.theme.InstitutionalRed
+import com.example.gamequest.ui.common.LocalPerfilVentanaCampus
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,6 +43,7 @@ fun SettingsScreen(
     onCerrarSesion: () -> Unit
 ) {
     val prefs by viewModel.preferencias.collectAsStateWithLifecycle()
+    val perfilVentana = LocalPerfilVentanaCampus.current
 
     Scaffold(
         topBar = {
@@ -58,7 +60,7 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 8.dp)
+                .padding(horizontal = perfilVentana.margenHorizontal, vertical = 8.dp)
         ) {
             SeccionTitulo("APARIENCIA")
             FilaSwitch(Icons.Filled.DarkMode, "Tema oscuro", prefs.temaOscuro, viewModel::setTemaOscuro)
