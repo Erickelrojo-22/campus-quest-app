@@ -22,6 +22,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -54,10 +56,10 @@ private fun coloresBarra(): NavigationBarItemColors = NavigationBarItemDefaults.
 )
 
 /**
- * Barra inferior de navegación: muestra solo los íconos y el nombre únicamente
- * de la pestaña seleccionada, para que no se vea amontonada en pantallas
- * angostas. Las pestañas no seleccionadas conservan su nombre como
- * `contentDescription` para TalkBack, y el seleccionado lo expone el texto.
+ * Barra inferior para ancho compacto: compone sólo iconos. Cinco rótulos de
+ * tipografía pixel art no caben de forma estable en 320--599dp, sobre todo con
+ * notch, gestos o multitarea. El nombre se conserva en la semántica de cada
+ * destino para TalkBack y el estado activo se comunica por el indicador.
  */
 @Composable
 fun CampusBottomBar(selectedIndex: Int, onSelect: (Int) -> Unit) {
@@ -71,21 +73,15 @@ fun CampusBottomBar(selectedIndex: Int, onSelect: (Int) -> Unit) {
             NavigationBarItem(
                 selected = seleccionada,
                 onClick = { onSelect(indice) },
+                modifier = Modifier.semantics { contentDescription = tab.label },
                 icon = {
                     Icon(
                         tab.icon,
-                        // Seleccionada: el nombre ya está en el texto visible (evita leerlo doble).
-                        contentDescription = if (seleccionada) null else tab.label
+                        // El contenedor expone una sola descripción, también al estar seleccionado.
+                        contentDescription = null
                     )
                 },
-                label = {
-                    Text(
-                        tab.label,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
+                label = null,
                 alwaysShowLabel = false,
                 colors = coloresBarra()
             )
