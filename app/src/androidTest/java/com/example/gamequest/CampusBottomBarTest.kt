@@ -19,7 +19,7 @@ class CampusBottomBarTest {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun compactNavigationHasAccessibleIconsWithoutVisibleLabels() {
+    fun compactNavigationKeepsSelectedLabelVisible() {
         compose.setContent {
             val selected = remember { mutableIntStateOf(3) }
             GamequestTheme {
@@ -32,6 +32,7 @@ class CampusBottomBarTest {
         compose.onNodeWithContentDescription("QR").assertIsDisplayed()
         compose.onNodeWithContentDescription("Insignias").assertIsDisplayed()
         compose.onNodeWithContentDescription("Perfil").assertIsDisplayed()
+        compose.onNodeWithText("Perfil").assertIsDisplayed()
         assertTrue(compose.onAllNodesWithText("Insignias").fetchSemanticsNodes().isEmpty())
         assertTrue(compose.onAllNodesWithText("Misiones").fetchSemanticsNodes().isEmpty())
     }

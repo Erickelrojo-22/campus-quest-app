@@ -89,7 +89,7 @@ fun HomeScreen(
             // Horizontal / poco alto: encabezado en una sola fila y panel lateral para la misión
             // sugerida, así el mapa conserva altura útil en lugar de quedar aplastado.
             val compactoAlto = perfilVentana.alto == ClaseAltoVentana.COMPACTO
-            val horizontal = maxWidth > maxHeight && maxWidth >= 560.dp
+            val horizontal = maxWidth > maxHeight
             val anchoContenido = maxWidth
             val altoContenido = maxHeight
 

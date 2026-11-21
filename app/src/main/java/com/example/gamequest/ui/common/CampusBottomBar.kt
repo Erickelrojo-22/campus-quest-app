@@ -56,10 +56,8 @@ private fun coloresBarra(): NavigationBarItemColors = NavigationBarItemDefaults.
 )
 
 /**
- * Barra inferior para ancho compacto: compone sólo iconos. Cinco rótulos de
- * tipografía pixel art no caben de forma estable en 320--599dp, sobre todo con
- * notch, gestos o multitarea. El nombre se conserva en la semántica de cada
- * destino para TalkBack y el estado activo se comunica por el indicador.
+ * Barra inferior para ancho compacto: muestra el rótulo del destino activo y
+ * conserva los nombres en la semántica de cada destino para TalkBack.
  */
 @Composable
 fun CampusBottomBar(selectedIndex: Int, onSelect: (Int) -> Unit) {
@@ -81,8 +79,12 @@ fun CampusBottomBar(selectedIndex: Int, onSelect: (Int) -> Unit) {
                         contentDescription = null
                     )
                 },
-                label = null,
-                alwaysShowLabel = false,
+                label = {
+                    if (seleccionada) {
+                        Text(tab.label, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                },
+                alwaysShowLabel = true,
                 colors = coloresBarra()
             )
         }
