@@ -268,9 +268,12 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                                 key = "badges-$usuarioId",
                                 factory = GenericViewModelFactory { BadgesViewModel(container.campusRepository, usuarioId) }
                             )
+                            val estadoInsignias by badgesViewModel.estado.collectAsStateWithLifecycle()
                             BadgesScreen(
-                                viewModel = badgesViewModel,
-                                usuarioActualId = usuarioId
+                                estado = estadoInsignias,
+                                usuarioActualId = usuarioId,
+                                onSeleccionarInsignia = badgesViewModel::seleccionarInsignia,
+                                onCerrarDetalleInsignia = badgesViewModel::cerrarDetalleInsignia
                             )
                         }
 

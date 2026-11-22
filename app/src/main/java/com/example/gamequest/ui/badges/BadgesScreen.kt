@@ -42,8 +42,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -77,12 +75,13 @@ import com.example.gamequest.util.SoundEffect
 
 @Composable
 fun BadgesScreen(
-    viewModel: BadgesViewModel,
-    usuarioActualId: Int
+    estado: BadgesUiState,
+    usuarioActualId: Int,
+    onSeleccionarInsignia: (MisionConEstado) -> Unit,
+    onCerrarDetalleInsignia: () -> Unit
 ) {
     val soundManager = LocalSoundManager.current
     val haptic = LocalHapticFeedback.current
-    val estado by viewModel.estado.collectAsStateWithLifecycle()
     val perfilVentana = LocalPerfilVentanaCampus.current
 
     // Insignias y ranking aprovechan el ancho de tablets/horizontal; no son un
@@ -141,7 +140,7 @@ fun BadgesScreen(
                     onInsigniaClick = { item ->
                         soundManager?.play(SoundEffect.BADGE_EARNED)
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        viewModel.seleccionarInsignia(item)
+                        onSeleccionarInsignia(item)
                     }
                 )
             }
@@ -156,7 +155,7 @@ fun BadgesScreen(
                     onInsigniaClick = { item ->
                         soundManager?.play(SoundEffect.CLICK)
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        viewModel.seleccionarInsignia(item)
+                        onSeleccionarInsignia(item)
                     }
                 )
             }
@@ -177,7 +176,7 @@ fun BadgesScreen(
             item = seleccionada,
             onDismiss = {
                 soundManager?.play(SoundEffect.CLICK)
-                viewModel.cerrarDetalleInsignia()
+                onCerrarDetalleInsignia()
             }
         )
     }
