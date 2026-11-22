@@ -54,6 +54,7 @@ import com.example.gamequest.ui.missions.MissionDetailScreen
 import com.example.gamequest.ui.missions.MissionDetailViewModel
 import com.example.gamequest.ui.missions.MissionsScreen
 import com.example.gamequest.ui.missions.MissionsViewModel
+import com.example.gamequest.ui.profile.ProfileEventos
 import com.example.gamequest.ui.profile.ProfileScreen
 import com.example.gamequest.ui.profile.ProfileViewModel
 import com.example.gamequest.ui.scanner.ScannerScreen
@@ -302,8 +303,31 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                                     )
                                 }
                             )
+                            val estadoPerfil by profileViewModel.uiState.collectAsStateWithLifecycle()
+                            val eventosPerfil = remember(profileViewModel) {
+                                ProfileEventos(
+                                    toggleSpriteAnim = profileViewModel::toggleSpriteAnim,
+                                    abrirEditor = profileViewModel::abrirEditor,
+                                    cerrarEditor = profileViewModel::cerrarEditor,
+                                    onEditorSpeciesChange = profileViewModel::onEditorSpeciesChange,
+                                    onEditorColorSelected = profileViewModel::onEditorColorSelected,
+                                    onEditorActiveZoneChange = profileViewModel::onEditorActiveZoneChange,
+                                    toggleEditorPreviewAnim = profileViewModel::toggleEditorPreviewAnim,
+                                    restablecerEditor = profileViewModel::restablecerEditor,
+                                    guardarAvatar = profileViewModel::guardarAvatar,
+                                    abrirTimeline = profileViewModel::abrirTimeline,
+                                    cerrarTimeline = profileViewModel::cerrarTimeline,
+                                    abrirAdventurerCard = profileViewModel::abrirAdventurerCard,
+                                    cerrarAdventurerCard = profileViewModel::cerrarAdventurerCard,
+                                    abrirOnboarding = profileViewModel::abrirOnboarding,
+                                    cerrarOnboarding = profileViewModel::cerrarOnboarding,
+                                    abrirRanking = profileViewModel::abrirRanking,
+                                    cerrarRanking = profileViewModel::cerrarRanking
+                                )
+                            }
                             ProfileScreen(
-                                viewModel = profileViewModel,
+                                uiState = estadoPerfil,
+                                eventos = eventosPerfil,
                                 onSettings = { navController.navigate(Routes.SETTINGS) },
                                 onMissionManagement = { navController.navigate(Routes.MISSION_MANAGEMENT) },
                                 onCerrarSesion = {
