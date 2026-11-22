@@ -6,17 +6,24 @@ import com.example.gamequest.data.local.entity.Rol
 import com.example.gamequest.data.local.entity.UsuarioEntity
 import com.example.gamequest.data.session.LocalAccountSessionCommitter
 import com.example.gamequest.util.PasswordHasher
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 
 /** A local install can bootstrap exactly one tutor; public registration cannot elevate roles. */
 class LocalTutorSetupRepository(
     private val database: AppDatabase,
     private val auth: AuthRepository,
-    private val session: LocalAccountSessionCommitter
+    private val session: LocalAccountSessionCommitter,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : TutorSetupRepository {
-    override suspend fun isSetupRequired(): Boolean = buscarTutor() == null
+    override suspend fun isSetupRequired(): Boolean = withContext(ioDispatcher) { buscarTutor() == null }
 
-    override suspend fun configureTutor(nombres: String, correo: String, carrera: String, contrasena: String): AuthResult {
+    override suspend fun configureTutor(nombres: String, correo: String, carrera: String, contrasena: String): AuthResult =
+        withContext(ioDispatcher) { configureTutorOnIo(nombres, correo, carrera, contrasena) }
+
+    private suspend fun configureTutorOnIo(nombres: String, correo: String, carrera: String, contrasena: String): AuthResult {
         val name = nombres.trim()
         val email = correo.trim().lowercase()
         val degree = carrera.trim()
