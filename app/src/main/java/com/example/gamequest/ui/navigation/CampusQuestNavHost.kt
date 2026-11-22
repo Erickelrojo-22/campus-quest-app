@@ -84,7 +84,7 @@ private fun NavHostController.mostrarTab(route: String, puntoDestinoId: Int? = n
 fun CampusQuestNavHost(container: AppContainer) {
     val navController = rememberNavController()
     val sessionViewModel: SessionViewModel = viewModel(
-        factory = GenericViewModelFactory { SessionViewModel(container) }
+        factory = GenericViewModelFactory { SessionViewModel(container.sessionCoordinator) }
     )
     val state by sessionViewModel.state.collectAsStateWithLifecycle()
     CampusQuestNavGraph(navController, state, container,
