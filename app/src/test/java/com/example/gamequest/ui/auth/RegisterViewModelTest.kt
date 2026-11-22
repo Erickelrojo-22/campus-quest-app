@@ -5,6 +5,7 @@ import com.example.gamequest.data.local.dao.UsuarioDao
 import com.example.gamequest.data.local.entity.Rol
 import com.example.gamequest.data.local.entity.UsuarioEntity
 import com.example.gamequest.data.repository.AuthRepository
+import com.example.gamequest.data.repository.DefaultAuthRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -32,7 +33,7 @@ class RegisterViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         fakeDao = FakeUsuarioDao()
-        authRepository = AuthRepository(fakeDao, ioDispatcher = testDispatcher)
+        authRepository = DefaultAuthRepository(fakeDao, ioDispatcher = testDispatcher)
         viewModel = RegisterViewModel(authRepository)
     }
 

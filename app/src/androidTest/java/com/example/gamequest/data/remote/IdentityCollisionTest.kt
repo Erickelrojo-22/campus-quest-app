@@ -6,6 +6,7 @@ import com.example.gamequest.data.local.AppDatabase
 import com.example.gamequest.data.local.SeedData
 import com.example.gamequest.data.local.entity.*
 import com.example.gamequest.data.repository.AuthRepository
+import com.example.gamequest.data.repository.DefaultAuthRepository
 import com.example.gamequest.data.repository.AuthResult
 import com.example.gamequest.data.repository.ValidacionQrResult
 import java.io.IOException
@@ -52,7 +53,7 @@ class IdentityCollisionTest {
     @Test fun visitanteYRemoto_mismoNumero_noSeMezclan() = runBlocking {
         db.usuarioDao().insertar(user(51, "Offline Visitor"))
         db.progresoMisionDao().insertar(ProgresoMisionEntity(usuarioId = 51, misionId = 1, fechaHora = 10, puntosObtenidos = 20, codigoQrValidado = "TEST"))
-        val result = AuthRepository(db.usuarioDao(), gateway).entrarConNombre("Remote", false) as AuthResult.Exito
+        val result = DefaultAuthRepository(db.usuarioDao(), gateway).entrarConNombre("Remote", false) as AuthResult.Exito
         assertNotEquals("Remote id is not a local primary key", 51, result.usuario.id)
         assertEquals("Offline Visitor", db.usuarioDao().buscarPorId(51)?.nombres)
         assertEquals(1, db.progresoMisionDao().contarCompletadas(51))

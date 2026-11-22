@@ -26,7 +26,7 @@ class AuthRepositoryTest {
     @Before
     fun setup() {
         fakeUsuarioDao = FakeUsuarioDao()
-        repository = AuthRepository(fakeUsuarioDao)
+        repository = DefaultAuthRepository(fakeUsuarioDao)
     }
 
     @Test

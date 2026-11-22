@@ -1,18 +1,6 @@
 package com.example.gamequest.data.repository
 
-import com.example.gamequest.data.local.dao.UsuarioDao
-import com.example.gamequest.data.local.entity.Rol
 import com.example.gamequest.data.local.entity.UsuarioEntity
-import com.example.gamequest.util.PasswordHasher
-import com.example.gamequest.data.remote.CampusGateway
-import com.example.gamequest.data.remote.AuthPayload
-import com.example.gamequest.data.remote.permiteFallbackOffline
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import org.json.JSONObject
-
 
 sealed class AuthResult {
     data class Exito(val usuario: UsuarioEntity) : AuthResult()
@@ -20,43 +8,14 @@ sealed class AuthResult {
 }
 
 /**
- * Acceso simplificado: el usuario solo escribe su nombre para entrar.
- * Si el nombre ya existe se reutiliza la cuenta (con su progreso); si no, se crea una nueva.
+ * Contrato de autenticación que consumen los ViewModels de acceso y registro.
+ * La implementación ([DefaultAuthRepository]) decide si valida contra Room o
+ * contra la API y ejecuta el trabajo fuera del hilo principal.
  */
-class AuthRepository(private val usuarioDao: UsuarioDao, private val api: CampusGateway? = null,
-    private val sessionCommitter: com.example.gamequest.data.session.SessionCommitter? = null,
-    private val localAccountCommitter: com.example.gamequest.data.session.LocalAccountSessionCommitter? = null,
-    /** Room, red y hash de contraseñas nunca se ejecutan en el hilo principal. */
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO) {
+interface AuthRepository {
+    val minimumPasswordLength: Int
 
-    val minimumPasswordLength: Int get() = if (api != null) 8 else MIN_CONTRASENA_LENGTH
-
-    private suspend fun commitSession(token: String, localId: Int) {
-        if (sessionCommitter != null) sessionCommitter.commitAuthenticated(token,localId)
-        else api!!.tokens.save(token,localId)
-    }
-
-    private suspend fun persistRemote(payload: AuthPayload): AuthResult = try {
-        val user = usuarioDao.guardarUsuarioRemoto(payload.user.toLocal())
-        commitSession(payload.accessToken, user.id)
-        AuthResult.Exito(user)
-    } catch (e: CancellationException) { throw e
-    } catch (e: Exception) { AuthResult.Error(e.message ?: "No se pudo guardar la sesión.") }
-
-    private suspend fun remote(path: String, body: JSONObject): AuthResult = try {
-        persistRemote(api!!.authenticate(path, body))
-    } catch (e: CancellationException) { throw e
-    } catch (e: Exception) { AuthResult.Error(e.message ?: "No se pudo conectar con el servidor.") }
-
-    companion object {
-        const val DOMINIO_INSTITUCIONAL = "@live.uleam.edu.ec"
-        const val MIN_CONTRASENA_LENGTH = 6
-    }
-
-    fun validarCorreoInstitucional(correo: String): Boolean {
-        val email = correo.trim().lowercase()
-        return email.contains("@") && email.endsWith(DOMINIO_INSTITUCIONAL) && email.length > DOMINIO_INSTITUCIONAL.length
-    }
+    fun validarCorreoInstitucional(correo: String): Boolean
 
     suspend fun registrar(
         nombres: String,
@@ -64,131 +23,14 @@ class AuthRepository(private val usuarioDao: UsuarioDao, private val api: Campus
         carrera: String,
         contrasena: String,
         esTutor: Boolean = false
-    ): AuthResult = withContext(ioDispatcher) { registrarOnIo(nombres, correo, carrera, contrasena) }
+    ): AuthResult
 
-    private suspend fun registrarOnIo(nombres: String, correo: String, carrera: String, contrasena: String): AuthResult {
-        if (api != null) return remote("register", JSONObject().put("nombres", nombres.trim())
-            .put("correo", correo.trim().lowercase()).put("carrera", carrera.trim()).put("contrasena", contrasena))
-        val nom = nombres.trim()
-        val mail = correo.trim().lowercase()
-        val carr = carrera.trim()
-        val pass = contrasena.trim()
+    suspend fun iniciarSesionConCredenciales(correo: String, contrasena: String): AuthResult
 
-        if (nom.isBlank()) return AuthResult.Error("El nombre no puede estar vacío.")
-        if (!validarCorreoInstitucional(mail)) {
-            return AuthResult.Error("Debe ingresar un correo institucional válido ($DOMINIO_INSTITUCIONAL).")
-        }
-        if (carr.isBlank()) return AuthResult.Error("Debes especificar tu carrera.")
-        if (pass.length < MIN_CONTRASENA_LENGTH) {
-            return AuthResult.Error("La contraseña debe tener al menos $MIN_CONTRASENA_LENGTH caracteres.")
-        }
+    suspend fun entrarConNombre(nombre: String, esTutor: Boolean): AuthResult
 
-        val existente = usuarioDao.buscarPorCorreo(mail)
-        if (existente != null) {
-            return AuthResult.Error("Ya existe una cuenta registrada con este correo.")
-        }
-
-        val hash = PasswordHasher.hash(pass)
-        val nuevoUsuario = UsuarioEntity(
-            nombres = nom,
-            correoInstitucional = mail,
-            carrera = carr,
-            contrasenaHash = hash,
-            // El rol tutor no se concede desde un formulario público.
-            rol = Rol.ESTUDIANTE
-        )
-        val id = usuarioDao.insertar(nuevoUsuario)
-        val saved = nuevoUsuario.copy(id = id.toInt())
-        localAccountCommitter?.commitLocalAccount(saved.id)
-        return AuthResult.Exito(saved)
-    }
-
-    suspend fun iniciarSesionConCredenciales(correo: String, contrasena: String): AuthResult =
-        withContext(ioDispatcher) { iniciarSesionOnIo(correo, contrasena) }
-
-    private suspend fun iniciarSesionOnIo(correo: String, contrasena: String): AuthResult {
-        if (api != null) return remote("login", JSONObject().put("correo", correo.trim().lowercase()).put("contrasena", contrasena))
-        val mail = correo.trim().lowercase()
-        val pass = contrasena.trim()
-
-        if (mail.isBlank()) return AuthResult.Error("Ingresa tu correo institucional.")
-        if (!validarCorreoInstitucional(mail)) {
-            return AuthResult.Error("Debe ingresar un correo institucional válido ($DOMINIO_INSTITUCIONAL).")
-        }
-        if (pass.isBlank()) return AuthResult.Error("Ingresa tu contraseña.")
-
-        val usuario = usuarioDao.buscarPorCorreo(mail)
-            ?: return AuthResult.Error("No existe una cuenta registrada con este correo.")
-
-        if (usuario.contrasenaHash.isBlank()) {
-            return AuthResult.Error("Esta cuenta debe completar su registro institucional.")
-        }
-        if (!PasswordHasher.matches(pass, usuario.contrasenaHash)) {
-            return AuthResult.Error("Contraseña incorrecta.")
-        }
-        if (PasswordHasher.needsRehash(usuario.contrasenaHash)) {
-            usuarioDao.actualizarContrasena(usuario.id, PasswordHasher.hash(pass))
-        }
-
-        localAccountCommitter?.commitLocalAccount(usuario.id)
-        return AuthResult.Exito(usuario)
-    }
-
-
-
-
-    suspend fun entrarConNombre(nombre: String, esTutor: Boolean): AuthResult =
-        withContext(ioDispatcher) { entrarConNombreOnIo(nombre) }
-
-    private suspend fun entrarConNombreOnIo(nombre: String): AuthResult {
-        val nombreNormalizado = nombre.trim()
-        if (nombreNormalizado.isBlank()) return AuthResult.Error("Escribe tu nombre para continuar.")
-
-        if (api != null) {
-            val payload = try {
-                api.authenticate("visitor", JSONObject().put("nombres", nombreNormalizado))
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                if (!e.permiteFallbackOffline()) {
-                    return AuthResult.Error(e.message ?: "No se pudo iniciar la sesión de visitante.")
-                }
-                null
-            }
-            // Persistence is outside the transport catch: a disk error must not grant offline access.
-            if (payload != null) return persistRemote(payload)
-        }
-
-        return try { persistLocalVisitor(nombreNormalizado) }
-        catch (e: CancellationException) { throw e }
-        catch (e: Exception) { AuthResult.Error(e.message ?: "No se pudo guardar la sesión de visitante.") }
-    }
-
-    private suspend fun persistLocalVisitor(nombreNormalizado: String): AuthResult {
-        usuarioDao.buscarPorNombre(nombreNormalizado)?.let {
-            if (it.rol == Rol.TUTOR) {
-                return AuthResult.Error("Las cuentas tutor deben entrar con correo y contraseña.")
-            }
-            // Una cuenta con contraseña (registro institucional) nunca debe abrirse solo con el
-            // nombre: el modo de prueba solo reutiliza perfiles de prueba (sin credenciales).
-            if (it.remoteId != null || it.contrasenaHash.isNotBlank() || it.correoInstitucional.isNotBlank()) {
-                return AuthResult.Error(
-                    "Ese nombre pertenece a una cuenta estudiantil. Inicia sesión desde la pestaña Estudiantil."
-                )
-            }
-            if (sessionCommitter != null || api != null) commitSession("offline-visitor-${it.id}", it.id)
-            return AuthResult.Exito(it)
-        }
-
-        val nuevo = UsuarioEntity(
-            nombres = nombreNormalizado,
-            correoInstitucional = "",
-            carrera = "",
-            contrasenaHash = "",
-            rol = Rol.ESTUDIANTE
-        )
-        val id = usuarioDao.insertar(nuevo)
-        if (sessionCommitter != null || api != null) commitSession("offline-visitor-$id", id.toInt())
-        return AuthResult.Exito(nuevo.copy(id = id.toInt()))
+    companion object {
+        const val DOMINIO_INSTITUCIONAL = "@live.uleam.edu.ec"
+        const val MIN_CONTRASENA_LENGTH = 6
     }
 }
