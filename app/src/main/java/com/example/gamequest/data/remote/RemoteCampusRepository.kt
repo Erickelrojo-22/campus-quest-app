@@ -7,16 +7,28 @@ import com.example.gamequest.data.model.RankingEntry
 import com.example.gamequest.data.repository.CampusRepository
 import com.example.gamequest.data.repository.ValidacionQrResult
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
-/** Translates server identities to local primary keys at the cache boundary. */
-class RemoteCampusRepository(private val db: AppDatabase, private val api: CampusGateway) : CampusRepository(
+/**
+ * Translates server identities to local primary keys at the cache boundary.
+ * Room sigue siendo la fuente única de verdad: la red solo actualiza la caché.
+ * Las operaciones que combinan red y Room se ejecutan en [ioDispatcher].
+ */
+class RemoteCampusRepository(
+    private val db: AppDatabase,
+    private val api: CampusGateway,
+    ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+) : CampusRepository(
     database = db, puntoDao = db.puntoInteresDao(), misionDao = db.misionDao(),
-    progresoDao = db.progresoMisionDao(), usuarioDao = db.usuarioDao()
+    progresoDao = db.progresoMisionDao(), usuarioDao = db.usuarioDao(), ioDispatcher = ioDispatcher
 ), com.example.gamequest.data.session.SessionAccess {
     override suspend fun resolverIdentidad() = resolveIdentity()
     override suspend fun sincronizarCatalogoYProgreso(localUserId: Int) = syncCatalogAndProgress(localUserId)
@@ -26,9 +38,11 @@ class RemoteCampusRepository(private val db: AppDatabase, private val api: Campu
     override fun observarRanking(): Flow<List<RankingEntry>> =
         combine(ranking, db.usuarioDao().observarRanking()) { remotos, locales ->
             if (remotos.isNotEmpty()) remotos else locales.map(RankingEntry::local)
-        }
+        }.flowOn(ioDispatcher)
 
-    suspend fun resolveIdentity(): UsuarioEntity {
+    suspend fun resolveIdentity(): UsuarioEntity = withContext(ioDispatcher) { resolveIdentityOnIo() }
+
+    private suspend fun resolveIdentityOnIo(): UsuarioEntity {
         val snapshot = api.tokens.snapshot
         val token = snapshot.token ?: throw ApiException(401, "Inicia sesión para continuar.")
         if (token.startsWith("offline-")) {
@@ -50,7 +64,9 @@ class RemoteCampusRepository(private val db: AppDatabase, private val api: Campu
         }
     }
 
-    suspend fun syncCatalogAndProgress(localUserId: Int) = lock.withLock {
+    suspend fun syncCatalogAndProgress(localUserId: Int) = withContext(ioDispatcher) { syncOnIo(localUserId) }
+
+    private suspend fun syncOnIo(localUserId: Int) = lock.withLock {
         val snapshot = api.tokens.snapshot
         val token = snapshot.token ?: throw ApiException(401, "Inicia sesión para continuar.")
         if (token.startsWith("offline-")) return@withLock
@@ -78,7 +94,10 @@ class RemoteCampusRepository(private val db: AppDatabase, private val api: Campu
         return user
     }
 
-    override suspend fun validarCodigo(codigo: String, usuarioId: Int): ValidacionQrResult = lock.withLock {
+    override suspend fun validarCodigo(codigo: String, usuarioId: Int): ValidacionQrResult =
+        withContext(ioDispatcher) { validarCodigoOnIo(codigo, usuarioId) }
+
+    private suspend fun validarCodigoOnIo(codigo: String, usuarioId: Int): ValidacionQrResult = lock.withLock {
         val snapshot = api.tokens.snapshot
         val token = snapshot.token ?: throw ApiException(401, "Inicia sesión para continuar.")
         require(snapshot.localUserId == usuarioId) { "Inicia sesión con tu propia cuenta." }
