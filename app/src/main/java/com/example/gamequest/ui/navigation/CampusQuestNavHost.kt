@@ -357,8 +357,14 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
             val settingsViewModel: SettingsViewModel = viewModel(
                 factory = GenericViewModelFactory { SettingsViewModel(container.preferencesRepository) }
             )
+            val preferencias by settingsViewModel.preferencias.collectAsStateWithLifecycle()
             SettingsScreen(
-                viewModel = settingsViewModel,
+                prefs = preferencias,
+                onTemaOscuroChange = settingsViewModel::setTemaOscuro,
+                onRecordatoriosMisionChange = settingsViewModel::setRecordatoriosMision,
+                onAvisosCampusChange = settingsViewModel::setAvisosCampus,
+                onSonidoVibracionChange = settingsViewModel::setSonidoVibracion,
+                onDescargarMapaChange = settingsViewModel::setDescargarMapaSinConexion,
                 onBack = { navController.popBackStack() },
                 onCerrarSesion = {
                     onLogout()
