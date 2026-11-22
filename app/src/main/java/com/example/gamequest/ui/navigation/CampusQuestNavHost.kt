@@ -345,8 +345,9 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                     key = "badge-$misionId-$usuarioId",
                     factory = GenericViewModelFactory { BadgeEarnedViewModel(container.campusRepository, misionId, usuarioId) }
                 )
+                val estadoInsignia by badgeViewModel.estado.collectAsStateWithLifecycle()
                 BadgeEarnedScreen(
-                    viewModel = badgeViewModel,
+                    estado = estadoInsignia,
                     onSiguienteMision = {
                         navController.mostrarTab(Routes.MISSIONS)
                     }
