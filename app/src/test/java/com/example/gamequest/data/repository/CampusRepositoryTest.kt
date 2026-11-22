@@ -14,7 +14,10 @@ import com.example.gamequest.data.local.entity.UsuarioEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
+import java.util.concurrent.Executors
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -174,7 +177,35 @@ class CampusRepositoryTest {
 
     // --- Fake DAOs para pruebas ---
 
+    @Test
+    fun consultasSuspendidas_seEjecutanEnElDispatcherInyectado() {
+        val executor = Executors.newSingleThreadExecutor { Thread(it, "campus-io-test") }
+        val io = executor.asCoroutineDispatcher()
+        try {
+            val repo = CampusRepository(puntoDao = fakePuntoDao, misionDao = fakeMisionDao, ioDispatcher = io)
+            runBlocking { repo.buscarPuntoPorId(10) }
+            assertTrue(fakePuntoDao.ultimoHilo.orEmpty().startsWith("campus-io-test"))
+        } finally {
+            io.close()
+        }
+    }
+
+    @Test
+    fun flujosDeRoom_seRecogenEnElDispatcherInyectado() {
+        val executor = Executors.newSingleThreadExecutor { Thread(it, "campus-io-test") }
+        val io = executor.asCoroutineDispatcher()
+        try {
+            val repo = CampusRepository(puntoDao = fakePuntoDao, misionDao = fakeMisionDao, ioDispatcher = io)
+            runBlocking { repo.observarPuntos().first() }
+            assertTrue(fakePuntoDao.ultimoHilo.orEmpty().startsWith("campus-io-test"))
+        } finally {
+            io.close()
+        }
+    }
+
     private class FakePuntoInteresDao : PuntoInteresDao {
+        /** Hilo en el que se ejecutó la última consulta, para verificar el dispatcher. */
+        @Volatile var ultimoHilo: String? = null
         override suspend fun guardarRemotos(items: List<PuntoInteresEntity>) {
             items.forEach { item ->
                 puntos.removeAll { it.id == item.id }
@@ -201,8 +232,14 @@ class CampusRepositoryTest {
             puntos.removeAll { it.id == punto.id }
         }
 
-        override fun observarTodos(): Flow<List<PuntoInteresEntity>> = flowOf(puntos)
-    override suspend fun buscarPorId(id: Int): PuntoInteresEntity? = puntos.find { it.id == id }
+        override fun observarTodos(): Flow<List<PuntoInteresEntity>> = flow {
+            ultimoHilo = Thread.currentThread().name
+            emit(puntos)
+        }
+    override suspend fun buscarPorId(id: Int): PuntoInteresEntity? {
+        ultimoHilo = Thread.currentThread().name
+        return puntos.find { it.id == id }
+    }
         override fun observarPorId(id: Int): Flow<PuntoInteresEntity?> = flowOf(puntos.find { it.id == id })
         override suspend fun buscarPorCodigoQr(codigo: String): PuntoInteresEntity? =
             puntos.find { it.codigoQr.equals(codigo, ignoreCase = true) }
