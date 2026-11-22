@@ -177,7 +177,20 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                 val setupViewModel: LocalTutorSetupViewModel = viewModel(
                     factory = GenericViewModelFactory { LocalTutorSetupViewModel(setup) }
                 )
-                LocalTutorSetupScreen(setupViewModel, onConfigured = { navController.navigate(Routes.MAIN) { popUpTo(Routes.LOGIN) { inclusive = true } } }, onBack = { navController.popBackStack() })
+                val estadoTutor by setupViewModel.state.collectAsStateWithLifecycle()
+                LocalTutorSetupScreen(
+                    state = estadoTutor,
+                    onNombresChange = setupViewModel::nombres,
+                    onCorreoChange = setupViewModel::correo,
+                    onCarreraChange = setupViewModel::carrera,
+                    onContrasenaChange = setupViewModel::contrasena,
+                    onGuardar = {
+                        setupViewModel.save {
+                            navController.navigate(Routes.MAIN) { popUpTo(Routes.LOGIN) { inclusive = true } }
+                        }
+                    },
+                    onBack = { navController.popBackStack() }
+                )
             }
         }
 
