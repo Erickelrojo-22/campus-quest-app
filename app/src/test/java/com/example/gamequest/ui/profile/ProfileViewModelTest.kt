@@ -3,6 +3,7 @@ package com.example.gamequest.ui.profile
 import com.example.gamequest.data.local.entity.Rol
 import com.example.gamequest.data.local.entity.UsuarioEntity
 import com.example.gamequest.data.preferences.UserPreferences
+import com.example.gamequest.data.preferences.DataStoreUserPreferencesRepository
 import com.example.gamequest.data.preferences.UserPreferencesRepository
 import com.example.gamequest.data.repository.OfflineFirstCampusRepository
 import com.example.gamequest.data.repository.ProgresoDetallado
@@ -265,7 +266,7 @@ class ProfileViewModelTest {
 
     private class FakeUserPreferencesRepository(
         initialPrefs: UserPreferences
-    ) : UserPreferencesRepository() {
+    ) : DataStoreUserPreferencesRepository() {
         val preferenciasState = MutableStateFlow(initialPrefs)
         override val preferencias: Flow<UserPreferences> = preferenciasState
 

@@ -3,6 +3,7 @@ package com.example.gamequest
 import android.content.Context
 import com.example.gamequest.data.local.AppDatabase
 import com.example.gamequest.data.local.LocalCampusInitializer
+import com.example.gamequest.data.preferences.DataStoreUserPreferencesRepository
 import com.example.gamequest.data.preferences.UserPreferencesRepository
 import com.example.gamequest.data.repository.AuthRepository
 import com.example.gamequest.data.repository.DefaultAuthRepository
@@ -42,7 +43,7 @@ class AppContainer(context: Context) : CampusQuestDependencies {
     private val tokens = SessionTokenStore(context)
     val api: CampusApi? = if (mode == CampusDataMode.REMOTE) CampusApi(tokens) else null
 
-    override val preferencesRepository = UserPreferencesRepository(context, ioDispatcher)
+    override val preferencesRepository = DataStoreUserPreferencesRepository(context, ioDispatcher)
 
     override val soundEffectManager = SoundEffectManager(context, preferencesRepository, applicationScope)
 

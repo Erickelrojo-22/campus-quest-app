@@ -20,7 +20,7 @@ import org.json.JSONObject
 class FakeCampusQuestDependencies(context: Context, val db: AppDatabase = Room.inMemoryDatabaseBuilder(context,AppDatabase::class.java).build()) : CampusQuestDependencies, AutoCloseable {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     val preferences = MutableStateFlow(UserPreferences())
-    override val preferencesRepository = object : UserPreferencesRepository() {
+    override val preferencesRepository = object : DataStoreUserPreferencesRepository() {
         override val preferencias = preferences
         override suspend fun setUsuarioActivoId(id: Int) { preferences.value = preferences.value.copy(usuarioActivoId=id) }
         override suspend fun cerrarSesion() = setUsuarioActivoId(-1)
