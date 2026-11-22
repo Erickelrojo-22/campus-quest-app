@@ -312,8 +312,9 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                     key = "detail-$misionId-$usuarioId",
                     factory = GenericViewModelFactory { MissionDetailViewModel(container.campusRepository, misionId, usuarioId) }
                 )
+                val estadoDetalle by detailViewModel.estado.collectAsStateWithLifecycle()
                 MissionDetailScreen(
-                    viewModel = detailViewModel,
+                    estado = estadoDetalle,
                     onBack = {
                         container.soundEffectManager.play(com.example.gamequest.util.SoundEffect.CLICK)
                         navController.popBackStack()
@@ -324,7 +325,7 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                     },
                     onVerRuta = {
                         container.soundEffectManager.play(com.example.gamequest.util.SoundEffect.CLICK)
-                        val targetPuntoId = detailViewModel.estado.value.punto?.id
+                        val targetPuntoId = estadoDetalle.punto?.id
                         navController.mostrarTab(Routes.HOME, puntoDestinoId = targetPuntoId)
                     }
                 )
