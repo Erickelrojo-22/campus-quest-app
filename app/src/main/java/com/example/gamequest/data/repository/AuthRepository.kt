@@ -8,6 +8,9 @@ import com.example.gamequest.data.remote.CampusGateway
 import com.example.gamequest.data.remote.AuthPayload
 import com.example.gamequest.data.remote.permiteFallbackOffline
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 
@@ -22,7 +25,9 @@ sealed class AuthResult {
  */
 class AuthRepository(private val usuarioDao: UsuarioDao, private val api: CampusGateway? = null,
     private val sessionCommitter: com.example.gamequest.data.session.SessionCommitter? = null,
-    private val localAccountCommitter: com.example.gamequest.data.session.LocalAccountSessionCommitter? = null) {
+    private val localAccountCommitter: com.example.gamequest.data.session.LocalAccountSessionCommitter? = null,
+    /** Room, red y hash de contraseñas nunca se ejecutan en el hilo principal. */
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO) {
 
     val minimumPasswordLength: Int get() = if (api != null) 8 else MIN_CONTRASENA_LENGTH
 
@@ -59,7 +64,9 @@ class AuthRepository(private val usuarioDao: UsuarioDao, private val api: Campus
         carrera: String,
         contrasena: String,
         esTutor: Boolean = false
-    ): AuthResult {
+    ): AuthResult = withContext(ioDispatcher) { registrarOnIo(nombres, correo, carrera, contrasena) }
+
+    private suspend fun registrarOnIo(nombres: String, correo: String, carrera: String, contrasena: String): AuthResult {
         if (api != null) return remote("register", JSONObject().put("nombres", nombres.trim())
             .put("correo", correo.trim().lowercase()).put("carrera", carrera.trim()).put("contrasena", contrasena))
         val nom = nombres.trim()
@@ -96,7 +103,10 @@ class AuthRepository(private val usuarioDao: UsuarioDao, private val api: Campus
         return AuthResult.Exito(saved)
     }
 
-    suspend fun iniciarSesionConCredenciales(correo: String, contrasena: String): AuthResult {
+    suspend fun iniciarSesionConCredenciales(correo: String, contrasena: String): AuthResult =
+        withContext(ioDispatcher) { iniciarSesionOnIo(correo, contrasena) }
+
+    private suspend fun iniciarSesionOnIo(correo: String, contrasena: String): AuthResult {
         if (api != null) return remote("login", JSONObject().put("correo", correo.trim().lowercase()).put("contrasena", contrasena))
         val mail = correo.trim().lowercase()
         val pass = contrasena.trim()
@@ -127,7 +137,10 @@ class AuthRepository(private val usuarioDao: UsuarioDao, private val api: Campus
 
 
 
-    suspend fun entrarConNombre(nombre: String, esTutor: Boolean): AuthResult {
+    suspend fun entrarConNombre(nombre: String, esTutor: Boolean): AuthResult =
+        withContext(ioDispatcher) { entrarConNombreOnIo(nombre) }
+
+    private suspend fun entrarConNombreOnIo(nombre: String): AuthResult {
         val nombreNormalizado = nombre.trim()
         if (nombreNormalizado.isBlank()) return AuthResult.Error("Escribe tu nombre para continuar.")
 

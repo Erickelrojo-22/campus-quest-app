@@ -32,7 +32,7 @@ class RegisterViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         fakeDao = FakeUsuarioDao()
-        authRepository = AuthRepository(fakeDao)
+        authRepository = AuthRepository(fakeDao, ioDispatcher = testDispatcher)
         viewModel = RegisterViewModel(authRepository)
     }
 
