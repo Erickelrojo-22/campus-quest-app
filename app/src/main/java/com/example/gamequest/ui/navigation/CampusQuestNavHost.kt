@@ -43,6 +43,7 @@ import com.example.gamequest.ui.common.GenericViewModelFactory
 import com.example.gamequest.ui.common.SessionViewModel
 import com.example.gamequest.ui.common.bottomTabs
 import com.example.gamequest.ui.common.indiceDeTab
+import com.example.gamequest.ui.crud.MissionFormEventos
 import com.example.gamequest.ui.crud.MissionFormScreen
 import com.example.gamequest.ui.crud.MissionFormViewModel
 import com.example.gamequest.ui.crud.MissionManagementScreen
@@ -407,9 +408,29 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                     key = "form-$puntoId",
                     factory = GenericViewModelFactory { MissionFormViewModel(container.campusRepository, puntoId) }
                 )
+                val estadoFormulario by formViewModel.state.collectAsStateWithLifecycle()
+                val eventosFormulario = remember(formViewModel) {
+                    MissionFormEventos(
+                        onTitulo = formViewModel::onTitulo,
+                        onNombreLugar = formViewModel::onNombreLugar,
+                        onCategoriaExpandida = formViewModel::onCategoriaExpandida,
+                        onCategoria = formViewModel::onCategoria,
+                        onHorario = formViewModel::onHorario,
+                        onTramites = formViewModel::onTramites,
+                        onDescripcionPista = formViewModel::onDescripcionPista,
+                        onPuntos = formViewModel::onPuntos,
+                        onTiempo = formViewModel::onTiempo,
+                        onDificultad = formViewModel::onDificultad,
+                        onInsigniaNombre = formViewModel::onInsigniaNombre,
+                        onInsigniaEmoji = formViewModel::onInsigniaEmoji,
+                        onCodigoQr = formViewModel::onCodigoQr,
+                        onGenerarCodigoQr = formViewModel::generarCodigoQr,
+                        onGuardar = { formViewModel.guardar { navController.popBackStack() } }
+                    )
+                }
                 MissionFormScreen(
-                    viewModel = formViewModel,
-                    onGuardado = { navController.popBackStack() },
+                    estado = estadoFormulario,
+                    eventos = eventosFormulario,
                     onCancelar = { navController.popBackStack() }
                 )
             } else {
