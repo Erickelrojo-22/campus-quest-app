@@ -216,8 +216,11 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                                     HomeViewModel(container.campusRepository, usuarioId, container.preferencesRepository)
                                 }
                             )
+                            val estadoInicio by homeViewModel.uiState.collectAsStateWithLifecycle()
                             HomeScreen(
-                                viewModel = homeViewModel,
+                                uiState = estadoInicio,
+                                onBusquedaChange = homeViewModel::onBusquedaChange,
+                                onTutorialVisto = homeViewModel::marcarTutorialVisto,
                                 puntoDestinoId = puntoDestinoId,
                                 onPuntoDestinoAtendido = {
                                     entrada.savedStateHandle[Routes.KEY_PUNTO_DESTINO] = null
