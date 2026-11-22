@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -47,6 +48,8 @@ import com.example.gamequest.data.local.entity.UsuarioEntity
 import com.example.gamequest.ui.common.CampoFormulario
 import com.example.gamequest.ui.common.ContenidoAdaptable
 import com.example.gamequest.ui.common.MensajeError
+import com.example.gamequest.ui.common.ClaseAnchoVentana
+import com.example.gamequest.ui.common.LocalPerfilVentanaCampus
 import com.example.gamequest.ui.common.encabezado
 import com.example.gamequest.ui.theme.AmberAccent
 import com.example.gamequest.ui.theme.PixelCream
@@ -64,6 +67,8 @@ fun RegisterScreen(
     onVolverALogin: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val perfilVentana = LocalPerfilVentanaCampus.current
+    val paddingTarjeta = if (perfilVentana.ancho == ClaseAnchoVentana.COMPACTO_PEQUENO) 14.dp else 20.dp
 
     Scaffold(containerColor = TealPrimaryDark) { padding ->
         ContenidoAdaptable(modifier = Modifier.fillMaxSize().padding(padding)) {
@@ -71,7 +76,8 @@ fun RegisterScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp, vertical = 24.dp),
+                    .imePadding()
+                    .padding(horizontal = perfilVentana.margenHorizontal, vertical = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Box(
@@ -97,7 +103,7 @@ fun RegisterScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
-                        modifier = Modifier.padding(20.dp),
+                        modifier = Modifier.padding(paddingTarjeta),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(

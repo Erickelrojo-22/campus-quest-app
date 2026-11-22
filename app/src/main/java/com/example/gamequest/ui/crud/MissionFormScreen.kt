@@ -2,11 +2,14 @@ package com.example.gamequest.ui.crud
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -38,12 +41,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.gamequest.data.local.entity.Dificultad
+import com.example.gamequest.ui.common.LocalPerfilVentanaCampus
 
 private val categorias = listOf("Académico", "Trámites", "Servicios", "Recreación")
 private val dificultades = listOf(Dificultad.BAJA, Dificultad.MEDIA, Dificultad.ALTA)
 private val emojisSugeridos = listOf("📚", "🏛️", "💻", "💚", "☕", "⚽", "📄", "🖥️", "🎖")
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun MissionFormScreen(
     viewModel: MissionFormViewModel,
@@ -51,6 +55,7 @@ fun MissionFormScreen(
     onCancelar: () -> Unit
 ) {
     val estado by viewModel.state.collectAsStateWithLifecycle()
+    val perfilVentana = LocalPerfilVentanaCampus.current
 
     Scaffold(
         topBar = {
@@ -72,7 +77,8 @@ fun MissionFormScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 12.dp)
+                .imePadding()
+                .padding(horizontal = perfilVentana.margenHorizontal, vertical = 12.dp)
         ) {
             Etiqueta("Título de la misión")
             OutlinedTextField(estado.titulo, viewModel::onTitulo, modifier = Modifier.fillMaxWidth(), singleLine = true)
@@ -156,7 +162,7 @@ fun MissionFormScreen(
             Etiqueta("Insignia asociada")
             OutlinedTextField(estado.insigniaNombre, viewModel::onInsigniaNombre, modifier = Modifier.fillMaxWidth(), singleLine = true, placeholder = { Text("Nombre de la insignia") })
             Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 emojisSugeridos.forEach { emoji ->
                     OutlinedButton(onClick = { viewModel.onInsigniaEmoji(emoji) }) { Text(emoji) }
                 }

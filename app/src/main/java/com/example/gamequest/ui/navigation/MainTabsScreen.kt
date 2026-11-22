@@ -2,7 +2,6 @@ package com.example.gamequest.ui.navigation
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -27,9 +26,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
-import com.example.gamequest.ui.common.ANCHO_PANTALLA_AMPLIA
 import com.example.gamequest.ui.common.CampusBottomBar
 import com.example.gamequest.ui.common.CampusNavigationRail
+import com.example.gamequest.ui.common.LocalPerfilVentanaCampus
 import com.example.gamequest.ui.common.bottomTabs
 import com.example.gamequest.ui.common.rememberReducirMovimiento
 import com.example.gamequest.util.LocalSoundManager
@@ -41,8 +40,8 @@ import kotlin.math.abs
  * Contenedor de las 5 pestañas principales (Inicio, Misiones, QR, Insignias, Perfil).
  *
  * - Se puede **deslizar** a izquierda/derecha entre pestañas, o tocar el menú.
- * - Teléfono en vertical: barra inferior (solo íconos; nombre en la activa).
- * - Pantalla ancha u horizontal: riel lateral (no resta altura al contenido).
+ * - Ancho compacto: barra inferior de iconos, sin texto que pueda partirse.
+ * - Ancho medio/expandido o altura compacta: riel lateral (no resta altura al contenido).
  * - Solo se compone la página visible (+ las vecinas mientras se desliza), así que
  *   cada pestaña carga de forma perezosa. [contenido] recibe `activa = true`
  *   únicamente cuando la página ya se asentó (p. ej. el escáner no abre la
@@ -105,8 +104,9 @@ fun MainTabsScreen(
 
     val seleccion = pagerState.targetPage
 
-    BoxWithConstraints(Modifier.fillMaxSize()) {
-        val usarRiel = maxWidth >= ANCHO_PANTALLA_AMPLIA
+    val perfilVentana = LocalPerfilVentanaCampus.current
+    Box(Modifier.fillMaxSize()) {
+        val usarRiel = perfilVentana.usarRielNavegacion
         val paginas: @Composable (Modifier) -> Unit = { modifier ->
             HorizontalPager(
                 state = pagerState,

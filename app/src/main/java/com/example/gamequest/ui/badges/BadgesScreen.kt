@@ -66,6 +66,7 @@ import com.example.gamequest.data.local.entity.UsuarioEntity
 import com.example.gamequest.data.model.RankingEntry
 import com.example.gamequest.data.repository.MisionConEstado
 import com.example.gamequest.ui.common.ContenidoAdaptable
+import com.example.gamequest.ui.common.LocalPerfilVentanaCampus
 import com.example.gamequest.ui.common.encabezado
 import com.example.gamequest.ui.theme.AmberAccent
 import com.example.gamequest.ui.theme.AmberAccentDark
@@ -82,6 +83,7 @@ fun BadgesScreen(
     val soundManager = LocalSoundManager.current
     val haptic = LocalHapticFeedback.current
     val estado by viewModel.estado.collectAsStateWithLifecycle()
+    val perfilVentana = LocalPerfilVentanaCampus.current
 
     // Insignias y ranking aprovechan el ancho de tablets/horizontal; no son un
     // formulario y no deben quedar limitados al ancho estrecho de Perfil.
@@ -92,7 +94,7 @@ fun BadgesScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(MaterialTheme.colorScheme.primary)
-                        .padding(20.dp)
+                        .padding(horizontal = perfilVentana.margenHorizontal, vertical = 20.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Surface(color = Color.White.copy(alpha = 0.15f), shape = CircleShape) {
