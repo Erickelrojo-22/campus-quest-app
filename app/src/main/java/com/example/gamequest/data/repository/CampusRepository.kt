@@ -13,10 +13,14 @@ import com.example.gamequest.data.local.entity.ProgresoMisionEntity
 import com.example.gamequest.data.local.entity.PuntoInteresEntity
 import com.example.gamequest.data.local.entity.UsuarioEntity
 import com.example.gamequest.data.model.RankingEntry
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 
 /** Misión combinada con su punto de interés y el estado de avance del usuario actual. */
 data class MisionConEstado(
@@ -51,6 +55,12 @@ sealed class ValidacionQrResult {
  * Repositorio central del campus: puntos de interés, misiones y progreso
  * (RF-05 a RF-17). Toda la información se sirve desde Room, por lo que la
  * aplicación funciona igual con o sin conexión (RF-20).
+ *
+ * Concurrencia: toda lectura y escritura de Room se ejecuta en [ioDispatcher]
+ * (por defecto [Dispatchers.IO]); los Flow se recogen en ese hilo con
+ * `flowOn` y las funciones suspendidas usan `withContext`, de modo que el
+ * hilo principal nunca espera a la base de datos. Las pruebas pueden
+ * inyectar un dispatcher de prueba.
  */
 open class CampusRepository(
     private val database: AppDatabase? = null,
@@ -58,21 +68,26 @@ open class CampusRepository(
     private val misionDao: MisionDao? = null,
     private val progresoDao: ProgresoMisionDao? = null,
     private val usuarioDao: UsuarioDao? = null,
-    private val localCrudAuthorizer: LocalCrudAuthorizer? = null
+    private val localCrudAuthorizer: LocalCrudAuthorizer? = null,
+    protected val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : CampusDataRepository {
 
-    protected open suspend fun <T> runInTransaction(block: suspend () -> T): T {
-        return database?.withTransaction { block() } ?: block()
+    protected open suspend fun <T> runInTransaction(block: suspend () -> T): T = withContext(ioDispatcher) {
+        database?.withTransaction { block() } ?: block()
     }
 
+    /** Ejecuta una operación de datos suspendida fuera del hilo principal. */
+    protected suspend fun <T> io(block: suspend () -> T): T = withContext(ioDispatcher) { block() }
+
     open fun observarPuntos(): Flow<List<PuntoInteresEntity>> =
-        puntoDao?.observarTodos() ?: flowOf(emptyList())
+        (puntoDao?.observarTodos() ?: flowOf(emptyList())).flowOn(ioDispatcher)
 
     override fun observarUsuario(id: Int): Flow<UsuarioEntity?> =
-        usuarioDao?.observarPorId(id) ?: flowOf(null)
+        (usuarioDao?.observarPorId(id) ?: flowOf(null)).flowOn(ioDispatcher)
 
     override fun observarRanking(): Flow<List<RankingEntry>> =
-        usuarioDao?.observarRanking()?.map { users -> users.map(RankingEntry::local) } ?: flowOf(emptyList())
+        (usuarioDao?.observarRanking()?.map { users -> users.map(RankingEntry::local) } ?: flowOf(emptyList()))
+            .flowOn(ioDispatcher)
 
     /** Lista de misiones combinada con su punto de interés y si el usuario ya la completó. */
     override fun observarMisionesConEstado(usuarioId: Int): Flow<List<MisionConEstado>> {
@@ -90,7 +105,7 @@ open class CampusRepository(
                     completada = mision.id in completadasIds
                 )
             }
-        }
+        }.flowOn(ioDispatcher)
     }
 
     /** RF-16: listado de misiones con su punto de interés, para la pantalla de gestión (CRUD). */
@@ -104,25 +119,25 @@ open class CampusRepository(
                 val punto = puntosPorId[mision.puntoInteresId] ?: return@mapNotNull null
                 mision to punto
             }
-        }
+        }.flowOn(ioDispatcher)
     }
 
-    override suspend fun buscarPuntoPorId(id: Int): PuntoInteresEntity? = puntoDao?.buscarPorId(id)
+    override suspend fun buscarPuntoPorId(id: Int): PuntoInteresEntity? = io { puntoDao?.buscarPorId(id) }
 
-    override suspend fun buscarMisionPorId(id: Int): MisionEntity? = misionDao?.buscarPorId(id)
+    override suspend fun buscarMisionPorId(id: Int): MisionEntity? = io { misionDao?.buscarPorId(id) }
 
     /** Misión(es) asociada(s) a un punto de interés (relación 1 a 1 en esta etapa). */
     override suspend fun buscarMisionPorPuntoId(puntoId: Int): MisionEntity? =
-        misionDao?.buscarPorPunto(puntoId)?.firstOrNull()
+        io { misionDao?.buscarPorPunto(puntoId)?.firstOrNull() }
 
     override fun observarMisionPorId(id: Int): Flow<MisionEntity?> =
-        misionDao?.observarPorId(id) ?: flowOf(null)
+        (misionDao?.observarPorId(id) ?: flowOf(null)).flowOn(ioDispatcher)
 
     override fun observarPuntoPorId(id: Int): Flow<PuntoInteresEntity?> =
-        puntoDao?.observarPorId(id) ?: flowOf(null)
+        (puntoDao?.observarPorId(id) ?: flowOf(null)).flowOn(ioDispatcher)
 
     override fun observarTotalInsignias(usuarioId: Int): Flow<Int> =
-        progresoDao?.observarTotalCompletadas(usuarioId) ?: flowOf(0)
+        (progresoDao?.observarTotalCompletadas(usuarioId) ?: flowOf(0)).flowOn(ioDispatcher)
 
     /** RF-15 / Timeline: Historial de actividades y puntos ganados por el usuario en orden cronológico. */
     override fun observarHistorialProgreso(usuarioId: Int): Flow<List<ProgresoDetallado>> {
@@ -142,7 +157,7 @@ open class CampusRepository(
                     punto = punto
                 )
             }
-        }
+        }.flowOn(ioDispatcher)
     }
 
     /**
@@ -246,8 +261,9 @@ open class CampusRepository(
         misionDao?.archivar(mision.id)
     }
 
-    private suspend fun <T> authorizeCrud(block: suspend () -> T): T =
+    private suspend fun <T> authorizeCrud(block: suspend () -> T): T = io {
         localCrudAuthorizer?.withTutor(block) ?: block()
+    }
 
     open fun generarCodigoQr(categoria: String): String {
         val prefijo = categoria.take(3).uppercase().ifBlank { "CQ0" }
