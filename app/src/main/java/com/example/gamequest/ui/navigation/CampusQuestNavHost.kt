@@ -26,7 +26,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.gamequest.CampusQuestDependencies
 import com.example.gamequest.data.session.*
-import com.example.gamequest.AppContainer
 import com.example.gamequest.data.local.entity.Rol
 import com.example.gamequest.ui.auth.AuthViewModel
 import com.example.gamequest.ui.auth.LoginScreen
@@ -81,7 +80,7 @@ private fun NavHostController.mostrarTab(route: String, puntoDestinoId: Int? = n
 }
 
 @Composable
-fun CampusQuestNavHost(container: AppContainer) {
+fun CampusQuestNavHost(container: CampusQuestDependencies) {
     val navController = rememberNavController()
     val sessionViewModel: SessionViewModel = viewModel(
         factory = GenericViewModelFactory { SessionViewModel(container.sessionCoordinator) }
