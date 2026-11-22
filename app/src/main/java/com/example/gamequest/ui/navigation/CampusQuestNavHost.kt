@@ -183,10 +183,16 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
 
         composable(Routes.REGISTER) {
             val registerViewModel: RegisterViewModel = viewModel(factory = GenericViewModelFactory { RegisterViewModel(container.authRepository) })
+            val estadoRegistro by registerViewModel.uiState.collectAsStateWithLifecycle()
             RegisterScreen(
-                viewModel = registerViewModel,
-                onRegistroExitoso = { usuarioRegistrado ->
-                    onLogin(usuarioRegistrado.id)
+                uiState = estadoRegistro,
+                onNombresChange = registerViewModel::onNombresChange,
+                onCorreoChange = registerViewModel::onCorreoChange,
+                onCarreraChange = registerViewModel::onCarreraChange,
+                onContrasenaChange = registerViewModel::onContrasenaChange,
+                onConfirmarContrasenaChange = registerViewModel::onConfirmarContrasenaChange,
+                onRegistrar = {
+                    registerViewModel.registrar { usuarioRegistrado -> onLogin(usuarioRegistrado.id) }
                 },
                 onVolverALogin = {
                     navController.popBackStack()
