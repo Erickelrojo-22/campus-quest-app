@@ -151,10 +151,16 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
 
         composable(Routes.LOGIN) {
             val authViewModel: AuthViewModel = viewModel(factory = GenericViewModelFactory { AuthViewModel(container.authRepository) })
+            val estadoAcceso by authViewModel.uiState.collectAsStateWithLifecycle()
             LoginScreen(
-                viewModel = authViewModel,
-                onLoginExitoso = { usuarioLogueado ->
-                    onLogin(usuarioLogueado.id)
+                uiState = estadoAcceso,
+                onModoInstitucionalChange = authViewModel::onModoInstitucionalChange,
+                onCorreoChange = authViewModel::onCorreoChange,
+                onContrasenaChange = authViewModel::onContrasenaChange,
+                onNombreChange = authViewModel::onNombreChange,
+                onSeleccionarUsuarioPrueba = authViewModel::onSeleccionarUsuarioPrueba,
+                onIniciarSesion = {
+                    authViewModel.iniciarSesion { usuarioLogueado -> onLogin(usuarioLogueado.id) }
                 },
                 onIrARegistro = {
                     navController.navigate(Routes.REGISTER)
