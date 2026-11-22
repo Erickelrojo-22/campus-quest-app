@@ -254,8 +254,19 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                                 key = "scanner-$usuarioId",
                                 factory = GenericViewModelFactory { ScannerViewModel(container.campusRepository, usuarioId) }
                             )
+                            val estadoEscaner by scannerViewModel.uiState.collectAsStateWithLifecycle()
+                            val mostrarDialogoManual by scannerViewModel.mostrarDialogoManual.collectAsStateWithLifecycle()
+                            val codigoManual by scannerViewModel.codigoManual.collectAsStateWithLifecycle()
                             ScannerScreen(
-                                viewModel = scannerViewModel,
+                                uiState = estadoEscaner,
+                                mostrarDialogoManual = mostrarDialogoManual,
+                                codigoManual = codigoManual,
+                                onQrDetectado = scannerViewModel::validar,
+                                onReiniciar = scannerViewModel::reiniciar,
+                                onAbrirDialogoManual = scannerViewModel::abrirDialogoManual,
+                                onCerrarDialogoManual = scannerViewModel::cerrarDialogoManual,
+                                onCodigoManualChange = scannerViewModel::onCodigoManualChange,
+                                onValidarCodigoManual = scannerViewModel::validarCodigoManual,
                                 activa = activa,
                                 onBack = { navController.mostrarTab(Routes.HOME) },
                                 onMisionCompletada = { misionId ->
