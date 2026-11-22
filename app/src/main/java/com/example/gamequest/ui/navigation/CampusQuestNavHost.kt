@@ -378,8 +378,14 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                 val managementViewModel: MissionManagementViewModel = viewModel(
                     factory = GenericViewModelFactory { MissionManagementViewModel(container.campusRepository) }
                 )
+                val misiones by managementViewModel.misiones.collectAsStateWithLifecycle()
+                val misionAEliminar by managementViewModel.misionAEliminar.collectAsStateWithLifecycle()
                 MissionManagementScreen(
-                    viewModel = managementViewModel,
+                    misiones = misiones,
+                    misionAEliminar = misionAEliminar,
+                    onSolicitarEliminacion = managementViewModel::solicitarEliminacion,
+                    onConfirmarEliminacion = managementViewModel::confirmarEliminacion,
+                    onCancelarEliminacion = managementViewModel::cancelarEliminacion,
                     onBack = { navController.popBackStack() },
                     onNuevaMision = { navController.navigate(Routes.missionFormNuevo()) },
                     onEditarMision = { puntoId -> navController.navigate(Routes.missionFormEditar(puntoId)) }
