@@ -45,7 +45,7 @@ class CampusRepositoryTest {
             fakeProgresoDao = FakeProgresoMisionDao()
             fakeUsuarioDao = FakeUsuarioDao()
 
-            repository = CampusRepository(
+            repository = OfflineFirstCampusRepository(
                 database = null,
                 puntoDao = fakePuntoDao,
                 misionDao = fakeMisionDao,
@@ -182,7 +182,7 @@ class CampusRepositoryTest {
         val executor = Executors.newSingleThreadExecutor { Thread(it, "campus-io-test") }
         val io = executor.asCoroutineDispatcher()
         try {
-            val repo = CampusRepository(puntoDao = fakePuntoDao, misionDao = fakeMisionDao, ioDispatcher = io)
+            val repo = OfflineFirstCampusRepository(puntoDao = fakePuntoDao, misionDao = fakeMisionDao, ioDispatcher = io)
             runBlocking { repo.buscarPuntoPorId(10) }
             assertTrue(fakePuntoDao.ultimoHilo.orEmpty().startsWith("campus-io-test"))
         } finally {
@@ -195,7 +195,7 @@ class CampusRepositoryTest {
         val executor = Executors.newSingleThreadExecutor { Thread(it, "campus-io-test") }
         val io = executor.asCoroutineDispatcher()
         try {
-            val repo = CampusRepository(puntoDao = fakePuntoDao, misionDao = fakeMisionDao, ioDispatcher = io)
+            val repo = OfflineFirstCampusRepository(puntoDao = fakePuntoDao, misionDao = fakeMisionDao, ioDispatcher = io)
             runBlocking { repo.observarPuntos().first() }
             assertTrue(fakePuntoDao.ultimoHilo.orEmpty().startsWith("campus-io-test"))
         } finally {

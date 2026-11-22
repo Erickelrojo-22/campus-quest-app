@@ -6,6 +6,7 @@ import com.example.gamequest.data.local.LocalCampusInitializer
 import com.example.gamequest.data.preferences.UserPreferencesRepository
 import com.example.gamequest.data.repository.AuthRepository
 import com.example.gamequest.data.repository.CampusRepository
+import com.example.gamequest.data.repository.OfflineFirstCampusRepository
 import com.example.gamequest.data.repository.LocalCrudAuthorizer
 import com.example.gamequest.data.repository.LocalTutorSetupRepository
 import com.example.gamequest.data.repository.TutorSetupRepository
@@ -47,7 +48,7 @@ class AppContainer(context: Context) : CampusQuestDependencies {
     override val campusRepository: CampusRepository = if (mode == CampusDataMode.REMOTE) {
         RemoteCampusRepository(database, requireNotNull(api), ioDispatcher)
     } else {
-        CampusRepository(database, database.puntoInteresDao(), database.misionDao(), database.progresoMisionDao(),
+        OfflineFirstCampusRepository(database, database.puntoInteresDao(), database.misionDao(), database.progresoMisionDao(),
             database.usuarioDao(), LocalCrudAuthorizer(tokens, database.usuarioDao()), ioDispatcher)
     }
 

@@ -4,7 +4,7 @@ import androidx.room.withTransaction
 import com.example.gamequest.data.local.AppDatabase
 import com.example.gamequest.data.local.entity.*
 import com.example.gamequest.data.model.RankingEntry
-import com.example.gamequest.data.repository.CampusRepository
+import com.example.gamequest.data.repository.OfflineFirstCampusRepository
 import com.example.gamequest.data.repository.ValidacionQrResult
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -26,7 +26,7 @@ class RemoteCampusRepository(
     private val db: AppDatabase,
     private val api: CampusGateway,
     ioDispatcher: CoroutineDispatcher = Dispatchers.IO
-) : CampusRepository(
+) : OfflineFirstCampusRepository(
     database = db, puntoDao = db.puntoInteresDao(), misionDao = db.misionDao(),
     progresoDao = db.progresoMisionDao(), usuarioDao = db.usuarioDao(), ioDispatcher = ioDispatcher
 ), com.example.gamequest.data.session.SessionAccess {
