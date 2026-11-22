@@ -24,7 +24,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.gamequest.CampusQuestDependencies
+import com.example.gamequest.di.CampusQuestDependencies
 import com.example.gamequest.data.session.*
 import com.example.gamequest.data.local.entity.Rol
 import com.example.gamequest.ui.auth.AuthViewModel
