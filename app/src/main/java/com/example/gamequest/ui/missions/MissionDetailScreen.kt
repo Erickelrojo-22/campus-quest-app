@@ -36,8 +36,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -49,12 +47,11 @@ import com.example.gamequest.ui.theme.AmberAccentDark
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MissionDetailScreen(
-    viewModel: MissionDetailViewModel,
+    estado: MisionDetailState,
     onBack: () -> Unit,
     onEscanear: () -> Unit,
     onVerRuta: () -> Unit
 ) {
-    val estado by viewModel.estado.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {

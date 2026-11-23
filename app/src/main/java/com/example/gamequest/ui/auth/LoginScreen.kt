@@ -47,8 +47,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -59,7 +57,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.gamequest.data.local.entity.UsuarioEntity
 import com.example.gamequest.ui.common.CampoFormulario
 import com.example.gamequest.ui.common.ContenidoAdaptable
 import com.example.gamequest.ui.common.MensajeError
@@ -73,12 +70,16 @@ import com.example.gamequest.ui.theme.TealPrimaryDark
 
 @Composable
 fun LoginScreen(
-    viewModel: AuthViewModel,
-    onLoginExitoso: (UsuarioEntity) -> Unit,
+    uiState: AuthUiState,
+    onModoInstitucionalChange: (Boolean) -> Unit,
+    onCorreoChange: (String) -> Unit,
+    onContrasenaChange: (String) -> Unit,
+    onNombreChange: (String) -> Unit,
+    onSeleccionarUsuarioPrueba: (String) -> Unit,
+    onIniciarSesion: () -> Unit,
     onIrARegistro: () -> Unit = {},
     onConfigurarTutorLocal: (() -> Unit)? = null
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val perfilVentana = LocalPerfilVentanaCampus.current
     val paddingTarjeta = if (perfilVentana.ancho == ClaseAnchoVentana.COMPACTO_PEQUENO) 14.dp else 20.dp
 
@@ -143,7 +144,7 @@ fun LoginScreen(
                     ) {
                         FilterChip(
                             selected = uiState.modoInstitucional,
-                            onClick = { viewModel.onModoInstitucionalChange(true) },
+                            onClick = { onModoInstitucionalChange(true) },
                             label = { Text("Estudiantil") },
                             leadingIcon = {
                                 Icon(
@@ -161,7 +162,7 @@ fun LoginScreen(
                         )
                         FilterChip(
                             selected = !uiState.modoInstitucional,
-                            onClick = { viewModel.onModoInstitucionalChange(false) },
+                            onClick = { onModoInstitucionalChange(false) },
                             label = { Text("Modo Prueba") },
                             leadingIcon = {
                                 Icon(
@@ -184,7 +185,7 @@ fun LoginScreen(
                         CampoFormulario(
                             etiqueta = "Correo institucional (@live.uleam.edu.ec)",
                             valor = uiState.correo,
-                            onValorChange = viewModel::onCorreoChange,
+                            onValorChange = onCorreoChange,
                             placeholder = "usuario@live.uleam.edu.ec",
                             icono = Icons.Filled.Email,
                             keyboardType = KeyboardType.Email,
@@ -196,13 +197,13 @@ fun LoginScreen(
                         CampoFormulario(
                             etiqueta = "Contraseña",
                             valor = uiState.contrasena,
-                            onValorChange = viewModel::onContrasenaChange,
+                            onValorChange = onContrasenaChange,
                             icono = Icons.Filled.Lock,
                             esPassword = true,
                             keyboardType = KeyboardType.Password,
                             imeAction = ImeAction.Done,
                             keyboardActions = KeyboardActions(
-                                onDone = { viewModel.iniciarSesion(onLoginExitoso) }
+                                onDone = { onIniciarSesion() }
                             ),
                             hayError = uiState.error != null
                         )
@@ -265,13 +266,13 @@ fun LoginScreen(
                         CampoFormulario(
                             etiqueta = "Nombre del tester",
                             valor = uiState.nombre,
-                            onValorChange = viewModel::onNombreChange,
+                            onValorChange = onNombreChange,
                             placeholder = "Ej. Aventurero Test",
                             icono = Icons.Filled.Person,
                             keyboardType = KeyboardType.Text,
                             imeAction = ImeAction.Done,
                             keyboardActions = KeyboardActions(
-                                onDone = { viewModel.iniciarSesion(onLoginExitoso) }
+                                onDone = { onIniciarSesion() }
                             ),
                             hayError = uiState.error != null
                         )
@@ -283,7 +284,7 @@ fun LoginScreen(
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             AssistChip(
-                                onClick = { viewModel.onSeleccionarUsuarioPrueba("Tester Estudiante") },
+                                onClick = { onSeleccionarUsuarioPrueba("Tester Estudiante") },
                                 label = { Text("Tester Estudiante", fontSize = 11.sp) },
                                 colors = AssistChipDefaults.assistChipColors(
                                     labelColor = AmberAccent
@@ -291,7 +292,7 @@ fun LoginScreen(
                                 border = BorderStroke(1.dp, AmberAccent.copy(alpha = 0.5f))
                             )
                             AssistChip(
-                                onClick = { viewModel.onSeleccionarUsuarioPrueba("Aventurero Demo") },
+                                onClick = { onSeleccionarUsuarioPrueba("Aventurero Demo") },
                                 label = { Text("Aventurero Demo", fontSize = 11.sp) },
                                 colors = AssistChipDefaults.assistChipColors(
                                     labelColor = AmberAccent
@@ -311,7 +312,7 @@ fun LoginScreen(
 
                     // Botón de acción principal
                     Button(
-                        onClick = { viewModel.iniciarSesion(onLoginExitoso) },
+                        onClick = onIniciarSesion,
                         enabled = !uiState.cargando,
                         shape = RoundedCornerShape(4.dp),
                         colors = ButtonDefaults.buttonColors(

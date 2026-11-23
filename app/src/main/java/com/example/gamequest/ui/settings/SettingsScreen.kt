@@ -26,8 +26,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.getValue
+import com.example.gamequest.data.preferences.UserPreferences
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -38,11 +37,15 @@ import com.example.gamequest.ui.common.LocalPerfilVentanaCampus
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    viewModel: SettingsViewModel,
+    prefs: UserPreferences,
+    onTemaOscuroChange: (Boolean) -> Unit,
+    onRecordatoriosMisionChange: (Boolean) -> Unit,
+    onAvisosCampusChange: (Boolean) -> Unit,
+    onSonidoVibracionChange: (Boolean) -> Unit,
+    onDescargarMapaChange: (Boolean) -> Unit,
     onBack: () -> Unit,
     onCerrarSesion: () -> Unit
 ) {
-    val prefs by viewModel.preferencias.collectAsStateWithLifecycle()
     val perfilVentana = LocalPerfilVentanaCampus.current
 
     Scaffold(
@@ -63,21 +66,21 @@ fun SettingsScreen(
                 .padding(horizontal = perfilVentana.margenHorizontal, vertical = 8.dp)
         ) {
             SeccionTitulo("APARIENCIA")
-            FilaSwitch(Icons.Filled.DarkMode, "Tema oscuro", prefs.temaOscuro, viewModel::setTemaOscuro)
+            FilaSwitch(Icons.Filled.DarkMode, "Tema oscuro", prefs.temaOscuro, onTemaOscuroChange)
             HorizontalDivider()
 
             Spacer()
             SeccionTitulo("NOTIFICACIONES")
-            FilaSwitch(Icons.Filled.Notifications, "Recordatorios de misión", prefs.recordatoriosMision, viewModel::setRecordatoriosMision)
-            FilaSwitch(Icons.Filled.Notifications, "Avisos del campus", prefs.avisosCampus, viewModel::setAvisosCampus)
-            FilaSwitch(Icons.Filled.Vibration, "Sonido y vibración", prefs.sonidoVibracion, viewModel::setSonidoVibracion)
+            FilaSwitch(Icons.Filled.Notifications, "Recordatorios de misión", prefs.recordatoriosMision, onRecordatoriosMisionChange)
+            FilaSwitch(Icons.Filled.Notifications, "Avisos del campus", prefs.avisosCampus, onAvisosCampusChange)
+            FilaSwitch(Icons.Filled.Vibration, "Sonido y vibración", prefs.sonidoVibracion, onSonidoVibracionChange)
             HorizontalDivider()
 
             Spacer()
             SeccionTitulo("PREFERENCIAS")
             FilaInfo(Icons.Filled.Language, "Idioma", prefs.idioma)
             FilaInfo(Icons.Filled.LocationCity, "Campus por defecto", prefs.campusPorDefecto)
-            FilaSwitch(Icons.Filled.CloudOff, "Descargar mapa sin conexión", prefs.descargarMapaSinConexion, viewModel::setDescargarMapaSinConexion)
+            FilaSwitch(Icons.Filled.CloudOff, "Descargar mapa sin conexión", prefs.descargarMapaSinConexion, onDescargarMapaChange)
 
             Spacer()
             Text(

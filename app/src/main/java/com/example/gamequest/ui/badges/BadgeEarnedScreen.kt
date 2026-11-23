@@ -34,8 +34,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -57,13 +55,12 @@ import com.example.gamequest.util.SoundEffect
 
 @Composable
 fun BadgeEarnedScreen(
-    viewModel: BadgeEarnedViewModel,
+    estado: BadgeEarnedState,
     onSiguienteMision: () -> Unit
 ) {
     val context = LocalContext.current
     val soundManager = LocalSoundManager.current
     val haptic = LocalHapticFeedback.current
-    val estado by viewModel.estado.collectAsStateWithLifecycle()
     val mision = estado.mision
 
     LaunchedEffect(Unit) {

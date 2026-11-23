@@ -35,8 +35,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -44,7 +42,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.gamequest.data.local.entity.UsuarioEntity
 import com.example.gamequest.ui.common.CampoFormulario
 import com.example.gamequest.ui.common.ContenidoAdaptable
 import com.example.gamequest.ui.common.MensajeError
@@ -62,11 +59,15 @@ import com.example.gamequest.ui.theme.TealPrimaryDark
  */
 @Composable
 fun RegisterScreen(
-    viewModel: RegisterViewModel,
-    onRegistroExitoso: (UsuarioEntity) -> Unit,
+    uiState: RegisterUiState,
+    onNombresChange: (String) -> Unit,
+    onCorreoChange: (String) -> Unit,
+    onCarreraChange: (String) -> Unit,
+    onContrasenaChange: (String) -> Unit,
+    onConfirmarContrasenaChange: (String) -> Unit,
+    onRegistrar: () -> Unit,
     onVolverALogin: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val perfilVentana = LocalPerfilVentanaCampus.current
     val paddingTarjeta = if (perfilVentana.ancho == ClaseAnchoVentana.COMPACTO_PEQUENO) 14.dp else 20.dp
 
@@ -123,7 +124,7 @@ fun RegisterScreen(
                         CampoFormulario(
                             etiqueta = "Nombres completos",
                             valor = uiState.nombres,
-                            onValorChange = viewModel::onNombresChange,
+                            onValorChange = onNombresChange,
                             icono = Icons.Filled.Person,
                             imeAction = ImeAction.Next,
                             hayError = uiState.error != null
@@ -133,7 +134,7 @@ fun RegisterScreen(
                         CampoFormulario(
                             etiqueta = "Correo institucional (@live.uleam.edu.ec)",
                             valor = uiState.correo,
-                            onValorChange = viewModel::onCorreoChange,
+                            onValorChange = onCorreoChange,
                             placeholder = "usuario@live.uleam.edu.ec",
                             icono = Icons.Filled.Email,
                             keyboardType = KeyboardType.Email,
@@ -145,7 +146,7 @@ fun RegisterScreen(
                         CampoFormulario(
                             etiqueta = "Carrera o facultad",
                             valor = uiState.carrera,
-                            onValorChange = viewModel::onCarreraChange,
+                            onValorChange = onCarreraChange,
                             placeholder = "Ej. Ingeniería de Software",
                             icono = Icons.Filled.School,
                             imeAction = ImeAction.Next,
@@ -156,7 +157,7 @@ fun RegisterScreen(
                         CampoFormulario(
                             etiqueta = "Contraseña (mín. 6 caracteres)",
                             valor = uiState.contrasena,
-                            onValorChange = viewModel::onContrasenaChange,
+                            onValorChange = onContrasenaChange,
                             icono = Icons.Filled.Lock,
                             esPassword = true,
                             keyboardType = KeyboardType.Password,
@@ -168,13 +169,13 @@ fun RegisterScreen(
                         CampoFormulario(
                             etiqueta = "Confirmar contraseña",
                             valor = uiState.confirmarContrasena,
-                            onValorChange = viewModel::onConfirmarContrasenaChange,
+                            onValorChange = onConfirmarContrasenaChange,
                             icono = Icons.Filled.Lock,
                             esPassword = true,
                             keyboardType = KeyboardType.Password,
                             imeAction = ImeAction.Done,
                             keyboardActions = KeyboardActions(
-                                onDone = { viewModel.registrar(onRegistroExitoso) }
+                                onDone = { onRegistrar() }
                             ),
                             hayError = uiState.error != null
                         )
@@ -213,7 +214,7 @@ fun RegisterScreen(
 
                         Spacer(Modifier.height(18.dp))
                         Button(
-                            onClick = { viewModel.registrar(onRegistroExitoso) },
+                            onClick = onRegistrar,
                             enabled = !uiState.cargando,
                             shape = RoundedCornerShape(4.dp),
                             colors = ButtonDefaults.buttonColors(

@@ -72,7 +72,8 @@ class MissionsNavigationTest {
                         }) { padding -> Text("Inicio de prueba", Modifier.padding(padding)) }
                     }
                     composable("earned") {
-                        BadgeEarnedScreen(badgeViewModel, onSiguienteMision = {
+                        val badgeState by badgeViewModel.estado.collectAsStateWithLifecycle()
+                        BadgeEarnedScreen(badgeState, onSiguienteMision = {
                             nav.navigate(Routes.MISSIONS) { popUpTo(Routes.HOME) }
                         })
                     }
