@@ -1,5 +1,6 @@
 package com.example.gamequest
 
+import com.example.gamequest.di.CampusQuestDependencies
 import android.content.Context
 import androidx.room.Room
 import com.example.gamequest.data.local.AppDatabase

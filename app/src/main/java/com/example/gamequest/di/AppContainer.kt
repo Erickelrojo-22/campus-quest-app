@@ -1,4 +1,4 @@
-package com.example.gamequest
+package com.example.gamequest.di
 
 import android.content.Context
 import com.example.gamequest.data.local.AppDatabase
@@ -18,7 +18,6 @@ import com.example.gamequest.data.remote.RemoteCampusRepository
 import com.example.gamequest.data.session.LocalSessionAccess
 import com.example.gamequest.data.session.SessionCoordinator
 import com.example.gamequest.data.session.SessionAccess
-import com.example.gamequest.di.CampusDataMode
 import com.example.gamequest.util.SoundEffectManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
