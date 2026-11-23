@@ -187,9 +187,9 @@ class MissionsViewModelTest {
         assertEquals(2, viewModel.misionesFiltradas.value.size)
     }
 
-    private class FakeCampusRepository(
+    private inner class FakeCampusRepository(
         private val misionesConEstado: List<MisionConEstado>
-    ) : OfflineFirstCampusRepository() {
+    ) : OfflineFirstCampusRepository(ioDispatcher = testDispatcher) {
         override fun observarMisionesConEstado(usuarioId: Int): Flow<List<MisionConEstado>> =
             flowOf(misionesConEstado)
     }

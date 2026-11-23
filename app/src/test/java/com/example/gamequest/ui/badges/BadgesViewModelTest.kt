@@ -155,11 +155,11 @@ class BadgesViewModelTest {
         assertNull(viewModel.estado.value.insigniaSeleccionada)
     }
 
-    private class FakeCampusRepository(
+    private inner class FakeCampusRepository(
         private val usuario: UsuarioEntity,
         private val misionesConEstado: List<MisionConEstado>,
         private val ranking: List<UsuarioEntity>
-    ) : OfflineFirstCampusRepository() {
+    ) : OfflineFirstCampusRepository(ioDispatcher = testDispatcher) {
         override fun observarUsuario(id: Int): Flow<UsuarioEntity?> = flowOf(usuario)
         override fun observarMisionesConEstado(usuarioId: Int): Flow<List<MisionConEstado>> =
             flowOf(misionesConEstado)

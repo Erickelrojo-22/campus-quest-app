@@ -254,19 +254,19 @@ class ProfileViewModelTest {
         assertFalse(viewModel.uiState.value.showRanking)
     }
 
-    private class FakeCampusRepository(
+    private inner class FakeCampusRepository(
         private val usuario: UsuarioEntity,
         private val totalInsignias: Int
-    ) : OfflineFirstCampusRepository() {
+    ) : OfflineFirstCampusRepository(ioDispatcher = testDispatcher) {
         override fun observarUsuario(id: Int): Flow<UsuarioEntity?> = MutableStateFlow(usuario)
         override fun observarTotalInsignias(usuarioId: Int): Flow<Int> = MutableStateFlow(totalInsignias)
         override fun observarHistorialProgreso(usuarioId: Int): Flow<List<ProgresoDetallado>> =
             MutableStateFlow(emptyList())
     }
 
-    private class FakeUserPreferencesRepository(
+    private inner class FakeUserPreferencesRepository(
         initialPrefs: UserPreferences
-    ) : DataStoreUserPreferencesRepository() {
+    ) : DataStoreUserPreferencesRepository(ioDispatcher = testDispatcher) {
         val preferenciasState = MutableStateFlow(initialPrefs)
         override val preferencias: Flow<UserPreferences> = preferenciasState
 

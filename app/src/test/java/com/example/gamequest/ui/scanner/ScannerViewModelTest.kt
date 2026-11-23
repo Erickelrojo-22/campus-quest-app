@@ -132,7 +132,7 @@ class ScannerViewModelTest {
         assertTrue(viewModel.uiState.value is ScannerUiState.Escaneando)
     }
 
-    private class FakeCampusRepository : OfflineFirstCampusRepository() {
+    private inner class FakeCampusRepository : OfflineFirstCampusRepository(ioDispatcher = testDispatcher) {
         var resultadoAEntregar: ValidacionQrResult = ValidacionQrResult.CodigoNoReconocido
         var errorAEntregar: Exception? = null
         var totalValidaciones: Int = 0

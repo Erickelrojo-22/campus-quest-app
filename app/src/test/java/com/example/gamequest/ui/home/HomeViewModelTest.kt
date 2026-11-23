@@ -167,10 +167,10 @@ class HomeViewModelTest {
         assertTrue(sugerida?.completada == false)
     }
 
-    private class FakeCampusRepository(
+    private inner class FakeCampusRepository(
         private val usuario: UsuarioEntity,
         private val misionesConEstado: List<MisionConEstado>
-    ) : OfflineFirstCampusRepository() {
+    ) : OfflineFirstCampusRepository(ioDispatcher = testDispatcher) {
         override fun observarUsuario(id: Int): Flow<UsuarioEntity?> = flowOf(usuario)
         override fun observarMisionesConEstado(usuarioId: Int): Flow<List<MisionConEstado>> =
             flowOf(misionesConEstado)
