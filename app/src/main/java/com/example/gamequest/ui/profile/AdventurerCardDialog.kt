@@ -9,8 +9,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Share
@@ -33,6 +35,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.gamequest.data.local.entity.UsuarioEntity
+import com.example.gamequest.ui.common.ClaseAltoVentana
+import com.example.gamequest.ui.common.LocalPerfilVentanaCampus
 import com.example.gamequest.ui.components.CharacterAnimation
 import com.example.gamequest.ui.components.CharacterSprite
 import com.example.gamequest.ui.theme.AmberAccent
@@ -91,6 +95,8 @@ fun AdventurerCardDialog(
     val haptic = LocalHapticFeedback.current
     val rango = obtenerRangoRpg(usuario.nivel)
     val carnetId = "CQ-EST-%04d".format(usuario.id)
+    val perfilVentana = LocalPerfilVentanaCampus.current
+    val compactoAlto = perfilVentana.alto == ClaseAltoVentana.COMPACTO
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -99,6 +105,7 @@ fun AdventurerCardDialog(
         Surface(
             modifier = Modifier
                 .fillMaxWidth(0.92f)
+                .widthIn(max = 420.dp)
                 .clip(RoundedCornerShape(16.dp))
                 .border(BorderStroke(3.dp, AmberAccent), RoundedCornerShape(16.dp)),
             color = MaterialTheme.colorScheme.surface,
@@ -110,7 +117,10 @@ fun AdventurerCardDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(InstitutionalRed)
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                        .padding(
+                            horizontal = perfilVentana.margenHorizontal,
+                            vertical = if (compactoAlto) 8.dp else 12.dp
+                        ),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
@@ -132,7 +142,11 @@ fun AdventurerCardDialog(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
+                        .verticalScroll(rememberScrollState())
+                        .padding(
+                            horizontal = perfilVentana.margenHorizontal,
+                            vertical = if (compactoAlto) 12.dp else 16.dp
+                        )
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),

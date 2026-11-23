@@ -49,6 +49,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.gamequest.data.local.entity.UsuarioEntity
 import com.example.gamequest.data.model.RankingEntry
+import com.example.gamequest.ui.common.ClaseAltoVentana
+import com.example.gamequest.ui.common.LocalPerfilVentanaCampus
 import com.example.gamequest.ui.common.encabezado
 import com.example.gamequest.ui.theme.AmberAccent
 import com.example.gamequest.ui.theme.AmberAccentDark
@@ -67,6 +69,8 @@ fun LeaderboardDialog(
     onDismiss: () -> Unit
 ) {
     val soundManager = LocalSoundManager.current
+    val perfilVentana = LocalPerfilVentanaCampus.current
+    val compactoAlto = perfilVentana.alto == ClaseAltoVentana.COMPACTO
 
     Dialog(
         onDismissRequest = {
@@ -78,7 +82,7 @@ fun LeaderboardDialog(
         Surface(
             modifier = Modifier
                 .fillMaxWidth(0.94f)
-                .fillMaxHeight(0.88f)
+                .fillMaxHeight(if (compactoAlto) 0.94f else 0.88f)
                 .widthIn(max = 460.dp),
             shape = RoundedCornerShape(12.dp),
             color = TealPrimaryDark,
@@ -163,14 +167,21 @@ fun LeaderboardDialog(
                     val usuarioActual = if (indexActual >= 0) ranking[indexActual] else null
 
                     Column(modifier = Modifier.fillMaxSize()) {
-                        PodioTop3(top3 = top3, usuarioActualId = usuarioActualId, usuarioRemotoId = usuarioRemotoId)
+                        if (ranking.size >= 3) {
+                            PodioTop3(
+                                top3 = top3,
+                                usuarioActualId = usuarioActualId,
+                                usuarioRemotoId = usuarioRemotoId,
+                                compactoAlto = compactoAlto
+                            )
+                        }
 
                         // Resumen de la posición del usuario actual
                         if (usuarioActual != null) {
                             Surface(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                                    .padding(horizontal = perfilVentana.margenHorizontal, vertical = 6.dp),
                                 shape = RoundedCornerShape(8.dp),
                                 color = AmberAccent.copy(alpha = 0.2f),
                                 border = BorderStroke(1.5.dp, AmberAccent)
@@ -209,7 +220,7 @@ fun LeaderboardDialog(
                         // Lista completa de clasificación
                         LazyColumn(
                             modifier = Modifier.weight(1f),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                            contentPadding = PaddingValues(horizontal = perfilVentana.margenHorizontal, vertical = 8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             itemsIndexed(ranking, key = { _, user -> user.stableKey }) { index, user ->
@@ -228,11 +239,17 @@ fun LeaderboardDialog(
 }
 
 @Composable
-private fun PodioTop3(top3: List<RankingEntry>, usuarioActualId: Int, usuarioRemotoId: Int?) {
+private fun PodioTop3(
+    top3: List<RankingEntry>,
+    usuarioActualId: Int,
+    usuarioRemotoId: Int?,
+    compactoAlto: Boolean = false
+) {
+    val margen = LocalPerfilVentanaCampus.current.margenHorizontal
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = margen, vertical = if (compactoAlto) 6.dp else 10.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.Bottom
     ) {
@@ -243,7 +260,7 @@ private fun PodioTop3(top3: List<RankingEntry>, usuarioActualId: Int, usuarioRem
                 emoji = "🥈",
                 usuario = top3[1],
                 colorMedalla = Color(0xFFC0C0C0),
-                altura = 105.dp,
+                altura = if (compactoAlto) 88.dp else 105.dp,
                 esUsuarioActual = top3[1].isCurrent(usuarioActualId, usuarioRemotoId),
                 modifier = Modifier.weight(1f)
             )
@@ -260,7 +277,7 @@ private fun PodioTop3(top3: List<RankingEntry>, usuarioActualId: Int, usuarioRem
                 emoji = "👑 🥇",
                 usuario = top3[0],
                 colorMedalla = AmberAccent,
-                altura = 125.dp,
+                altura = if (compactoAlto) 104.dp else 125.dp,
                 esUsuarioActual = top3[0].isCurrent(usuarioActualId, usuarioRemotoId),
                 modifier = Modifier.weight(1.15f)
             )
@@ -275,7 +292,7 @@ private fun PodioTop3(top3: List<RankingEntry>, usuarioActualId: Int, usuarioRem
                 emoji = "🥉",
                 usuario = top3[2],
                 colorMedalla = Color(0xFFCD7F32),
-                altura = 95.dp,
+                altura = if (compactoAlto) 80.dp else 95.dp,
                 esUsuarioActual = top3[2].isCurrent(usuarioActualId, usuarioRemotoId),
                 modifier = Modifier.weight(1f)
             )

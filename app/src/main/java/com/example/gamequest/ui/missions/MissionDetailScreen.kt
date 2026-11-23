@@ -15,6 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import com.example.gamequest.ui.common.ClaseAltoVentana
+import com.example.gamequest.ui.common.ContenidoAdaptable
+import com.example.gamequest.ui.common.LocalPerfilVentanaCampus
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
@@ -73,90 +76,121 @@ fun MissionDetailScreen(
         }
         val mision = estado.mision!!
         val punto = estado.punto!!
+        val perfilVentana = LocalPerfilVentanaCampus.current
+        val compactoAlto = perfilVentana.alto == ClaseAltoVentana.COMPACTO
 
-        Column(
-            Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(24.dp)
-                .verticalScroll(rememberScrollState())
+        ContenidoAdaptable(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            anchoMaximo = 720.dp
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(150.dp)
-                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(6.dp)),
-                contentAlignment = Alignment.Center
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(
+                        horizontal = perfilVentana.margenHorizontal,
+                        vertical = if (compactoAlto) 16.dp else 24.dp
+                    )
             ) {
-                Text(mision.insigniaEmoji, fontSize = 56.sp)
-            }
-            Spacer(Modifier.height(16.dp))
-            Text(mision.titulo, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(6.dp))
-            Text(
-                mision.descripcionPista,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(Modifier.height(24.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                MetricaCard("${mision.puntos}", "PUNTOS", Modifier.weight(1f))
-                MetricaCard("${mision.tiempoEstimadoMin}'", "TIEMPO", Modifier.weight(1f))
-                MetricaCard(mision.dificultad, "NIVEL", Modifier.weight(1f))
-            }
-
-            Spacer(Modifier.height(28.dp))
-            Text("PASOS", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(10.dp))
-            Surface(shape = RoundedCornerShape(4.dp), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)) {
-                Column(Modifier.padding(14.dp)) {
-                    PasoItem("Llegar al punto de interés: ${punto.nombre}", completado = true)
-                    PasoItem("Escanear el código QR", completado = estado.completada)
-                    PasoItem("Revisar la ficha del lugar", completado = estado.completada)
-                }
-            }
-
-            Spacer(Modifier.height(20.dp))
-            if (estado.completada) {
-                Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = RoundedCornerShape(4.dp),
-                    modifier = Modifier.fillMaxWidth()
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(if (compactoAlto) 104.dp else 150.dp)
+                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(6.dp)),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Ya completaste esta misión. ¡Bien hecho!", fontWeight = FontWeight.Bold)
+                    Text(mision.insigniaEmoji, fontSize = if (compactoAlto) 42.sp else 56.sp)
+                }
+                Spacer(Modifier.height(if (compactoAlto) 12.dp else 16.dp))
+                Text(mision.titulo, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    mision.descripcionPista,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(if (compactoAlto) 16.dp else 24.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    MetricaCard("${mision.puntos}", "PUNTOS", Modifier.weight(1f))
+                    MetricaCard("${mision.tiempoEstimadoMin}'", "TIEMPO", Modifier.weight(1f))
+                    MetricaCard(mision.dificultad, "NIVEL", Modifier.weight(1f))
+                }
+
+                Spacer(Modifier.height(if (compactoAlto) 18.dp else 24.dp))
+                Text("DÓNDE ESTÁ", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(10.dp))
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(4.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                ) {
+                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("${punto.nombre} · ${punto.categoria}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                        if (punto.descripcion.isNotBlank()) {
+                            Text(punto.descripcion, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        if (punto.horarioAtencion.isNotBlank() && !punto.horarioAtencion.equals("Por confirmar", ignoreCase = true)) {
+                            Text("Horario: ${punto.horarioAtencion}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        if (punto.tramites.isNotBlank()) {
+                            Text("Aquí puedes: ${punto.tramites}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
                 }
-            } else {
-                Button(
-                    onClick = onEscanear,
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
-                    shape = RoundedCornerShape(4.dp),
-                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                        containerColor = com.example.gamequest.ui.theme.AmberAccent,
-                        contentColor = com.example.gamequest.ui.theme.PixelInkOnCream
-                    )
-                ) {
-                    Icon(Icons.Filled.CameraAlt, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("ESCANEAR QR DEL LUGAR", style = MaterialTheme.typography.titleSmall)
+
+                Spacer(Modifier.height(if (compactoAlto) 16.dp else 24.dp))
+                Text("PASOS", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(10.dp))
+                Surface(shape = RoundedCornerShape(4.dp), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)) {
+                    Column(Modifier.padding(14.dp)) {
+                        PasoItem("Llegar al punto de interés: ${punto.nombre}", completado = true)
+                        PasoItem("Escanear el código QR", completado = estado.completada)
+                        PasoItem("Revisar la ficha del lugar", completado = estado.completada)
+                    }
                 }
-            }
-            Spacer(Modifier.height(10.dp))
-            OutlinedButton(
-                onClick = onVerRuta,
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                shape = RoundedCornerShape(4.dp)
-            ) {
-                Icon(Icons.Filled.Map, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Ver ruta en el mapa")
+
+                Spacer(Modifier.height(20.dp))
+                if (estado.completada) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Ya completaste esta misión. ¡Bien hecho!", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                } else {
+                    Button(
+                        onClick = onEscanear,
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                        shape = RoundedCornerShape(4.dp),
+                        colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                            containerColor = com.example.gamequest.ui.theme.AmberAccent,
+                            contentColor = com.example.gamequest.ui.theme.PixelInkOnCream
+                        )
+                    ) {
+                        Icon(Icons.Filled.CameraAlt, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("ESCANEAR QR DEL LUGAR", style = MaterialTheme.typography.titleSmall)
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
+                OutlinedButton(
+                    onClick = onVerRuta,
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    shape = RoundedCornerShape(4.dp)
+                ) {
+                    Icon(Icons.Filled.Map, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Ver ruta en el mapa")
+                }
             }
         }
     }

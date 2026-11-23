@@ -21,7 +21,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.example.gamequest.ui.common.ClaseAltoVentana
+import com.example.gamequest.ui.common.LocalPerfilVentanaCampus
 import com.example.gamequest.ui.components.CharacterAnimation
 import com.example.gamequest.ui.components.CharacterSprite
 import com.example.gamequest.ui.theme.AmberAccent
@@ -55,6 +59,8 @@ fun AvatarEditorSheet(
 ) {
     val soundManager = LocalSoundManager.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val perfilVentana = LocalPerfilVentanaCampus.current
+    val compactoAlto = perfilVentana.alto == ClaseAltoVentana.COMPACTO
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -65,8 +71,9 @@ fun AvatarEditorSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .widthIn(max = 560.dp)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 4.dp)
+                .padding(horizontal = perfilVentana.margenHorizontal, vertical = 4.dp)
                 .padding(bottom = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -84,12 +91,12 @@ fun AvatarEditorSheet(
                 )
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(if (compactoAlto) 10.dp else 16.dp))
 
             // ── Vista previa animada ────────────────────────────────────
             Box(
                 modifier = Modifier
-                    .size(110.dp)
+                    .size(if (compactoAlto) 84.dp else 110.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .clickable {
@@ -103,7 +110,7 @@ fun AvatarEditorSheet(
                     animation      = previewAnim,
                     primaryColor   = primary,
                     secondaryColor = secondary,
-                    size           = 80.dp,
+                    size           = if (compactoAlto) 60.dp else 80.dp,
                 )
             }
 
@@ -340,7 +347,10 @@ private fun ColorDot(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        modifier = Modifier.width(68.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         Box(
             modifier = Modifier
                 .size(42.dp)
@@ -357,6 +367,9 @@ private fun ColorDot(
             label,
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center
         )
     }
 }

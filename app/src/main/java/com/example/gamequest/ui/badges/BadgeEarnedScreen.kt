@@ -6,17 +6,24 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import com.example.gamequest.ui.common.ClaseAltoVentana
+import com.example.gamequest.ui.common.LocalPerfilVentanaCampus
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
@@ -65,117 +72,133 @@ fun BadgeEarnedScreen(
     }
 
     Scaffold { padding ->
-        Box(
+        val perfilVentana = LocalPerfilVentanaCampus.current
+        val compactoAlto = perfilVentana.alto == ClaseAltoVentana.COMPACTO
+
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .background(Brush.verticalGradient(listOf(TealPrimary, TealPrimaryDark)))
         ) {
+            val altoMinimo = maxHeight
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    "¡MISIÓN COMPLETADA!",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 2.sp
-                )
-                Spacer(Modifier.height(20.dp))
-                Box(
+                Column(
                     modifier = Modifier
-                        .size(150.dp)
-                        .background(Brush.radialGradient(listOf(AmberAccent, AmberAccentDark)), CircleShape),
-                    contentAlignment = Alignment.Center
+                        .widthIn(max = 520.dp)
+                        .fillMaxWidth()
+                        .heightIn(min = altoMinimo)
+                        .padding(
+                            horizontal = perfilVentana.margenHorizontal,
+                            vertical = if (compactoAlto) 16.dp else 24.dp
+                        ),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    Text(mision?.insigniaEmoji ?: "🎖", fontSize = 64.sp)
-                }
-                Spacer(Modifier.height(20.dp))
-                Text(
-                    mision?.insigniaNombre ?: "",
-                    color = Color.White,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    mision?.descripcionPista ?: "",
-                    color = Color.White.copy(alpha = 0.85f),
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Spacer(Modifier.height(24.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    EstadisticaChip("+${mision?.puntos ?: 0}", "PUNTOS")
-                    EstadisticaChip("Nv. ${estado.usuario?.nivel ?: 1}", "NIVEL")
-                    EstadisticaChip("${estado.totalInsignias}/20", "INSIGNIAS")
-                }
-                Spacer(Modifier.height(20.dp))
-
-                if ((estado.usuario?.nivel ?: 1) >= 2) {
-                    Surface(
-                        color = AmberAccent.copy(alpha = 0.25f),
-                        border = BorderStroke(2.dp, AmberAccent),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Text("⭐", fontSize = 16.sp)
-                            Text(
-                                "¡NIVEL ${estado.usuario?.nivel} ALCANZADO!",
-                                color = AmberAccent,
-                                fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.labelMedium
-                            )
-                        }
-                    }
-                    Spacer(Modifier.height(16.dp))
-                } else {
-                    Spacer(Modifier.height(12.dp))
-                }
-
-                Button(
-                    onClick = {
-                        soundManager?.play(SoundEffect.CLICK)
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        onSiguienteMision()
-                    },
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
-                    shape = RoundedCornerShape(4.dp),
-                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                        containerColor = AmberAccent,
-                        contentColor = Color(0xFF1A2E2A)
+                    Text(
+                        "¡MISIÓN COMPLETADA!",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 2.sp
                     )
-                ) {
-                    Text("SIGUIENTE MISIÓN", style = MaterialTheme.typography.titleSmall)
-                }
-                Spacer(Modifier.height(10.dp))
-                OutlinedButton(
-                    onClick = {
-                        soundManager?.play(SoundEffect.CLICK)
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        val mensaje = "🏆 ¡He completado la misión \"${mision?.titulo}\" y ganado la insignia \"${mision?.insigniaNombre}\" ${mision?.insigniaEmoji} en Campus Quest ULEAM! (+${mision?.puntos ?: 0} pts) 🎮🏛️"
-                        val intent = Intent(Intent.ACTION_SEND).apply {
-                            type = "text/plain"
-                            putExtra(Intent.EXTRA_SUBJECT, "Logro Campus Quest")
-                            putExtra(Intent.EXTRA_TEXT, mensaje)
+                    Spacer(Modifier.height(if (compactoAlto) 12.dp else 20.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(if (compactoAlto) 110.dp else 150.dp)
+                            .background(Brush.radialGradient(listOf(AmberAccent, AmberAccentDark)), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(mision?.insigniaEmoji ?: "🎖", fontSize = if (compactoAlto) 48.sp else 64.sp)
+                    }
+                    Spacer(Modifier.height(if (compactoAlto) 12.dp else 20.dp))
+                    Text(
+                        mision?.insigniaNombre ?: "",
+                        color = Color.White,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        mision?.descripcionPista ?: "",
+                        color = Color.White.copy(alpha = 0.85f),
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(Modifier.height(if (compactoAlto) 16.dp else 24.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        EstadisticaChip("+${mision?.puntos ?: 0}", "PUNTOS")
+                        EstadisticaChip("Nv. ${estado.usuario?.nivel ?: 1}", "NIVEL")
+                        EstadisticaChip("${estado.totalInsignias}/20", "INSIGNIAS")
+                    }
+                    Spacer(Modifier.height(if (compactoAlto) 14.dp else 20.dp))
+
+                    if ((estado.usuario?.nivel ?: 1) >= 2) {
+                        Surface(
+                            color = AmberAccent.copy(alpha = 0.25f),
+                            border = BorderStroke(2.dp, AmberAccent),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text("⭐", fontSize = 16.sp)
+                                Text(
+                                    "¡NIVEL ${estado.usuario?.nivel} ALCANZADO!",
+                                    color = AmberAccent,
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            }
                         }
-                        context.startActivity(Intent.createChooser(intent, "Compartir logro"))
-                    },
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
-                    shape = RoundedCornerShape(4.dp),
-                    colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
-                ) {
-                    Icon(Icons.Filled.Share, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Compartir mi logro")
+                        Spacer(Modifier.height(16.dp))
+                    } else {
+                        Spacer(Modifier.height(12.dp))
+                    }
+
+                    Button(
+                        onClick = {
+                            soundManager?.play(SoundEffect.CLICK)
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            onSiguienteMision()
+                        },
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                        shape = RoundedCornerShape(4.dp),
+                        colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                            containerColor = AmberAccent,
+                            contentColor = Color(0xFF1A2E2A)
+                        )
+                    ) {
+                        Text("SIGUIENTE MISIÓN", style = MaterialTheme.typography.titleSmall)
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    OutlinedButton(
+                        onClick = {
+                            soundManager?.play(SoundEffect.CLICK)
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            val mensaje = "🏆 ¡He completado la misión \"${mision?.titulo}\" y ganado la insignia \"${mision?.insigniaNombre}\" ${mision?.insigniaEmoji} en Campus Quest ULEAM! (+${mision?.puntos ?: 0} pts) 🎮🏛️"
+                            val intent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_SUBJECT, "Logro Campus Quest")
+                                putExtra(Intent.EXTRA_TEXT, mensaje)
+                            }
+                            context.startActivity(Intent.createChooser(intent, "Compartir logro"))
+                        },
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        shape = RoundedCornerShape(4.dp),
+                        colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                    ) {
+                        Icon(Icons.Filled.Share, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Compartir mi logro")
+                    }
                 }
             }
         }

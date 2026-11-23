@@ -65,6 +65,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.example.gamequest.data.local.entity.UsuarioEntity
 import com.example.gamequest.data.model.RankingEntry
 import com.example.gamequest.data.repository.MisionConEstado
+import com.example.gamequest.ui.common.ClaseAltoVentana
 import com.example.gamequest.ui.common.ContenidoAdaptable
 import com.example.gamequest.ui.common.LocalPerfilVentanaCampus
 import com.example.gamequest.ui.common.encabezado
@@ -185,12 +186,13 @@ fun BadgesScreen(
 
 @Composable
 private fun SeccionTitulo(texto: String) {
+    val margen = LocalPerfilVentanaCampus.current.margenHorizontal
     Text(
         texto,
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp).encabezado()
+        modifier = Modifier.padding(horizontal = margen, vertical = 12.dp).encabezado()
     )
 }
 
@@ -201,12 +203,13 @@ private fun InsigniasGrid(
     bloqueadas: Boolean,
     onInsigniaClick: (MisionConEstado) -> Unit
 ) {
+    val margen = LocalPerfilVentanaCampus.current.margenHorizontal
     if (misiones.isEmpty()) {
         Text(
             if (bloqueadas) "¡Ya desbloqueaste todas las insignias disponibles!" else "Completa tu primera misión para ganar una insignia.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 20.dp)
+            modifier = Modifier.padding(horizontal = margen)
         )
         return
     }
@@ -214,7 +217,7 @@ private fun InsigniasGrid(
     FlowRow(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = margen),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
@@ -256,6 +259,8 @@ private fun InsigniaDetalleDialog(
     val soundManager = LocalSoundManager.current
     val haptic = LocalHapticFeedback.current
     val esDesbloqueada = item.completada
+    val perfilVentana = LocalPerfilVentanaCampus.current
+    val compactoAlto = perfilVentana.alto == ClaseAltoVentana.COMPACTO
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -263,7 +268,7 @@ private fun InsigniaDetalleDialog(
     ) {
         Surface(
             modifier = Modifier
-                .fillMaxWidth(0.88f)
+                .fillMaxWidth(0.90f)
                 .widthIn(max = 480.dp)
                 .clip(RoundedCornerShape(16.dp))
                 .border(BorderStroke(3.dp, if (esDesbloqueada) AmberAccent else MaterialTheme.colorScheme.outlineVariant), RoundedCornerShape(16.dp)),
@@ -274,13 +279,13 @@ private fun InsigniaDetalleDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(20.dp),
+                    .padding(horizontal = perfilVentana.margenHorizontal, vertical = if (compactoAlto) 16.dp else 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Insignia en grande con resplandor
                 Box(
                     modifier = Modifier
-                        .size(100.dp)
+                        .size(if (compactoAlto) 76.dp else 100.dp)
                         .background(
                             brush = if (esDesbloqueada) {
                                 Brush.radialGradient(listOf(AmberAccent, AmberAccentDark))
@@ -296,9 +301,9 @@ private fun InsigniaDetalleDialog(
                     contentAlignment = Alignment.Center
                 ) {
                     if (esDesbloqueada) {
-                        Text(item.mision.insigniaEmoji, fontSize = 48.sp)
+                        Text(item.mision.insigniaEmoji, fontSize = if (compactoAlto) 36.sp else 48.sp)
                     } else {
-                        Icon(Icons.Filled.Lock, contentDescription = null, tint = Color.White, modifier = Modifier.size(44.dp))
+                        Icon(Icons.Filled.Lock, contentDescription = null, tint = Color.White, modifier = Modifier.size(if (compactoAlto) 34.dp else 44.dp))
                     }
                 }
 
@@ -422,12 +427,13 @@ private fun InsigniaDetalleDialog(
 
 @Composable
 private fun RankingRow(usuario: RankingEntry, esUsuarioActual: Boolean, posicion: Int) {
+    val margen = LocalPerfilVentanaCampus.current.margenHorizontal
     val descripcion = "Puesto $posicion, ${usuario.nombres}${if (esUsuarioActual) ", eres tú" else ""}, " +
         "${usuario.puntajeAcumulado} puntos"
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .padding(horizontal = margen, vertical = 4.dp)
             // Una sola frase por fila en vez de "medalla", nombre y número por separado.
             .clearAndSetSemantics { contentDescription = descripcion },
         colors = androidx.compose.material3.CardDefaults.cardColors(

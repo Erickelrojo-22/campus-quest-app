@@ -17,8 +17,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -44,6 +47,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.example.gamequest.ui.common.ClaseAltoVentana
+import com.example.gamequest.ui.common.LocalPerfilVentanaCampus
 import com.example.gamequest.ui.theme.AmberAccent
 import com.example.gamequest.ui.theme.AmberAccentDark
 import com.example.gamequest.ui.theme.ContainerDark
@@ -90,6 +95,8 @@ fun OnboardingDialog(
 ) {
     val soundManager = LocalSoundManager.current
     val haptic = LocalHapticFeedback.current
+    val perfilVentana = LocalPerfilVentanaCampus.current
+    val compactoAlto = perfilVentana.alto == ClaseAltoVentana.COMPACTO
     var pasoActual by remember { mutableIntStateOf(0) }
 
     Dialog(
@@ -99,6 +106,7 @@ fun OnboardingDialog(
         Surface(
             modifier = Modifier
                 .fillMaxWidth(0.90f)
+                .widthIn(max = 460.dp)
                 .clip(RoundedCornerShape(16.dp))
                 .border(BorderStroke(3.dp, AmberAccent), RoundedCornerShape(16.dp)),
             color = MaterialTheme.colorScheme.surface,
@@ -107,7 +115,11 @@ fun OnboardingDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
+                    .verticalScroll(rememberScrollState())
+                    .padding(
+                        horizontal = perfilVentana.margenHorizontal,
+                        vertical = if (compactoAlto) 14.dp else 20.dp
+                    ),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Indicador RPG superior
@@ -125,7 +137,7 @@ fun OnboardingDialog(
                     )
                 }
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(if (compactoAlto) 10.dp else 16.dp))
 
                 // Contenido animado del paso
                 AnimatedContent(
@@ -141,7 +153,7 @@ fun OnboardingDialog(
                         // Icono circular retro
                         Box(
                             modifier = Modifier
-                                .size(90.dp)
+                                .size(if (compactoAlto) 64.dp else 88.dp)
                                 .background(
                                     brush = Brush.radialGradient(listOf(AmberAccent, AmberAccentDark)),
                                     shape = CircleShape
@@ -149,10 +161,10 @@ fun OnboardingDialog(
                                 .border(BorderStroke(3.dp, Color.White.copy(alpha = 0.8f)), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(datos.icono, fontSize = 42.sp)
+                            Text(datos.icono, fontSize = if (compactoAlto) 30.sp else 40.sp)
                         }
 
-                        Spacer(Modifier.height(14.dp))
+                        Spacer(Modifier.height(if (compactoAlto) 8.dp else 14.dp))
 
                         Text(
                             datos.titulo,
@@ -185,7 +197,7 @@ fun OnboardingDialog(
                     }
                 }
 
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(if (compactoAlto) 12.dp else 20.dp))
 
                 // Indicador de pasos (puntos)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -201,7 +213,7 @@ fun OnboardingDialog(
                     }
                 }
 
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(if (compactoAlto) 12.dp else 20.dp))
 
                 // Botones de navegación
                 Row(

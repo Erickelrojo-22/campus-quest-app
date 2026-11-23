@@ -49,6 +49,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.gamequest.data.local.entity.Dificultad
 import com.example.gamequest.data.repository.MisionConEstado
+import com.example.gamequest.ui.common.ClaseAltoVentana
+import com.example.gamequest.ui.common.LocalPerfilVentanaCampus
 import com.example.gamequest.ui.theme.AmberAccent
 import com.example.gamequest.ui.theme.InstitutionalRed
 import com.example.gamequest.ui.theme.PixelSuccess
@@ -65,6 +67,8 @@ fun MissionsScreen(
     onMisionClick: (Int) -> Unit
 ) {
     val soundManager = LocalSoundManager.current
+    val perfilVentana = LocalPerfilVentanaCampus.current
+    val compactoAlto = perfilVentana.alto == ClaseAltoVentana.COMPACTO
     val filtro = uiState.filtro
     val busqueda = uiState.busqueda
     val misiones = uiState.misiones
@@ -88,7 +92,10 @@ fun MissionsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.primary)
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(
+                        horizontal = perfilVentana.margenHorizontal,
+                        vertical = if (compactoAlto) 6.dp else 8.dp
+                    )
             ) {
                 TextField(
                     value = busqueda,
@@ -171,10 +178,13 @@ fun MissionsScreen(
                     )
                 }
             } else {
-                // Rejilla adaptable: 1 columna en teléfono vertical, 2 o más en horizontal / tablet.
+                // Rejilla adaptable: 1 columna en teléfono vertical (incl. <360dp), 2 o más en horizontal / tablet.
                 LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 320.dp),
-                    contentPadding = PaddingValues(16.dp),
+                    columns = GridCells.Adaptive(minSize = 260.dp),
+                    contentPadding = PaddingValues(
+                        horizontal = perfilVentana.margenHorizontal,
+                        vertical = if (compactoAlto) 10.dp else 16.dp
+                    ),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {

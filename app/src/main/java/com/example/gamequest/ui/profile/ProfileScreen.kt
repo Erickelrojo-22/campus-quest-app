@@ -438,11 +438,12 @@ private fun OpcionPerfil(
     onClick: () -> Unit,
     colorTexto: Color = Color.Unspecified,
 ) {
+    val margen = LocalPerfilVentanaCampus.current.margenHorizontal
     Card(
         onClick    = onClick,
         modifier   = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .padding(horizontal = margen, vertical = 6.dp)
             .clearAndSetSemantics {
                 contentDescription = "$titulo, $subtitulo"
                 role = Role.Button
