@@ -21,8 +21,7 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,15 +46,40 @@ import com.example.gamequest.util.CharacterSpecies
 import com.example.gamequest.util.LocalSoundManager
 import com.example.gamequest.util.SoundEffect
 
+/**
+ * Eventos del perfil elevados al NavHost (state hoisting): la pantalla y sus
+ * diálogos solo reciben lambdas, nunca la instancia del ViewModel.
+ */
+@Immutable
+data class ProfileEventos(
+    val toggleSpriteAnim: () -> Unit,
+    val abrirEditor: () -> Unit,
+    val cerrarEditor: () -> Unit,
+    val onEditorSpeciesChange: (CharacterSpecies) -> Unit,
+    val onEditorColorSelected: (AvatarColor) -> Unit,
+    val onEditorActiveZoneChange: (AvatarColorZone) -> Unit,
+    val toggleEditorPreviewAnim: () -> Unit,
+    val restablecerEditor: () -> Unit,
+    val guardarAvatar: () -> Unit,
+    val abrirTimeline: () -> Unit,
+    val cerrarTimeline: () -> Unit,
+    val abrirAdventurerCard: () -> Unit,
+    val cerrarAdventurerCard: () -> Unit,
+    val abrirOnboarding: () -> Unit,
+    val cerrarOnboarding: () -> Unit,
+    val abrirRanking: () -> Unit,
+    val cerrarRanking: () -> Unit
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
-    viewModel: ProfileViewModel,
+    uiState: ProfileUiState,
+    eventos: ProfileEventos,
     onSettings: () -> Unit,
     onMissionManagement: () -> Unit,
     onCerrarSesion: () -> Unit,
 ) {
-    val uiState         by viewModel.uiState.collectAsStateWithLifecycle()
     val usuario         = uiState.usuario
     val soundManager     = LocalSoundManager.current
 
@@ -98,7 +122,7 @@ fun ProfileScreen(
                         .background(Color.White.copy(alpha = 0.15f))
                         .clickable(role = Role.Button) {
                             soundManager?.play(SoundEffect.CLICK)
-                            viewModel.toggleSpriteAnim()
+                            eventos.toggleSpriteAnim()
                         }
                         .semantics {
                             contentDescription = "Avatar de ${usuario?.nombres ?: "usuario"}. Toca para animar el personaje."
@@ -164,7 +188,7 @@ fun ProfileScreen(
                 subtitulo = "Especie, colores y estilo",
                 onClick   = {
                     soundManager?.play(SoundEffect.CLICK)
-                    viewModel.abrirEditor()
+                    eventos.abrirEditor()
                 },
             )
 
@@ -175,7 +199,7 @@ fun ProfileScreen(
                 subtitulo = "Línea de tiempo de misiones completadas",
                 onClick   = {
                     soundManager?.play(SoundEffect.CLICK)
-                    viewModel.abrirTimeline()
+                    eventos.abrirTimeline()
                 },
             )
 
@@ -186,7 +210,7 @@ fun ProfileScreen(
                 subtitulo = "Credencial institucional RPG y compartir logros",
                 onClick   = {
                     soundManager?.play(SoundEffect.CLICK)
-                    viewModel.abrirAdventurerCard()
+                    eventos.abrirAdventurerCard()
                 },
             )
 
@@ -197,7 +221,7 @@ fun ProfileScreen(
                 subtitulo = "Ranking de exploradores y podio del campus",
                 onClick   = {
                     soundManager?.play(SoundEffect.CLICK)
-                    viewModel.abrirRanking()
+                    eventos.abrirRanking()
                 },
             )
 
@@ -208,7 +232,7 @@ fun ProfileScreen(
                 subtitulo = "Tutorial de exploración, misiones y rankings",
                 onClick   = {
                     soundManager?.play(SoundEffect.CLICK)
-                    viewModel.abrirOnboarding()
+                    eventos.abrirOnboarding()
                 },
             )
 
@@ -241,7 +265,7 @@ fun ProfileScreen(
         val historial = uiState.historial
 
         ModalBottomSheet(
-            onDismissRequest = viewModel::cerrarTimeline,
+            onDismissRequest = eventos.cerrarTimeline,
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
             Column(
@@ -389,13 +413,13 @@ fun ProfileScreen(
             secondary           = uiState.editorSecondary,
             activeZone          = uiState.editorActiveZone,
             previewAnim         = uiState.editorPreviewAnim,
-            onSpeciesChange     = viewModel::onEditorSpeciesChange,
-            onActiveZoneChange  = viewModel::onEditorActiveZoneChange,
-            onColorSelected     = viewModel::onEditorColorSelected,
-            onTogglePreviewAnim = viewModel::toggleEditorPreviewAnim,
-            onReset             = viewModel::restablecerEditor,
-            onSave              = viewModel::guardarAvatar,
-            onDismiss           = viewModel::cerrarEditor,
+            onSpeciesChange     = eventos.onEditorSpeciesChange,
+            onActiveZoneChange  = eventos.onEditorActiveZoneChange,
+            onColorSelected     = eventos.onEditorColorSelected,
+            onTogglePreviewAnim = eventos.toggleEditorPreviewAnim,
+            onReset             = eventos.restablecerEditor,
+            onSave              = eventos.guardarAvatar,
+            onDismiss           = eventos.cerrarEditor,
         )
     }
 
@@ -407,15 +431,15 @@ fun ProfileScreen(
             primaryColor   = primaryColor,
             secondaryColor = secondaryColor,
             totalInsignias = totalInsignias,
-            onDismiss      = viewModel::cerrarAdventurerCard
+            onDismiss      = eventos.cerrarAdventurerCard
         )
     }
 
     // ── Guía de inicio / Tutorial Onboarding ─────────────────────────────
     if (uiState.showOnboarding) {
         OnboardingDialog(
-            onDismiss   = viewModel::cerrarOnboarding,
-            onCompletar = viewModel::cerrarOnboarding
+            onDismiss   = eventos.cerrarOnboarding,
+            onCompletar = eventos.cerrarOnboarding
         )
     }
 
@@ -425,7 +449,7 @@ fun ProfileScreen(
             ranking         = uiState.ranking,
             usuarioActualId = usuario?.id ?: 0,
             usuarioRemotoId = usuario?.remoteId,
-            onDismiss       = viewModel::cerrarRanking
+            onDismiss       = eventos.cerrarRanking
         )
     }
 }

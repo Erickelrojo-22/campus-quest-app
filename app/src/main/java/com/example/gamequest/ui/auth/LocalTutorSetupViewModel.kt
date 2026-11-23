@@ -10,11 +10,17 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+/** Campos del formulario de configuración del tutor local y su estado de envío. */
 data class LocalTutorSetupState(
     val nombres: String = "", val correo: String = "", val carrera: String = "", val contrasena: String = "",
     val cargando: Boolean = false, val error: String? = null
 )
 
+/**
+ * Gestiona el formulario con el que se crea el único tutor de una instalación local.
+ * Cada cambio de campo limpia el error anterior; [save] ignora envíos repetidos
+ * mientras hay uno en curso y delega la validación en [TutorSetupRepository].
+ */
 class LocalTutorSetupViewModel(private val repository: TutorSetupRepository) : ViewModel() {
     private val mutableState = MutableStateFlow(LocalTutorSetupState())
     val state: StateFlow<LocalTutorSetupState> = mutableState.asStateFlow()
@@ -22,6 +28,7 @@ class LocalTutorSetupViewModel(private val repository: TutorSetupRepository) : V
     fun correo(value: String) { mutableState.value = mutableState.value.copy(correo = value, error = null) }
     fun carrera(value: String) { mutableState.value = mutableState.value.copy(carrera = value, error = null) }
     fun contrasena(value: String) { mutableState.value = mutableState.value.copy(contrasena = value, error = null) }
+    /** Envía el formulario; llama a [onSuccess] con el tutor creado si la configuración se completa. */
     fun save(onSuccess: (UsuarioEntity) -> Unit) {
         val current = mutableState.value
         if (current.cargando) return

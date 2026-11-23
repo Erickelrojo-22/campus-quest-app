@@ -3,7 +3,7 @@ package com.example.gamequest.ui.missions
 import com.example.gamequest.data.local.entity.Dificultad
 import com.example.gamequest.data.local.entity.MisionEntity
 import com.example.gamequest.data.local.entity.PuntoInteresEntity
-import com.example.gamequest.data.repository.CampusRepository
+import com.example.gamequest.data.repository.OfflineFirstCampusRepository
 import com.example.gamequest.data.repository.MisionConEstado
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -187,9 +187,9 @@ class MissionsViewModelTest {
         assertEquals(2, viewModel.misionesFiltradas.value.size)
     }
 
-    private class FakeCampusRepository(
+    private inner class FakeCampusRepository(
         private val misionesConEstado: List<MisionConEstado>
-    ) : CampusRepository() {
+    ) : OfflineFirstCampusRepository(ioDispatcher = testDispatcher) {
         override fun observarMisionesConEstado(usuarioId: Int): Flow<List<MisionConEstado>> =
             flowOf(misionesConEstado)
     }

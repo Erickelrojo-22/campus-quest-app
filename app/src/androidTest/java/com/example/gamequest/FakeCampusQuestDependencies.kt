@@ -1,5 +1,6 @@
 package com.example.gamequest
 
+import com.example.gamequest.di.CampusQuestDependencies
 import android.content.Context
 import androidx.room.Room
 import com.example.gamequest.data.local.AppDatabase
@@ -9,6 +10,7 @@ import com.example.gamequest.data.model.RankingEntry
 import com.example.gamequest.data.preferences.*
 import com.example.gamequest.data.remote.*
 import com.example.gamequest.data.repository.AuthRepository
+import com.example.gamequest.data.repository.DefaultAuthRepository
 import com.example.gamequest.data.session.SessionCoordinator
 import com.example.gamequest.util.SoundEffectManager
 import kotlinx.coroutines.*
@@ -19,7 +21,7 @@ import org.json.JSONObject
 class FakeCampusQuestDependencies(context: Context, val db: AppDatabase = Room.inMemoryDatabaseBuilder(context,AppDatabase::class.java).build()) : CampusQuestDependencies, AutoCloseable {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     val preferences = MutableStateFlow(UserPreferences())
-    override val preferencesRepository = object : UserPreferencesRepository() {
+    override val preferencesRepository = object : DataStoreUserPreferencesRepository() {
         override val preferencias = preferences
         override suspend fun setUsuarioActivoId(id: Int) { preferences.value = preferences.value.copy(usuarioActivoId=id) }
         override suspend fun cerrarSesion() = setUsuarioActivoId(-1)
@@ -57,7 +59,7 @@ class FakeCampusQuestDependencies(context: Context, val db: AppDatabase = Room.i
     }
     override val campusRepository = RemoteCampusRepository(db,gateway)
     override val sessionCoordinator = SessionCoordinator(tokens,preferencesRepository,campusRepository,db.usuarioDao()::buscarPorId,gateway::logout,scope)
-    override val authRepository = AuthRepository(db.usuarioDao(),gateway,sessionCoordinator)
+    override val authRepository = DefaultAuthRepository(db.usuarioDao(),gateway,sessionCoordinator)
     override val soundEffectManager = SoundEffectManager(context,preferencesRepository,scope)
     init { gateway.onUnauthorized = { token -> scope.launch { sessionCoordinator.unauthorized(token) } } }
     suspend fun seed() {

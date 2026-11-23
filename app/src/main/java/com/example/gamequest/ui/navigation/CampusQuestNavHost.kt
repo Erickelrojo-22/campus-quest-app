@@ -24,9 +24,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.gamequest.CampusQuestDependencies
+import com.example.gamequest.di.CampusQuestDependencies
 import com.example.gamequest.data.session.*
-import com.example.gamequest.AppContainer
 import com.example.gamequest.data.local.entity.Rol
 import com.example.gamequest.ui.auth.AuthViewModel
 import com.example.gamequest.ui.auth.LoginScreen
@@ -43,6 +42,7 @@ import com.example.gamequest.ui.common.GenericViewModelFactory
 import com.example.gamequest.ui.common.SessionViewModel
 import com.example.gamequest.ui.common.bottomTabs
 import com.example.gamequest.ui.common.indiceDeTab
+import com.example.gamequest.ui.crud.MissionFormEventos
 import com.example.gamequest.ui.crud.MissionFormScreen
 import com.example.gamequest.ui.crud.MissionFormViewModel
 import com.example.gamequest.ui.crud.MissionManagementScreen
@@ -53,6 +53,7 @@ import com.example.gamequest.ui.missions.MissionDetailScreen
 import com.example.gamequest.ui.missions.MissionDetailViewModel
 import com.example.gamequest.ui.missions.MissionsScreen
 import com.example.gamequest.ui.missions.MissionsViewModel
+import com.example.gamequest.ui.profile.ProfileEventos
 import com.example.gamequest.ui.profile.ProfileScreen
 import com.example.gamequest.ui.profile.ProfileViewModel
 import com.example.gamequest.ui.scanner.ScannerScreen
@@ -81,10 +82,10 @@ private fun NavHostController.mostrarTab(route: String, puntoDestinoId: Int? = n
 }
 
 @Composable
-fun CampusQuestNavHost(container: AppContainer) {
+fun CampusQuestNavHost(container: CampusQuestDependencies) {
     val navController = rememberNavController()
     val sessionViewModel: SessionViewModel = viewModel(
-        factory = GenericViewModelFactory { SessionViewModel(container) }
+        factory = GenericViewModelFactory { SessionViewModel(container.sessionCoordinator) }
     )
     val state by sessionViewModel.state.collectAsStateWithLifecycle()
     CampusQuestNavGraph(navController, state, container,
@@ -149,10 +150,16 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
 
         composable(Routes.LOGIN) {
             val authViewModel: AuthViewModel = viewModel(factory = GenericViewModelFactory { AuthViewModel(container.authRepository) })
+            val estadoAcceso by authViewModel.uiState.collectAsStateWithLifecycle()
             LoginScreen(
-                viewModel = authViewModel,
-                onLoginExitoso = { usuarioLogueado ->
-                    onLogin(usuarioLogueado.id)
+                uiState = estadoAcceso,
+                onModoInstitucionalChange = authViewModel::onModoInstitucionalChange,
+                onCorreoChange = authViewModel::onCorreoChange,
+                onContrasenaChange = authViewModel::onContrasenaChange,
+                onNombreChange = authViewModel::onNombreChange,
+                onSeleccionarUsuarioPrueba = authViewModel::onSeleccionarUsuarioPrueba,
+                onIniciarSesion = {
+                    authViewModel.iniciarSesion { usuarioLogueado -> onLogin(usuarioLogueado.id) }
                 },
                 onIrARegistro = {
                     navController.navigate(Routes.REGISTER)
@@ -169,16 +176,35 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                 val setupViewModel: LocalTutorSetupViewModel = viewModel(
                     factory = GenericViewModelFactory { LocalTutorSetupViewModel(setup) }
                 )
-                LocalTutorSetupScreen(setupViewModel, onConfigured = { navController.navigate(Routes.MAIN) { popUpTo(Routes.LOGIN) { inclusive = true } } }, onBack = { navController.popBackStack() })
+                val estadoTutor by setupViewModel.state.collectAsStateWithLifecycle()
+                LocalTutorSetupScreen(
+                    state = estadoTutor,
+                    onNombresChange = setupViewModel::nombres,
+                    onCorreoChange = setupViewModel::correo,
+                    onCarreraChange = setupViewModel::carrera,
+                    onContrasenaChange = setupViewModel::contrasena,
+                    onGuardar = {
+                        setupViewModel.save {
+                            navController.navigate(Routes.MAIN) { popUpTo(Routes.LOGIN) { inclusive = true } }
+                        }
+                    },
+                    onBack = { navController.popBackStack() }
+                )
             }
         }
 
         composable(Routes.REGISTER) {
             val registerViewModel: RegisterViewModel = viewModel(factory = GenericViewModelFactory { RegisterViewModel(container.authRepository) })
+            val estadoRegistro by registerViewModel.uiState.collectAsStateWithLifecycle()
             RegisterScreen(
-                viewModel = registerViewModel,
-                onRegistroExitoso = { usuarioRegistrado ->
-                    onLogin(usuarioRegistrado.id)
+                uiState = estadoRegistro,
+                onNombresChange = registerViewModel::onNombresChange,
+                onCorreoChange = registerViewModel::onCorreoChange,
+                onCarreraChange = registerViewModel::onCarreraChange,
+                onContrasenaChange = registerViewModel::onContrasenaChange,
+                onConfirmarContrasenaChange = registerViewModel::onConfirmarContrasenaChange,
+                onRegistrar = {
+                    registerViewModel.registrar { usuarioRegistrado -> onLogin(usuarioRegistrado.id) }
                 },
                 onVolverALogin = {
                     navController.popBackStack()
@@ -215,8 +241,11 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                                     HomeViewModel(container.campusRepository, usuarioId, container.preferencesRepository)
                                 }
                             )
+                            val estadoInicio by homeViewModel.uiState.collectAsStateWithLifecycle()
                             HomeScreen(
-                                viewModel = homeViewModel,
+                                uiState = estadoInicio,
+                                onBusquedaChange = homeViewModel::onBusquedaChange,
+                                onTutorialVisto = homeViewModel::marcarTutorialVisto,
                                 puntoDestinoId = puntoDestinoId,
                                 onPuntoDestinoAtendido = {
                                     entrada.savedStateHandle[Routes.KEY_PUNTO_DESTINO] = null
@@ -250,8 +279,19 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                                 key = "scanner-$usuarioId",
                                 factory = GenericViewModelFactory { ScannerViewModel(container.campusRepository, usuarioId) }
                             )
+                            val estadoEscaner by scannerViewModel.uiState.collectAsStateWithLifecycle()
+                            val mostrarDialogoManual by scannerViewModel.mostrarDialogoManual.collectAsStateWithLifecycle()
+                            val codigoManual by scannerViewModel.codigoManual.collectAsStateWithLifecycle()
                             ScannerScreen(
-                                viewModel = scannerViewModel,
+                                uiState = estadoEscaner,
+                                mostrarDialogoManual = mostrarDialogoManual,
+                                codigoManual = codigoManual,
+                                onQrDetectado = scannerViewModel::validar,
+                                onReiniciar = scannerViewModel::reiniciar,
+                                onAbrirDialogoManual = scannerViewModel::abrirDialogoManual,
+                                onCerrarDialogoManual = scannerViewModel::cerrarDialogoManual,
+                                onCodigoManualChange = scannerViewModel::onCodigoManualChange,
+                                onValidarCodigoManual = scannerViewModel::validarCodigoManual,
                                 activa = activa,
                                 onBack = { navController.mostrarTab(Routes.HOME) },
                                 onMisionCompletada = { misionId ->
@@ -267,9 +307,12 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                                 key = "badges-$usuarioId",
                                 factory = GenericViewModelFactory { BadgesViewModel(container.campusRepository, usuarioId) }
                             )
+                            val estadoInsignias by badgesViewModel.estado.collectAsStateWithLifecycle()
                             BadgesScreen(
-                                viewModel = badgesViewModel,
-                                usuarioActualId = usuarioId
+                                estado = estadoInsignias,
+                                usuarioActualId = usuarioId,
+                                onSeleccionarInsignia = badgesViewModel::seleccionarInsignia,
+                                onCerrarDetalleInsignia = badgesViewModel::cerrarDetalleInsignia
                             )
                         }
 
@@ -284,8 +327,31 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                                     )
                                 }
                             )
+                            val estadoPerfil by profileViewModel.uiState.collectAsStateWithLifecycle()
+                            val eventosPerfil = remember(profileViewModel) {
+                                ProfileEventos(
+                                    toggleSpriteAnim = profileViewModel::toggleSpriteAnim,
+                                    abrirEditor = profileViewModel::abrirEditor,
+                                    cerrarEditor = profileViewModel::cerrarEditor,
+                                    onEditorSpeciesChange = profileViewModel::onEditorSpeciesChange,
+                                    onEditorColorSelected = profileViewModel::onEditorColorSelected,
+                                    onEditorActiveZoneChange = profileViewModel::onEditorActiveZoneChange,
+                                    toggleEditorPreviewAnim = profileViewModel::toggleEditorPreviewAnim,
+                                    restablecerEditor = profileViewModel::restablecerEditor,
+                                    guardarAvatar = profileViewModel::guardarAvatar,
+                                    abrirTimeline = profileViewModel::abrirTimeline,
+                                    cerrarTimeline = profileViewModel::cerrarTimeline,
+                                    abrirAdventurerCard = profileViewModel::abrirAdventurerCard,
+                                    cerrarAdventurerCard = profileViewModel::cerrarAdventurerCard,
+                                    abrirOnboarding = profileViewModel::abrirOnboarding,
+                                    cerrarOnboarding = profileViewModel::cerrarOnboarding,
+                                    abrirRanking = profileViewModel::abrirRanking,
+                                    cerrarRanking = profileViewModel::cerrarRanking
+                                )
+                            }
                             ProfileScreen(
-                                viewModel = profileViewModel,
+                                uiState = estadoPerfil,
+                                eventos = eventosPerfil,
                                 onSettings = { navController.navigate(Routes.SETTINGS) },
                                 onMissionManagement = { navController.navigate(Routes.MISSION_MANAGEMENT) },
                                 onCerrarSesion = {
@@ -311,8 +377,9 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                     key = "detail-$misionId-$usuarioId",
                     factory = GenericViewModelFactory { MissionDetailViewModel(container.campusRepository, misionId, usuarioId) }
                 )
+                val estadoDetalle by detailViewModel.estado.collectAsStateWithLifecycle()
                 MissionDetailScreen(
-                    viewModel = detailViewModel,
+                    estado = estadoDetalle,
                     onBack = {
                         container.soundEffectManager.play(com.example.gamequest.util.SoundEffect.CLICK)
                         navController.popBackStack()
@@ -323,7 +390,7 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                     },
                     onVerRuta = {
                         container.soundEffectManager.play(com.example.gamequest.util.SoundEffect.CLICK)
-                        val targetPuntoId = detailViewModel.estado.value.punto?.id
+                        val targetPuntoId = estadoDetalle.punto?.id
                         navController.mostrarTab(Routes.HOME, puntoDestinoId = targetPuntoId)
                     }
                 )
@@ -343,8 +410,9 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                     key = "badge-$misionId-$usuarioId",
                     factory = GenericViewModelFactory { BadgeEarnedViewModel(container.campusRepository, misionId, usuarioId) }
                 )
+                val estadoInsignia by badgeViewModel.estado.collectAsStateWithLifecycle()
                 BadgeEarnedScreen(
-                    viewModel = badgeViewModel,
+                    estado = estadoInsignia,
                     onSiguienteMision = {
                         navController.mostrarTab(Routes.MISSIONS)
                     }
@@ -357,8 +425,14 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
             val settingsViewModel: SettingsViewModel = viewModel(
                 factory = GenericViewModelFactory { SettingsViewModel(container.preferencesRepository) }
             )
+            val preferencias by settingsViewModel.preferencias.collectAsStateWithLifecycle()
             SettingsScreen(
-                viewModel = settingsViewModel,
+                prefs = preferencias,
+                onTemaOscuroChange = settingsViewModel::setTemaOscuro,
+                onRecordatoriosMisionChange = settingsViewModel::setRecordatoriosMision,
+                onAvisosCampusChange = settingsViewModel::setAvisosCampus,
+                onSonidoVibracionChange = settingsViewModel::setSonidoVibracion,
+                onDescargarMapaChange = settingsViewModel::setDescargarMapaSinConexion,
                 onBack = { navController.popBackStack() },
                 onCerrarSesion = {
                     onLogout()
@@ -372,8 +446,14 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                 val managementViewModel: MissionManagementViewModel = viewModel(
                     factory = GenericViewModelFactory { MissionManagementViewModel(container.campusRepository) }
                 )
+                val misiones by managementViewModel.misiones.collectAsStateWithLifecycle()
+                val misionAEliminar by managementViewModel.misionAEliminar.collectAsStateWithLifecycle()
                 MissionManagementScreen(
-                    viewModel = managementViewModel,
+                    misiones = misiones,
+                    misionAEliminar = misionAEliminar,
+                    onSolicitarEliminacion = managementViewModel::solicitarEliminacion,
+                    onConfirmarEliminacion = managementViewModel::confirmarEliminacion,
+                    onCancelarEliminacion = managementViewModel::cancelarEliminacion,
                     onBack = { navController.popBackStack() },
                     onNuevaMision = { navController.navigate(Routes.missionFormNuevo()) },
                     onEditarMision = { puntoId -> navController.navigate(Routes.missionFormEditar(puntoId)) }
@@ -395,9 +475,29 @@ fun CampusQuestNavGraph(navController: NavHostController, sessionState: SessionS
                     key = "form-$puntoId",
                     factory = GenericViewModelFactory { MissionFormViewModel(container.campusRepository, puntoId) }
                 )
+                val estadoFormulario by formViewModel.state.collectAsStateWithLifecycle()
+                val eventosFormulario = remember(formViewModel) {
+                    MissionFormEventos(
+                        onTitulo = formViewModel::onTitulo,
+                        onNombreLugar = formViewModel::onNombreLugar,
+                        onCategoriaExpandida = formViewModel::onCategoriaExpandida,
+                        onCategoria = formViewModel::onCategoria,
+                        onHorario = formViewModel::onHorario,
+                        onTramites = formViewModel::onTramites,
+                        onDescripcionPista = formViewModel::onDescripcionPista,
+                        onPuntos = formViewModel::onPuntos,
+                        onTiempo = formViewModel::onTiempo,
+                        onDificultad = formViewModel::onDificultad,
+                        onInsigniaNombre = formViewModel::onInsigniaNombre,
+                        onInsigniaEmoji = formViewModel::onInsigniaEmoji,
+                        onCodigoQr = formViewModel::onCodigoQr,
+                        onGenerarCodigoQr = formViewModel::generarCodigoQr,
+                        onGuardar = { formViewModel.guardar { navController.popBackStack() } }
+                    )
+                }
                 MissionFormScreen(
-                    viewModel = formViewModel,
-                    onGuardado = { navController.popBackStack() },
+                    estado = estadoFormulario,
+                    eventos = eventosFormulario,
                     onCancelar = { navController.popBackStack() }
                 )
             } else {

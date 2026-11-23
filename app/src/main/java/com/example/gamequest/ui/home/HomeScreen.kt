@@ -38,8 +38,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,12 +65,13 @@ import com.example.gamequest.util.SoundEffect
 
 @Composable
 fun HomeScreen(
-    viewModel: HomeViewModel,
+    uiState: HomeUiState,
+    onBusquedaChange: (String) -> Unit,
+    onTutorialVisto: () -> Unit,
     onMisionClick: (Int) -> Unit,
     puntoDestinoId: Int? = null,
     onPuntoDestinoAtendido: () -> Unit = {}
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val usuario = uiState.usuario
     val misiones = uiState.misiones
     val busqueda = uiState.busqueda
@@ -98,7 +97,7 @@ fun HomeScreen(
                     nombre = usuario?.nombres?.substringBefore(" ") ?: "explorador",
                     puntos = usuario?.puntajeAcumulado ?: 0,
                     busqueda = busqueda,
-                    onBusquedaChange = viewModel::onBusquedaChange,
+                    onBusquedaChange = onBusquedaChange,
                     compacto = compactoAlto,
                     species = charSpecies,
                     primaryColor = charPrimary,
@@ -208,8 +207,8 @@ fun HomeScreen(
 
     if (prefs != null && !prefs!!.tutorialVisto) {
         OnboardingDialog(
-            onDismiss = viewModel::marcarTutorialVisto,
-            onCompletar = viewModel::marcarTutorialVisto
+            onDismiss = onTutorialVisto,
+            onCompletar = onTutorialVisto
         )
     }
 }

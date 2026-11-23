@@ -46,7 +46,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -85,7 +84,15 @@ import java.util.concurrent.Executors
 
 @Composable
 fun ScannerScreen(
-    viewModel: ScannerViewModel,
+    uiState: ScannerUiState,
+    mostrarDialogoManual: Boolean,
+    codigoManual: String,
+    onQrDetectado: (String) -> Unit,
+    onReiniciar: () -> Unit,
+    onAbrirDialogoManual: () -> Unit,
+    onCerrarDialogoManual: () -> Unit,
+    onCodigoManualChange: (String) -> Unit,
+    onValidarCodigoManual: () -> Unit,
     onMisionCompletada: (misionId: Int) -> Unit,
     onBack: () -> Unit,
     /** `true` solo cuando esta pestaña ya está asentada en pantalla (enciende cámara y pide permiso). */
@@ -94,7 +101,6 @@ fun ScannerScreen(
     val context = LocalContext.current
     val soundManager = LocalSoundManager.current
     val haptic = LocalHapticFeedback.current
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     var permisoConcedido by remember {
         mutableStateOf(
@@ -110,8 +116,6 @@ fun ScannerScreen(
         if (activa && !permisoConcedido) launcherPermiso.launch(Manifest.permission.CAMERA)
     }
 
-    val mostrarDialogoManual by viewModel.mostrarDialogoManual.collectAsStateWithLifecycle()
-
     Scaffold { padding ->
         BoxWithConstraints(Modifier.fillMaxSize().padding(padding)) {
             // Marco proporcional a la altura disponible: en horizontal no choca con los paneles.
@@ -120,7 +124,7 @@ fun ScannerScreen(
                 if (activa) {
                     CamaraPreview(
                         activo = uiState is ScannerUiState.Escaneando,
-                        onQrDetectado = { codigo -> viewModel.validar(codigo) }
+                        onQrDetectado = onQrDetectado
                     )
                     // Marco de encuadre
                     Box(
@@ -223,7 +227,7 @@ fun ScannerScreen(
                         ResultadoPanel(estado.resultado, onContinuar = {
                             when (val r = estado.resultado) {
                                 is ValidacionQrResult.MisionCompletada -> onMisionCompletada(r.mision.id)
-                                else -> viewModel.reiniciar()
+                                else -> onReiniciar()
                             }
                         })
                     }
@@ -238,13 +242,13 @@ fun ScannerScreen(
                             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive }
                         )
                         Spacer(Modifier.height(8.dp))
-                        OutlinedButton(onClick = viewModel::reiniciar) {
+                        OutlinedButton(onClick = onReiniciar) {
                             Text("REINTENTAR")
                         }
                     }
                     ScannerUiState.Escaneando -> {
                         OutlinedButton(
-                            onClick = viewModel::abrirDialogoManual,
+                            onClick = onAbrirDialogoManual,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(4.dp),
                             colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
@@ -260,9 +264,8 @@ fun ScannerScreen(
     }
 
     if (mostrarDialogoManual) {
-        val codigoManual by viewModel.codigoManual.collectAsStateWithLifecycle()
         AlertDialog(
-            onDismissRequest = viewModel::cerrarDialogoManual,
+            onDismissRequest = onCerrarDialogoManual,
             title = { Text("Ingresar código manualmente") },
             text = {
                 Column {
@@ -273,17 +276,17 @@ fun ScannerScreen(
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(
                         value = codigoManual,
-                        onValueChange = viewModel::onCodigoManualChange,
+                        onValueChange = onCodigoManualChange,
                         placeholder = { Text("CQ-BIB-001") },
                         singleLine = true
                     )
                 }
             },
             confirmButton = {
-                TextButton(onClick = viewModel::validarCodigoManual) { Text("Validar") }
+                TextButton(onClick = onValidarCodigoManual) { Text("Validar") }
             },
             dismissButton = {
-                TextButton(onClick = viewModel::cerrarDialogoManual) { Text("Cancelar") }
+                TextButton(onClick = onCerrarDialogoManual) { Text("Cancelar") }
             }
         )
     }

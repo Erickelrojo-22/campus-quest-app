@@ -18,7 +18,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.gamequest.data.local.SeedData
 import com.example.gamequest.data.local.entity.UsuarioEntity
-import com.example.gamequest.data.repository.CampusRepository
+import com.example.gamequest.data.repository.OfflineFirstCampusRepository
 import com.example.gamequest.data.repository.MisionConEstado
 import com.example.gamequest.ui.badges.BadgeEarnedScreen
 import com.example.gamequest.ui.badges.BadgeEarnedViewModel
@@ -41,7 +41,7 @@ class MissionsNavigationTest {
     private val point = seed.punto.copy(id = 1)
 
     private fun launch(items: List<MisionConEstado>, fromBadge: Boolean = false) {
-        val repository = object : CampusRepository() {
+        val repository = object : OfflineFirstCampusRepository() {
             override fun observarMisionesConEstado(usuarioId: Int) = flowOf(items)
             override suspend fun buscarMisionPorId(id: Int) = mission
             override fun observarTotalInsignias(usuarioId: Int) = flowOf(1)
@@ -72,7 +72,8 @@ class MissionsNavigationTest {
                         }) { padding -> Text("Inicio de prueba", Modifier.padding(padding)) }
                     }
                     composable("earned") {
-                        BadgeEarnedScreen(badgeViewModel, onSiguienteMision = {
+                        val badgeState by badgeViewModel.estado.collectAsStateWithLifecycle()
+                        BadgeEarnedScreen(badgeState, onSiguienteMision = {
                             nav.navigate(Routes.MISSIONS) { popUpTo(Routes.HOME) }
                         })
                     }

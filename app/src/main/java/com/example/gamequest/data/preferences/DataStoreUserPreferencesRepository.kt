@@ -1,0 +1,151 @@
+package com.example.gamequest.data.preferences
+
+import android.content.Context
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import com.example.gamequest.util.AvatarColor
+import com.example.gamequest.util.CharacterSpecies
+import com.example.gamequest.util.SpriteColorEngine.CharacterColor
+import androidx.datastore.preferences.core.MutablePreferences
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+
+private val Context.dataStore by preferencesDataStore(name = "campus_quest_preferences")
+
+/**
+ * Implementación de [UserPreferencesRepository] con DataStore. Persistencia local ligera (RF-18, RF-19): preferencias de la
+ * aplicación y la sesión activa del usuario, para que se restauren
+ * automáticamente la próxima vez que se abra la aplicación.
+ */
+open class DataStoreUserPreferencesRepository(
+    private val context: Context? = null,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+) : UserPreferencesRepository {
+
+    /** Escribe en DataStore desde [ioDispatcher], nunca desde el hilo principal. */
+    private suspend fun editar(transform: (MutablePreferences) -> Unit) {
+        val store = context?.dataStore ?: return
+        withContext(ioDispatcher) { store.edit { transform(it) } }
+    }
+
+    private object Keys {
+        val TEMA_OSCURO = booleanPreferencesKey("tema_oscuro")
+        val TAMANO_TEXTO = stringPreferencesKey("tamano_texto")
+        val RECORDATORIOS_MISION = booleanPreferencesKey("recordatorios_mision")
+        val AVISOS_CAMPUS = booleanPreferencesKey("avisos_campus")
+        val SONIDO_VIBRACION = booleanPreferencesKey("sonido_vibracion")
+        val IDIOMA = stringPreferencesKey("idioma")
+        val CAMPUS_DEFECTO = stringPreferencesKey("campus_por_defecto")
+        val DESCARGAR_MAPA = booleanPreferencesKey("descargar_mapa_sin_conexion")
+        val USUARIO_ACTIVO_ID = intPreferencesKey("usuario_activo_id")
+        val CHARACTER_COLOR = stringPreferencesKey("character_color")
+        val CHARACTER_SPECIES = stringPreferencesKey("character_species")
+        val AVATAR_PRIMARY_COLOR = stringPreferencesKey("avatar_primary_color")
+        val AVATAR_SECONDARY_COLOR = stringPreferencesKey("avatar_secondary_color")
+        val TUTORIAL_VISTO = booleanPreferencesKey("tutorial_visto")
+    }
+
+    override val preferencias: Flow<UserPreferences> = context?.dataStore?.data?.map { prefs ->
+        // Migrar del antiguo CharacterColor si no hay AvatarColor guardado aún
+        @Suppress("DEPRECATION")
+        val legacyColor = prefs[Keys.CHARACTER_COLOR]
+            ?.let { runCatching { CharacterColor.valueOf(it) }.getOrNull() }
+            ?: CharacterColor.BLUE_ORIGINAL
+
+        val primaryColor = prefs[Keys.AVATAR_PRIMARY_COLOR]
+            ?.let { runCatching { AvatarColor.valueOf(it) }.getOrNull() }
+            ?: legacyColor.primary  // migración automática
+
+        val secondaryColor = prefs[Keys.AVATAR_SECONDARY_COLOR]
+            ?.let { runCatching { AvatarColor.valueOf(it) }.getOrNull() }
+            ?: legacyColor.secondary  // migración automática
+
+        @Suppress("DEPRECATION")
+        UserPreferences(
+            temaOscuro = prefs[Keys.TEMA_OSCURO] ?: true,
+            tamanoTexto = prefs[Keys.TAMANO_TEXTO] ?: "Mediano",
+            recordatoriosMision = prefs[Keys.RECORDATORIOS_MISION] ?: true,
+            avisosCampus = prefs[Keys.AVISOS_CAMPUS] ?: true,
+            sonidoVibracion = prefs[Keys.SONIDO_VIBRACION] ?: true,
+            idioma = prefs[Keys.IDIOMA] ?: "Español",
+            campusPorDefecto = prefs[Keys.CAMPUS_DEFECTO] ?: "Manta",
+            descargarMapaSinConexion = prefs[Keys.DESCARGAR_MAPA] ?: true,
+            usuarioActivoId = prefs[Keys.USUARIO_ACTIVO_ID] ?: -1,
+            characterSpecies = prefs[Keys.CHARACTER_SPECIES]
+                ?.let { runCatching { CharacterSpecies.valueOf(it) }.getOrNull() }
+                ?: CharacterSpecies.DUDE,
+            avatarPrimaryColor = primaryColor,
+            avatarSecondaryColor = secondaryColor,
+            tutorialVisto = prefs[Keys.TUTORIAL_VISTO] ?: false,
+            characterColor = legacyColor,
+        )
+    }?.flowOn(ioDispatcher) ?: flowOf(UserPreferences())
+
+    override suspend fun setTemaOscuro(valor: Boolean) {
+        editar { it[Keys.TEMA_OSCURO] = valor }
+    }
+
+    override suspend fun setTamanoTexto(valor: String) {
+        editar { it[Keys.TAMANO_TEXTO] = valor }
+    }
+
+    override suspend fun setRecordatoriosMision(valor: Boolean) {
+        editar { it[Keys.RECORDATORIOS_MISION] = valor }
+    }
+
+    override suspend fun setAvisosCampus(valor: Boolean) {
+        editar { it[Keys.AVISOS_CAMPUS] = valor }
+    }
+
+    override suspend fun setSonidoVibracion(valor: Boolean) {
+        editar { it[Keys.SONIDO_VIBRACION] = valor }
+    }
+
+    override suspend fun setCampusPorDefecto(valor: String) {
+        editar { it[Keys.CAMPUS_DEFECTO] = valor }
+    }
+
+    override suspend fun setDescargarMapaSinConexion(valor: Boolean) {
+        editar { it[Keys.DESCARGAR_MAPA] = valor }
+    }
+
+    override suspend fun setUsuarioActivoId(id: Int) {
+        editar { it[Keys.USUARIO_ACTIVO_ID] = id }
+    }
+
+    override suspend fun setCharacterSpecies(species: CharacterSpecies) {
+        editar { it[Keys.CHARACTER_SPECIES] = species.name }
+    }
+
+    /** Guarda el color primario (cuerpo / capucha / pelaje). */
+    override suspend fun setAvatarPrimaryColor(color: AvatarColor) {
+        editar { it[Keys.AVATAR_PRIMARY_COLOR] = color.name }
+    }
+
+    /** Guarda el color secundario (pañuelo / rostro / vientre). */
+    override suspend fun setAvatarSecondaryColor(color: AvatarColor) {
+        editar { it[Keys.AVATAR_SECONDARY_COLOR] = color.name }
+    }
+
+    @Suppress("DEPRECATION")
+    @Deprecated("Usar setAvatarPrimaryColor / setAvatarSecondaryColor")
+    override suspend fun setCharacterColor(color: CharacterColor) {
+        editar { it[Keys.CHARACTER_COLOR] = color.name }
+    }
+
+    override suspend fun setTutorialVisto(visto: Boolean) {
+        editar { it[Keys.TUTORIAL_VISTO] = visto }
+    }
+
+    override suspend fun cerrarSesion() {
+        editar { it[Keys.USUARIO_ACTIVO_ID] = -1 }
+    }
+}

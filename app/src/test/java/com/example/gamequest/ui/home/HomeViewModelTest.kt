@@ -5,7 +5,7 @@ import com.example.gamequest.data.local.entity.MisionEntity
 import com.example.gamequest.data.local.entity.PuntoInteresEntity
 import com.example.gamequest.data.local.entity.Rol
 import com.example.gamequest.data.local.entity.UsuarioEntity
-import com.example.gamequest.data.repository.CampusRepository
+import com.example.gamequest.data.repository.OfflineFirstCampusRepository
 import com.example.gamequest.data.repository.MisionConEstado
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -167,10 +167,10 @@ class HomeViewModelTest {
         assertTrue(sugerida?.completada == false)
     }
 
-    private class FakeCampusRepository(
+    private inner class FakeCampusRepository(
         private val usuario: UsuarioEntity,
         private val misionesConEstado: List<MisionConEstado>
-    ) : CampusRepository() {
+    ) : OfflineFirstCampusRepository(ioDispatcher = testDispatcher) {
         override fun observarUsuario(id: Int): Flow<UsuarioEntity?> = flowOf(usuario)
         override fun observarMisionesConEstado(usuarioId: Int): Flow<List<MisionConEstado>> =
             flowOf(misionesConEstado)

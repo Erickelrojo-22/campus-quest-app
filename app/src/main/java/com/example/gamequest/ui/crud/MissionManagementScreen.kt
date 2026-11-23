@@ -29,25 +29,25 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.gamequest.data.local.entity.MisionEntity
+import com.example.gamequest.data.local.entity.PuntoInteresEntity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MissionManagementScreen(
-    viewModel: MissionManagementViewModel,
+    misiones: List<Pair<MisionEntity, PuntoInteresEntity>>,
+    misionAEliminar: MisionEntity?,
+    onSolicitarEliminacion: (MisionEntity) -> Unit,
+    onConfirmarEliminacion: () -> Unit,
+    onCancelarEliminacion: () -> Unit,
     onBack: () -> Unit,
     onNuevaMision: () -> Unit,
     onEditarMision: (puntoId: Int) -> Unit
 ) {
-    val misiones by viewModel.misiones.collectAsStateWithLifecycle()
-    val misionAEliminar by viewModel.misionAEliminar.collectAsStateWithLifecycle()
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -94,7 +94,7 @@ fun MissionManagementScreen(
                             IconButton(onClick = { onEditarMision(punto.id) }) {
                                 Icon(Icons.Filled.Edit, contentDescription = "Editar")
                             }
-                            IconButton(onClick = { viewModel.solicitarEliminacion(mision) }) {
+                            IconButton(onClick = { onSolicitarEliminacion(mision) }) {
                                 Icon(Icons.Filled.Delete, contentDescription = "Eliminar")
                             }
                         }
@@ -107,14 +107,14 @@ fun MissionManagementScreen(
 
     misionAEliminar?.let { mision ->
         AlertDialog(
-            onDismissRequest = viewModel::cancelarEliminacion,
+            onDismissRequest = onCancelarEliminacion,
             title = { Text("Eliminar misión") },
             text = { Text("¿Seguro que deseas eliminar \"${mision.titulo}\"? Esta acción no se puede deshacer.") },
             confirmButton = {
-                TextButton(onClick = viewModel::confirmarEliminacion) { Text("Eliminar") }
+                TextButton(onClick = onConfirmarEliminacion) { Text("Eliminar") }
             },
             dismissButton = {
-                TextButton(onClick = viewModel::cancelarEliminacion) { Text("Cancelar") }
+                TextButton(onClick = onCancelarEliminacion) { Text("Cancelar") }
             }
         )
     }

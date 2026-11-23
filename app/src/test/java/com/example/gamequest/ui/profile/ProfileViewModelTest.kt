@@ -3,8 +3,9 @@ package com.example.gamequest.ui.profile
 import com.example.gamequest.data.local.entity.Rol
 import com.example.gamequest.data.local.entity.UsuarioEntity
 import com.example.gamequest.data.preferences.UserPreferences
+import com.example.gamequest.data.preferences.DataStoreUserPreferencesRepository
 import com.example.gamequest.data.preferences.UserPreferencesRepository
-import com.example.gamequest.data.repository.CampusRepository
+import com.example.gamequest.data.repository.OfflineFirstCampusRepository
 import com.example.gamequest.data.repository.ProgresoDetallado
 import com.example.gamequest.ui.components.CharacterAnimation
 import com.example.gamequest.util.AvatarColor
@@ -253,19 +254,19 @@ class ProfileViewModelTest {
         assertFalse(viewModel.uiState.value.showRanking)
     }
 
-    private class FakeCampusRepository(
+    private inner class FakeCampusRepository(
         private val usuario: UsuarioEntity,
         private val totalInsignias: Int
-    ) : CampusRepository() {
+    ) : OfflineFirstCampusRepository(ioDispatcher = testDispatcher) {
         override fun observarUsuario(id: Int): Flow<UsuarioEntity?> = MutableStateFlow(usuario)
         override fun observarTotalInsignias(usuarioId: Int): Flow<Int> = MutableStateFlow(totalInsignias)
         override fun observarHistorialProgreso(usuarioId: Int): Flow<List<ProgresoDetallado>> =
             MutableStateFlow(emptyList())
     }
 
-    private class FakeUserPreferencesRepository(
+    private inner class FakeUserPreferencesRepository(
         initialPrefs: UserPreferences
-    ) : UserPreferencesRepository() {
+    ) : DataStoreUserPreferencesRepository(ioDispatcher = testDispatcher) {
         val preferenciasState = MutableStateFlow(initialPrefs)
         override val preferencias: Flow<UserPreferences> = preferenciasState
 

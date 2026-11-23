@@ -1,4 +1,4 @@
-package com.example.gamequest
+package com.example.gamequest.di
 import com.example.gamequest.data.repository.AuthRepository
 import com.example.gamequest.data.repository.CampusRepository
 import com.example.gamequest.data.preferences.UserPreferencesRepository
