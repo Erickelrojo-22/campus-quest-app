@@ -4,10 +4,19 @@ import com.example.gamequest.data.local.dao.UsuarioDao
 import com.example.gamequest.data.local.entity.Rol
 import com.example.gamequest.data.local.entity.UsuarioEntity
 import com.example.gamequest.data.remote.TokenStore
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /** Resolves a Room-backed session and never performs network I/O. */
-class LocalSessionAccess(private val tokens: TokenStore, private val users: UsuarioDao) : SessionAccess {
-    override suspend fun resolverIdentidad(): UsuarioEntity {
+class LocalSessionAccess(
+    private val tokens: TokenStore,
+    private val users: UsuarioDao,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+) : SessionAccess {
+    override suspend fun resolverIdentidad(): UsuarioEntity = withContext(ioDispatcher) { resolverOnIo() }
+
+    private suspend fun resolverOnIo(): UsuarioEntity {
         val snapshot = tokens.snapshot
         val token = requireNotNull(snapshot.token) { "No hay sesión local." }
         val id = requireNotNull(snapshot.localUserId) { "La sesión local no tiene usuario." }

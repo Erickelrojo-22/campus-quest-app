@@ -2,6 +2,7 @@ package com.example.gamequest.data.session
 
 import com.example.gamequest.data.local.entity.UsuarioEntity
 import com.example.gamequest.data.preferences.UserPreferences
+import com.example.gamequest.data.preferences.DataStoreUserPreferencesRepository
 import com.example.gamequest.data.preferences.UserPreferencesRepository
 import com.example.gamequest.data.remote.*
 import kotlinx.coroutines.*
@@ -13,7 +14,7 @@ import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SessionCoordinatorTest {
-    private class Prefs : UserPreferencesRepository() {
+    private class Prefs : DataStoreUserPreferencesRepository() {
         val data = MutableStateFlow(UserPreferences(usuarioActivoId = 99))
         var delayRead = 0L
         var delayWrite = 0L

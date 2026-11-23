@@ -13,7 +13,7 @@ class AuthRepositoryRemoteTest {
     private val dao = FakeUsuarioDao()
     private val tokens = FakeTokenStore("previous-session")
     private val gateway = FakeCampusGateway(tokens)
-    private val repository = AuthRepository(dao, gateway)
+    private val repository = DefaultAuthRepository(dao, gateway)
     private val remote = RemoteUserDto(51, "Remote", "student@live.uleam.edu.ec", "Software", 0, 1, "estudiante")
 
     @Test fun visitante_rechazoHttp_noCreaSesionLocal() = runTest {
@@ -76,7 +76,7 @@ class AuthRepositoryRemoteTest {
             override fun save(value: String,localUserId: Int?) { throw IOException("disk error") }
         }
         val api = FakeCampusGateway(broken).apply { authentication = { _, _ -> throw IOException("offline") } }
-        assertTrue(AuthRepository(dao,api).entrarConNombre("Visitor",false) is AuthResult.Error)
+        assertTrue(DefaultAuthRepository(dao,api).entrarConNombre("Visitor",false) is AuthResult.Error)
         assertEquals("previous-session",tokens.token)
     }
 }

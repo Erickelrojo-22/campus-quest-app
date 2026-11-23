@@ -1,0 +1,243 @@
+package com.example.gamequest.data.repository
+
+import android.database.sqlite.SQLiteConstraintException
+import androidx.room.withTransaction
+import com.example.gamequest.data.local.AppDatabase
+
+import com.example.gamequest.data.local.dao.MisionDao
+import com.example.gamequest.data.local.dao.ProgresoMisionDao
+import com.example.gamequest.data.local.dao.PuntoInteresDao
+import com.example.gamequest.data.local.dao.UsuarioDao
+import com.example.gamequest.data.local.entity.MisionEntity
+import com.example.gamequest.data.local.entity.ProgresoMisionEntity
+import com.example.gamequest.data.local.entity.PuntoInteresEntity
+import com.example.gamequest.data.local.entity.UsuarioEntity
+import com.example.gamequest.data.model.RankingEntry
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
+
+/**
+ * Implementación offline-first de [CampusRepository]. Repositorio central del campus: puntos de interés, misiones y progreso
+ * (RF-05 a RF-17). Toda la información se sirve desde Room, por lo que la
+ * aplicación funciona igual con o sin conexión (RF-20).
+ *
+ * Concurrencia: toda lectura y escritura de Room se ejecuta en [ioDispatcher]
+ * (por defecto [Dispatchers.IO]); los Flow se recogen en ese hilo con
+ * `flowOn` y las funciones suspendidas usan `withContext`, de modo que el
+ * hilo principal nunca espera a la base de datos. Las pruebas pueden
+ * inyectar un dispatcher de prueba.
+ */
+open class OfflineFirstCampusRepository(
+    private val database: AppDatabase? = null,
+    private val puntoDao: PuntoInteresDao? = null,
+    private val misionDao: MisionDao? = null,
+    private val progresoDao: ProgresoMisionDao? = null,
+    private val usuarioDao: UsuarioDao? = null,
+    private val localCrudAuthorizer: LocalCrudAuthorizer? = null,
+    protected val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+) : CampusRepository {
+
+    protected open suspend fun <T> runInTransaction(block: suspend () -> T): T = withContext(ioDispatcher) {
+        database?.withTransaction { block() } ?: block()
+    }
+
+    /** Ejecuta una operación de datos suspendida fuera del hilo principal. */
+    protected suspend fun <T> io(block: suspend () -> T): T = withContext(ioDispatcher) { block() }
+
+    override fun observarPuntos(): Flow<List<PuntoInteresEntity>> =
+        (puntoDao?.observarTodos() ?: flowOf(emptyList())).flowOn(ioDispatcher)
+
+    override fun observarUsuario(id: Int): Flow<UsuarioEntity?> =
+        (usuarioDao?.observarPorId(id) ?: flowOf(null)).flowOn(ioDispatcher)
+
+    override fun observarRanking(): Flow<List<RankingEntry>> =
+        (usuarioDao?.observarRanking()?.map { users -> users.map(RankingEntry::local) } ?: flowOf(emptyList()))
+            .flowOn(ioDispatcher)
+
+    /** Lista de misiones combinada con su punto de interés y si el usuario ya la completó. */
+    override fun observarMisionesConEstado(usuarioId: Int): Flow<List<MisionConEstado>> {
+        val misionesFlow = misionDao?.observarTodas() ?: flowOf(emptyList())
+        val puntosFlow = puntoDao?.observarTodos() ?: flowOf(emptyList())
+        val completadasFlow = progresoDao?.observarMisionesCompletadasIds(usuarioId) ?: flowOf(emptyList())
+
+        return combine(misionesFlow, puntosFlow, completadasFlow) { misiones, puntos, completadasIds ->
+            val puntosPorId = puntos.associateBy { it.id }
+            misiones.mapNotNull { mision ->
+                val punto = puntosPorId[mision.puntoInteresId] ?: return@mapNotNull null
+                MisionConEstado(
+                    mision = mision,
+                    punto = punto,
+                    completada = mision.id in completadasIds
+                )
+            }
+        }.flowOn(ioDispatcher)
+    }
+
+    /** RF-16: listado de misiones con su punto de interés, para la pantalla de gestión (CRUD). */
+    override fun observarMisionesConPunto(): Flow<List<Pair<MisionEntity, PuntoInteresEntity>>> {
+        val misionesFlow = misionDao?.observarTodas() ?: flowOf(emptyList())
+        val puntosFlow = puntoDao?.observarTodos() ?: flowOf(emptyList())
+
+        return combine(misionesFlow, puntosFlow) { misiones, puntos ->
+            val puntosPorId = puntos.associateBy { it.id }
+            misiones.mapNotNull { mision ->
+                val punto = puntosPorId[mision.puntoInteresId] ?: return@mapNotNull null
+                mision to punto
+            }
+        }.flowOn(ioDispatcher)
+    }
+
+    override suspend fun buscarPuntoPorId(id: Int): PuntoInteresEntity? = io { puntoDao?.buscarPorId(id) }
+
+    override suspend fun buscarMisionPorId(id: Int): MisionEntity? = io { misionDao?.buscarPorId(id) }
+
+    /** Misión(es) asociada(s) a un punto de interés (relación 1 a 1 en esta etapa). */
+    override suspend fun buscarMisionPorPuntoId(puntoId: Int): MisionEntity? =
+        io { misionDao?.buscarPorPunto(puntoId)?.firstOrNull() }
+
+    override fun observarMisionPorId(id: Int): Flow<MisionEntity?> =
+        (misionDao?.observarPorId(id) ?: flowOf(null)).flowOn(ioDispatcher)
+
+    override fun observarPuntoPorId(id: Int): Flow<PuntoInteresEntity?> =
+        (puntoDao?.observarPorId(id) ?: flowOf(null)).flowOn(ioDispatcher)
+
+    override fun observarTotalInsignias(usuarioId: Int): Flow<Int> =
+        (progresoDao?.observarTotalCompletadas(usuarioId) ?: flowOf(0)).flowOn(ioDispatcher)
+
+    /** RF-15 / Timeline: Historial de actividades y puntos ganados por el usuario en orden cronológico. */
+    override fun observarHistorialProgreso(usuarioId: Int): Flow<List<ProgresoDetallado>> {
+        val progresoFlow = progresoDao?.observarPorUsuario(usuarioId) ?: flowOf(emptyList())
+        val misionesFlow = misionDao?.observarHistorialCatalogo() ?: flowOf(emptyList())
+        val puntosFlow = puntoDao?.observarTodos() ?: flowOf(emptyList())
+
+        return combine(progresoFlow, misionesFlow, puntosFlow) { progresos, misiones, puntos ->
+            val misionesPorId = misiones.associateBy { it.id }
+            val puntosPorId = puntos.associateBy { it.id }
+            progresos.map { prog ->
+                val mision = misionesPorId[prog.misionId]
+                val punto = mision?.let { puntosPorId[it.puntoInteresId] }
+                ProgresoDetallado(
+                    progreso = prog,
+                    mision = mision,
+                    punto = punto
+                )
+            }
+        }.flowOn(ioDispatcher)
+    }
+
+    /**
+     * RF-10 / RF-11 / RF-12 / RF-13: valida un código QR (o ingresado a mano),
+     * registra el progreso, otorga puntos y actualiza el nivel del usuario.
+     */
+    override suspend fun validarCodigo(codigo: String, usuarioId: Int): ValidacionQrResult {
+        return try {
+            runInTransaction {
+                validarCodigoEnTransaccion(codigo, usuarioId)
+            }
+        } catch (_: SQLiteConstraintException) {
+            ValidacionQrResult.YaCompletada
+        }
+    }
+
+    private suspend fun validarCodigoEnTransaccion(codigo: String, usuarioId: Int): ValidacionQrResult {
+        val codigoNormalizado = codigo.trim().uppercase()
+        val punto = puntoDao?.buscarPorCodigoQr(codigoNormalizado)
+            ?: return ValidacionQrResult.CodigoNoReconocido
+
+        val misionesDelPunto = misionDao?.buscarPorPunto(punto.id) ?: emptyList()
+        val mision = misionesDelPunto.firstOrNull { m ->
+            progresoDao?.buscar(usuarioId, m.id) == null
+        }
+
+        if (mision == null) {
+            val yaHayMision = misionesDelPunto.isNotEmpty()
+            return if (yaHayMision) ValidacionQrResult.YaCompletada else ValidacionQrResult.SinMisionAsociada
+        }
+
+        val usuario = usuarioDao?.buscarPorId(usuarioId)
+            ?: error("La sesión local no corresponde a un usuario válido.")
+
+        progresoDao?.insertar(
+            ProgresoMisionEntity(
+                usuarioId = usuarioId,
+                misionId = mision.id,
+                fechaHora = System.currentTimeMillis(),
+                puntosObtenidos = mision.puntos,
+                codigoQrValidado = codigoNormalizado
+            )
+        )
+
+        val nuevoPuntaje = usuario.puntajeAcumulado + mision.puntos
+        val nuevoNivel = 1 + (nuevoPuntaje / 100)
+        usuarioDao?.sumarPuntos(usuarioId, mision.puntos, nuevoNivel)
+
+        val totalInsignias = progresoDao?.contarCompletadas(usuarioId) ?: 1
+
+        return ValidacionQrResult.MisionCompletada(
+            mision = mision,
+            punto = punto,
+            puntosGanados = mision.puntos,
+            nuevoPuntajeTotal = nuevoPuntaje,
+            nuevoNivel = nuevoNivel,
+            totalInsignias = totalInsignias
+        )
+    }
+
+    // ---- CRUD de misiones y puntos de interés (RF-16, RF-17) ----
+
+    override suspend fun crearPuntoConMision(
+        punto: PuntoInteresEntity,
+        titulo: String,
+        descripcionPista: String,
+        puntos: Int,
+        tiempoEstimadoMin: Int,
+        dificultad: String,
+        insigniaNombre: String,
+        insigniaEmoji: String
+    ): Int = authorizeCrud {
+        runInTransaction {
+        val puntoId = puntoDao!!.insertar(punto).toInt()
+        misionDao!!.insertar(
+            MisionEntity(
+                titulo = titulo,
+                descripcionPista = descripcionPista,
+                puntos = puntos,
+                tiempoEstimadoMin = tiempoEstimadoMin,
+                dificultad = dificultad,
+                puntoInteresId = puntoId,
+                insigniaNombre = insigniaNombre,
+                insigniaEmoji = insigniaEmoji
+            )
+        )
+        puntoId
+        }
+    }
+
+    override suspend fun actualizarMisionYPunto(mision: MisionEntity, punto: PuntoInteresEntity): Unit = authorizeCrud {
+        val existeOtro = puntoDao?.existeOtroConCodigoQr(punto.codigoQr, punto.id) ?: false
+        require(!existeOtro) {
+            "Ya existe otro punto con ese código QR."
+        }
+        misionDao?.actualizar(mision)
+        puntoDao?.actualizar(punto)
+    }
+
+    override suspend fun eliminarMision(mision: MisionEntity): Unit = authorizeCrud {
+        misionDao?.archivar(mision.id)
+    }
+
+    private suspend fun <T> authorizeCrud(block: suspend () -> T): T = io {
+        localCrudAuthorizer?.withTutor(block) ?: block()
+    }
+
+    override fun generarCodigoQr(categoria: String): String {
+        val prefijo = categoria.take(3).uppercase().ifBlank { "CQ0" }
+        return "CQ-$prefijo-${java.util.UUID.randomUUID().toString().replace("-", "").take(12).uppercase()}"
+    }
+}

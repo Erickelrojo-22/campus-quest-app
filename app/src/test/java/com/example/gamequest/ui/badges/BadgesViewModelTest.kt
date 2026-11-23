@@ -4,7 +4,7 @@ import com.example.gamequest.data.local.entity.Dificultad
 import com.example.gamequest.data.local.entity.MisionEntity
 import com.example.gamequest.data.local.entity.PuntoInteresEntity
 import com.example.gamequest.data.local.entity.UsuarioEntity
-import com.example.gamequest.data.repository.CampusRepository
+import com.example.gamequest.data.repository.OfflineFirstCampusRepository
 import com.example.gamequest.data.repository.MisionConEstado
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -159,7 +159,7 @@ class BadgesViewModelTest {
         private val usuario: UsuarioEntity,
         private val misionesConEstado: List<MisionConEstado>,
         private val ranking: List<UsuarioEntity>
-    ) : CampusRepository() {
+    ) : OfflineFirstCampusRepository() {
         override fun observarUsuario(id: Int): Flow<UsuarioEntity?> = flowOf(usuario)
         override fun observarMisionesConEstado(usuarioId: Int): Flow<List<MisionConEstado>> =
             flowOf(misionesConEstado)
