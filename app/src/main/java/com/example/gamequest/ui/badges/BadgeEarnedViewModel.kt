@@ -10,12 +10,20 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+/** Estado de la pantalla que celebra una insignia recién obtenida. */
 data class BadgeEarnedState(
     val mision: MisionEntity? = null,
     val usuario: UsuarioEntity? = null,
     val totalInsignias: Int = 0
 )
 
+/**
+ * Carga la misión completada y observa al usuario y su total de insignias para la
+ * pantalla de celebración. Expone un único [StateFlow] inmutable en [estado].
+ *
+ * @param misionId misión cuya insignia se acaba de obtener.
+ * @param usuarioId usuario que completó la misión.
+ */
 class BadgeEarnedViewModel(
     private val campusRepository: CampusRepository,
     misionId: Int,

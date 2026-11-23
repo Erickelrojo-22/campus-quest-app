@@ -83,47 +83,71 @@ Splash ──▶ Login ──▶ Home (mapa) ──▶ Detalle de misión ──
 | **Cámara** | CameraX (core, camera2, lifecycle, view) |
 | **Lectura de QR** | ZXing (core) |
 | **Asincronía** | Kotlin Coroutines + Flow |
-| **Arquitectura** | MVVM + repositorios + inyección de dependencias manual |
+| **Arquitectura** | MVVM + repositorios con interfaz + DI manual (`di/`) + corrutinas en `Dispatchers.IO` |
 | **Tipografía** | Press Start 2P (títulos) · VT323 (cuerpo) |
 
 ---
 
 ## 🏛️ Arquitectura
 
-Patrón **MVVM** con separación por capas y un contenedor de dependencias manual (`AppContainer`):
+Patrón **MVVM** en dos capas (UI y datos) con un contenedor de dependencias manual
+(`di/AppContainer`). El detalle completo, con el diagrama de paquetes y las reglas de
+dependencia, está en [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md).
 
 ```
-UI (Compose)  ──▶  ViewModel (StateFlow)  ──▶  Repository  ──▶  API REST
-   Screens            lógica de estado          reglas de negocio       │
-                                                   │                     ▼
-                                                   └──────────────▶ Room / DataStore
+ UI (Compose)        ViewModel               Repositorio (interfaz)        Fuentes
+ ────────────        ─────────               ──────────────────────        ───────
+ Screen(estado,  ◀── StateFlow<Estado>  ◀──  CampusRepository        ──▶  Room (SSOT)
+        onEvento) ──▶ fun onEvento()    ──▶  AuthRepository          ──▶  API REST
+                                             UserPreferencesRepository ─▶ DataStore
+                     viewModelScope          Dispatchers.IO (inyectado)
 ```
 
-- **UI:** pantallas `@Composable` sin estado propio; observan `StateFlow` del ViewModel.
-- **ViewModel:** expone el estado con `stateIn` / `StateFlow` y sobrevive a rotaciones.
-- **Repository:** `RemoteCampusRepository`, `CampusRepository` y `AuthRepository`
-  coordinan la API, la caché y las reglas de negocio.
-- **Data:** entidades, DAOs y `AppDatabase` (Room), `CampusApi`, sesión cifrada y
-  `UserPreferencesRepository` (DataStore).
+- **UI (`ui/`):** las pantallas `@Composable` no conocen ningún ViewModel. Reciben el
+  estado y lambdas de evento (*state hoisting*); solo `CampusQuestNavHost` obtiene los
+  ViewModels y recoge su estado con `collectAsStateWithLifecycle()`. El test
+  `StateHoistingArchitectureTest` falla si una pantalla vuelve a recibir un ViewModel.
+- **ViewModel:** expone un único `StateFlow` inmutable (el `MutableStateFlow` es
+  privado) y lanza el trabajo en `viewModelScope`.
+- **Datos (`data/`):** cada repositorio es una **interfaz** con su implementación
+  (`OfflineFirstCampusRepository`, `RemoteCampusRepository`, `DefaultAuthRepository`,
+  `DataStoreUserPreferencesRepository`, `LocalTutorSetupRepository`). Room es la
+  fuente única de verdad: la API sincroniza contra la caché local y la UI siempre lee
+  de Room.
+- **Concurrencia:** los repositorios ejecutan el acceso a Room, DataStore y red en
+  `Dispatchers.IO`, inyectado como `CoroutineDispatcher` desde `AppContainer`
+  (`flowOn` en los `Flow`, `withContext` en las funciones `suspend`); en los tests se
+  reemplaza por un dispatcher de prueba. `CampusApi` también hace cada petición HTTP
+  dentro de `withContext(Dispatchers.IO)`. No se usa `GlobalScope` ni `runBlocking`.
+- **DI (`di/`):** `AppContainer` crea una sola instancia de cada dependencia y la expone
+  como `CampusQuestDependencies`; `GenericViewModelFactory` construye cada ViewModel
+  con lo que necesita. Las pantallas no buscan dependencias por su cuenta.
+- **Capa de dominio:** no se incluye (la guía de la asignatura la deja como opcional).
+  Cada regla de negocio (validar un QR, crear o eliminar una misión, permisos del
+  tutor) la invoca un solo ViewModel y vive en el repositorio, así que una capa de
+  casos de uso solo añadiría indirección.
 
 ### 📂 Estructura del proyecto
 
 ```
 app/src/main/java/com/example/gamequest/
-├── MainActivity.kt / CampusQuestApp.kt / AppContainer.kt   # núcleo y DI
+├── MainActivity.kt / CampusQuestApp.kt   # punto de entrada; crea el AppContainer
+├── di/                   # AppContainer, CampusQuestDependencies, CampusDataMode
 ├── data/
-│   ├── local/            # Room: entidades, DAOs, AppDatabase, SeedData
-│   ├── preferences/      # DataStore (tema, sesión)
-│   ├── remote/           # API REST, repositorio remoto y token cifrado
-│   └── repository/       # reglas compartidas y fallback local
+│   ├── local/            # Room: AppDatabase, dao/, entity/, SeedData, inicializador
+│   ├── model/            # modelos de lectura (RankingEntry)
+│   ├── preferences/      # UserPreferencesRepository + implementación con DataStore
+│   ├── remote/           # CampusApi, RemoteCampusRepository, token cifrado
+│   ├── repository/       # interfaces de repositorio + implementaciones offline-first
+│   └── session/          # SessionCoordinator y estado de sesión
 ├── ui/
-│   ├── navigation/       # Routes + NavHost
-│   ├── theme/            # Color, Type (pixel art), Theme
-│   ├── common/           # ViewModelFactory, SessionViewModel, BottomBar
-│   ├── splash / auth / home / missions / scanner /
-│   │   badges / profile / crud / settings           # pantallas + ViewModels
-│   └── ...
-└── util/                 # PasswordHasher, QrGenerator, QrAnalyzer
+│   ├── navigation/       # Routes, NavHost (único punto que conoce los ViewModels)
+│   ├── common/           # GenericViewModelFactory, SessionViewModel, BottomBar
+│   ├── auth / home / missions / scanner / badges /
+│   │   profile / crud / settings / splash     # pantalla + ViewModel por feature
+│   ├── components/       # componentes reutilizables (sprite, onboarding)
+│   └── theme/            # Color, Type (pixel art), Theme
+└── util/                 # PasswordHasher, QrGenerator, QrAnalyzer, sonidos
 ```
 
 ---
